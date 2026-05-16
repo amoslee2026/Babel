@@ -2,75 +2,91 @@
 name: babel-chiplet-multi-agent-system
 description: Babel 项目 — 基于 Claude Code 的 AI 原生 Chiplet 芯片设计多 Agent 系统方案
 type: project
-version: 1.1.1
+version: 1.3.0
 created: 2026-05-16
 updated: 2026-05-16
-naming_scheme: babel-{name}
+naming_scheme: bb-{role}
 related:
   - harness_spec/idea/decisions.md
   - harness_spec/idea/.review/issues.md
+  - harness_spec/idea/.review/issues_v1.1.md
 ---
 
-# Babel — AI 原生 Chiplet 多 Agent 系统设计方案 (v1.1)
+# Babel — AI 原生 Chiplet 多 Agent 系统设计方案 (v1.3)
 
-> v1.1 修订说明：根据 `harness_spec/idea/.review/issues.md` 修复 46 项 issue（4 CRITICAL / 15 HIGH / 20 MEDIUM / 7 LOW），同时收纳 3 项用户简化决策（ADR-007 claude-mem / ADR-008 VSCode waveform / ADR-009 EDA = skill only）。关键决策见 `harness_spec/idea/decisions.md`。
+> v1.3 修订摘要：
+> - 流水线扩展至 **5 个 agent**：新增 `bb-guru-pd`（物理设计 flow owner）
+> - 顺序调整为 `architect → rtl → verification → synthesis → pd`（RTL-level 验证在综合之前；signoff 在 PD 完成）
+> - `bb-architect` **复用既有 ic-* skills**：`ic-prd` / `ic-arch` / `ic-mas`（不重写 bb- 版本）
+> - `bb-guru-rtl` 复用 `ic-rtl-coder` skill；输出 hierarchical SV + file list；**不再**输出 SDC
+> - `bb-guru-synthesis` 从 MAS 推导 SDC（新 skill `bb-create-sdc`）；跑综合 + 迭代时序/面积优化
+> - `bb-guru-pd` 跑物理设计 flow（floorplan / place / route / DRC / LVS / timing closure / GDSII）
+> - Coverage target **100%**（替代 v1.2 ≥95%）
+>
+> v1.2 修订继承（不再列出）：bb- 前缀；bb-architect / bb-guru-*；sequential + git issues；skill 写脚本范式。
 
 ---
 
 ## 0. 文档约定
 
-### 0.1 术语表 (Glossary)
+### 0.1 Glossary
 
-| 术语 | 全称 | 含义 |
-|------|------|------|
-| RTL | Register Transfer Level | 寄存器传输级硬件描述 |
-| CDC | Clock Domain Crossing | 跨时钟域 |
-| RDC | Reset Domain Crossing | 跨复位域 |
-| CBB | Common Building Block | 通用构建模块 |
-| UPF | Unified Power Format | 统一功耗格式 |
-| ICG | Integrated Clock Gating | 集成时钟门控 |
-| SVA | SystemVerilog Assertions | SystemVerilog 断言 |
-| QoR | Quality of Results | 综合质量指标 |
-| DFT | Design for Test | 可测性设计 |
-| ATPG | Automatic Test Pattern Generation | 自动测试向量生成 |
-| WNS | Worst Negative Slack | 最差负时序裕量 |
-| LVS | Layout vs Schematic | 版图-原理图对比 |
-| DRC | Design Rule Check | 设计规则检查 |
-| UCIe | Universal Chiplet Interconnect Express | 通用芯粒互连标准 |
-| ADR | Architecture Decision Record | 架构决策记录 |
-| DoD | Definition of Done | 完成定义 |
+| 术语 | 定义 |
+|------|------|
+| Agent | Claude Code subagent；承担 flow ownership 与 optimization loop |
+| Flow Owner | 拥有某 flow 闭环责任的 agent（`bb-architect` 或 `bb-guru-*`） |
+| Skill | Claude Code skill；写脚本 → 跑脚本 → 解析输出 → 回传（详见 §10） |
+| Hook | Claude Code hook（PreToolUse / PostToolUse / Session） |
+| Sequential Pipeline | 各 agent 按固定顺序执行，无中央协调进程 |
+| Git Issue | inter-agent 协作的通信载体（label 表示阶段） |
+| Optimization Loop | agent 内迭代：调 skill → 检结果 → 调参 → 再调 skill；上限 `max_optim_iter` |
+| CBB | Common Building Block（wiki/cbb/ 复用模板） |
+| CDC / RDC | 跨时钟域 / 跨复位域 |
+| **MAS** | Microarchitecture Specification — 微架构规格说明书（bb-architect 产出，下游各 agent 共同消费） |
+| **PD** | Physical Design — 物理设计（floorplan / place / route / fill / DRC / LVS） |
+| **GDSII** | Graphic Design System II — 版图二进制交付格式（PD 终态产物） |
+| **Timing Closure** | 时序收敛（WNS ≥ 0 across all PVT corners） |
+| **File List** | 综合 / 仿真工具的输入 RTL 文件清单（`*.f` 格式或 JSON） |
+| WNS / QoR / UPF / ICG / SVA / DFT / ATPG / DRC / LVS / UCIe | 与 v1.1 相同含义 |
 
 ### 0.2 优先级语义
 
 | 标签 | 含义 |
 |------|------|
-| P0 | 必须采纳，缺失则系统不可用 |
-| P1 | 优先采纳，缺失则核心质量受损 |
-| P2 | 可选采纳，缺失不影响主流程 |
+| P0 | MVP（Phase 1-4）必交付 |
+| P1 | Phase 5 交付 |
+| P2 | Phase 6+ 交付 |
 
 ### 0.3 决策日志
 
-关键设计决策以 ADR 形式记录在 `harness_spec/idea/decisions.md`：
-
-| ADR | 决策 |
-|-----|------|
-| ADR-001 | EDA 工具集成方式 — Bash + CLI（非 MCP server） |
-| ADR-002 | Agent 命名与描述 — 去人格化，使用功能短语 |
-| ADR-003 | 状态管理 — 单写者（coordinator）模式 |
-| ADR-004 | MVP 范围 — 4 个 agent，其余转 Future |
-| ADR-005 | Pyverilog 不支持的 SV 子集使用 verible/slang fallback |
-| ADR-007 | Memory system 复用 `claude-mem` 插件，不自建 |
-| ADR-008 | Waveform 查看 — VSCode 扩展，不在 Babel skill 范围 |
-| ADR-009 | EDA 工具 = skill；flow owner = agent（严格分离） |
-| ADR-010 | Bash agent 下 write_paths/read_denylist 为软边界，接受残留风险 |
+| ADR | 决策 | Status |
+|-----|------|--------|
+| ADR-001 | EDA 工具 = Bash + CLI（非 MCP server） | Accepted |
+| ADR-002 | 去人格化命名 + bb-{role} 命名约定 | Accepted (v1.2 扩展) |
+| ADR-003 | ~~单写者 state.json~~ | **Deprecated by ADR-012** |
+| ADR-004 | MVP 范围；v1.3 更新为 **5 agent**：`bb-architect / bb-guru-rtl / bb-guru-verification / bb-guru-synthesis / bb-guru-pd` | Accepted (v1.3 更新) |
+| ADR-005 | Pyverilog SV fallback (verible / slang) | Accepted |
+| ADR-006 | ~~v1.0→v1.1 state schema migration~~ | **Deprecated** |
+| ADR-007 | Memory 复用 claude-mem | Accepted |
+| ADR-008 | Waveform → VSCode 扩展 | Accepted |
+| ADR-009 | EDA = skill；agent = flow owner | Accepted |
+| ADR-010 | Bash 软边界 / 接受残留风险 | Accepted |
+| ADR-011 | Inter-agent comms = GitHub issues | Accepted (v1.2) |
+| ADR-012 | Sequential pipeline 作为 MVP 协作模型 | Accepted (v1.2) |
+| ADR-013 | Skill 执行范式 (write-script → run → parse) | Accepted (v1.2) |
+| **ADR-014** | **复用既有 ic-* skills（ic-prd / ic-arch / ic-mas / ic-rtl-coder）；不重新实现 bb- 版本** | **Accepted (v1.3)** |
+| **ADR-015** | **流水线顺序：architect → rtl → verification → synthesis → pd（验证在综合前；signoff 落在 PD GDSII）** | **Accepted (v1.3)** |
+| **ADR-016** | **SDC 来源：bb-guru-synthesis 从 MAS 派生 SDC（不再由 bb-guru-rtl 起草）** | **Accepted (v1.3)** |
 
 ### 0.4 版本
 
 | Version | Date | Notes |
 |---------|------|-------|
 | 1.0.0 | 2026-05-16 | 初版 |
-| 1.1.0 | 2026-05-16 | 按 spec-review 修复 46 issue + 3 项简化决策 |
-| 1.1.1 | 2026-05-16 | 修复 v1.1 review C2 (IO contract 多 upstream) / C3 (UTF-8 line 106)；ADR-010 接受 C1；其余 v1.1 issue 推迟到 it.arch 阶段处理 |
+| 1.1.0 | 2026-05-16 | 修复 46 review issue + 3 项简化决策 |
+| 1.1.1 | 2026-05-16 | 修复 v1.1 review C2 / C3 + 接受 C1（ADR-010） |
+| 1.2.0 | 2026-05-16 | bb- 前缀；bb-architect / bb-guru-*；sequential + git issues；skill 写脚本范式 |
+| 1.3.0 | 2026-05-16 | 流水线扩展至 5 agent（+bb-guru-pd）；重排 rtl→verify→synth→pd；coverage 100%；复用 ic-* skills；SDC 由 synth 从 MAS 派生 |
 
 ---
 
@@ -80,28 +96,30 @@ related:
 
 | 项目 | 协调模式 | 核心机制 |
 |------|----------|----------|
-| digital-chip-design-agents | Pipeline Orchestrator | fix_request protocol, cross-domain loop |
+| digital-chip-design-agents | Pipeline Orchestrator | fix_request, cross-domain loop |
 | fnw | 12 Role Agents + Flow JSON | 强制门禁, Wiki 检索 |
 | MAGE | Planner→Programmer→Reviewer→Evaluator | 4-shot prompts, Fix Loop |
 | VerilogCoder | Planner→Coder→Fixer | Graph-based Planning, AST Tracing |
 
-详细引用（含 commit / 访问日期）见 §17 附录 B。
+> v1.2 决策保留：Babel 选用 sequential pipeline，inter-agent 协作通过 git issues 而非中央 coord（ADR-012）。
+> v1.3 决策：流水线顺序 RTL 验证在综合前；signoff 在 PD 完成（ADR-015）。
 
-### 1.2 关键采纳内容
+### 1.2 关键采纳
 
 | 优先级 | 内容 | 来源 |
 |--------|------|------|
-| P0 | fix_request Protocol | digital-chip-design-agents |
-| P0 | Pipeline Orchestrator 跨域协调 | digital-chip-design-agents |
-| P0 | Graph-based Planning 模式 | VerilogCoder（实现映射见 §10） |
+| P0 | Sequential pipeline (5 agent, architect → rtl → verify → synth → pd) | Babel v1.3 自创 |
+| P0 | Git issues 作为 inter-agent comms | Babel v1.2 自创 |
+| P0 | Skill 写脚本范式 (write → run → parse) | Babel v1.2 自创 |
+| P0 | 复用既有 ic-* skills | 用户既有 skill 库（ADR-014） |
 | P0 | 强制质量门禁体系 | fnw |
-| P0 | Memory 复用 claude-mem 插件（ADR-007） | 现有 Claude Code 生态 |
+| P0 | Memory 复用 claude-mem 插件 | 现有 Claude Code 生态 |
 | P1 | AST 静态分析 | VerilogCoder |
 | P1 | 对抗性评审 (devils-advocate) | fnw |
 | P1 | 4-shot Prompt 模板 | MAGE |
 
-> Waveform tracing 不进入 Babel 设计范围 — 由 VSCode 波形扩展承担（ADR-008）。
-> 原 v1.0 §11 "命名差异化验证" 表格已删除（自评 PASS、虚构引用风险）。命名唯一性改由 CI 脚本保障，见 §15.2。
+> Waveform tracing 不进入 Babel 设计范围 — 由 VSCode 扩展承担（ADR-008）。
+> 命名差异化对比表已删除；命名唯一性 CI 检查见 §15.2。
 
 ---
 
@@ -110,642 +128,823 @@ related:
 ### 2.1 整体架构
 
 ```mermaid
-flowchart TD
-    subgraph Meta["Meta Layer"]
-        coord["babel-cross-domain-coordinator<br/>跨域协调 唯一 state 写者"]
-        state["design_state.json<br/>共享状态"]
-        cmem["claude-mem 插件<br/>跨会话记忆 (复用)"]
-    end
+flowchart LR
+    user(["User /bb-design"])
 
-    subgraph MVP["MVP Agents (Phase 1-2)"]
-        spec["babel-spec-planner<br/>规格生成模块"]
-        rtl["babel-rtl-coder<br/>RTL 生成模块"]
-        test["babel-test-architect<br/>验证模块"]
-    end
+    arch["bb-architect<br/>PRD + Arch + MAS"]
+    rtl["bb-guru-rtl<br/>SV + file list"]
+    ver["bb-guru-verification<br/>Cov-driven sim<br/>100% target"]
+    synth["bb-guru-synthesis<br/>SDC + timing/area<br/>iteration"]
+    pd["bb-guru-pd<br/>PD flow + DRC<br/>+ timing closure"]
 
-    subgraph P3["Phase 3 Agents (flow owners)"]
-        synth["babel-yosys-synth-planner<br/>综合 flow owner"]
-        cdc["babel-clock-domain-guard<br/>跨时钟域 flow owner"]
-    end
+    gh[("GitHub Issues<br/>inter-agent 协作")]
+    cmem[("claude-mem<br/>跨会话记忆")]
 
-    subgraph Skills["EDA Tool Skills (Bash+CLI)"]
-        yosys["babel-invoke-yosys"]
-        verilator["babel-invoke-verilator"]
-        opensta["babel-invoke-opensta"]
-        ast["babel-parse-ast"]
-    end
+    user --> arch
+    arch -->|PRD + arch_spec + MAS| rtl
+    arch -.MAS read.-> synth
+    arch -.MAS read.-> pd
+    rtl -->|rtl_artifact + file_list.f| ver
+    ver -->|test_report.json| synth
+    rtl -.rtl read.-> synth
+    synth -->|synth_report.json + netlist| pd
+    pd -->|GDSII + drc/lvs/timing reports| user
 
-    coord --> state
-    coord --> cmem
-    state --> spec & rtl & test
-    spec -->|spec.json 10KB| rtl
-    rtl -->|*.sv 100KB| cdc
-    cdc -->|cdc_report| synth
-    synth -->|netlist 500KB| test
-    test -->|fix_request| coord
-    rtl & synth & test -.->|invoke| yosys & verilator & opensta
+    arch & rtl & ver & synth & pd -.write/read.-> gh
+    arch & rtl & ver & synth & pd -.experience.-> cmem
 ```
 
-> 节点 ID 英文，中文为 description 注释；边标签注明数据规模。
-> Agents（实心箭头）拥有 flow；Skills（虚线箭头）只被调用。
+关键约束：
+- 上游 agent 完成 → 创建 git issue 标 `ready-for-<next>` → 下游 agent 拾起
+- 下游失败 → 创建 issue 标 `<upstream>-needs-fix` → 上游 agent 拾起并重做
+- 没有中央 state.json 或 coordinator 进程；每个 agent 独立写自己的产物
+- MAS（bb-architect 产出）被 rtl / synth / pd 共同消费
+- 最终 signoff 落在 PD 输出 GDSII + DRC clean + timing closure
 
-### 2.2 Domain Pipeline (MVP)
+### 2.2 Sequential Pipeline 流程
 
 ```mermaid
 flowchart LR
-    A["spec-planner"] -->|spec.json 10KB| B["rtl-coder"]
-    B -->|*.sv 100KB| C["clock-domain-guard"]
-    C -->|cdc_report 50KB| D["yosys-synth-planner"]
-    D -->|netlist 500KB| E["test-architect"]
-    E -->|fix_request| F["cross-domain-coordinator"]
-    F -->|state update| B
+    A["bb-architect"] -->|PRD + arch_spec + MAS| B["bb-guru-rtl"]
+    B -->|rtl_artifact + file_list| C["bb-guru-verification"]
+    C -->|test_report cov=100%| D["bb-guru-synthesis"]
+    D -->|synth_report + netlist| E["bb-guru-pd"]
+    E --> F([signoff GDSII])
+
+    C -.functional bug.-> i1[/issue: rtl-needs-fix/]
+    D -.timing fail.-> i2[/issue: rtl-needs-fix or arch-needs-fix/]
+    E -.DRC/LVS/timing fail.-> i3[/issue: synth-needs-fix/]
+    i1 -.assign.-> B
+    i2 -.assign.-> B
+    i3 -.assign.-> D
 ```
 
-### 2.3 单写者模型 (Single Writer)
+### 2.3 Agent 内 Optimization Loop
 
-- **仅** `babel-cross-domain-coordinator` 可写 `design_state.json`
-- 其他 agent 通过 `events/*.jsonl`（append-only）提交状态变更请求
-- coordinator 周期性合并事件 → state
-- 详见 §7.3 与 §13.2
+```mermaid
+flowchart TD
+    start([agent start]) --> read[读取上游 artifact + MAS]
+    read --> call_skill[调 skill<br/>写脚本/跑/解析]
+    call_skill --> check{结果达标?}
+    check -->|yes| sign[写自己的 artifact<br/>+ 开下一阶段 issue]
+    check -->|no, iter<max| optim[调整参数/输入]
+    optim --> call_skill
+    check -->|no, iter>=max| fail[开 issue 标 upstream-needs-fix<br/>+ 退出]
+    sign --> done([end])
+    fail --> done
+```
 
 ---
 
 ## 三、Sub-Agent 定义
 
-### 3.0 Agent vs Skill 职责分离（ADR-009）
+### 3.0 Agent vs Skill 职责分离（ADR-009 复述）
 
-| 类别 | 实现形式 | 职责 |
-|------|---------|------|
-| **Agent** | Claude Code subagent | **Flow ownership**：决定何时调用哪些 skill、判断输出、生成 fix_request、推动闭环 |
-| **Skill** | Claude Code skill (Bash + CLI 封装) | **Tool operation**：执行单一 EDA 工具，输出结构化结果，无业务决策 |
+| 类别 | 实现 | 职责 |
+|------|------|------|
+| Agent | Claude Code subagent | Flow ownership + optimization loop（决定何时调 skill、读结果、调参重调） |
+| Skill | Claude Code skill (Bash + CLI) | Tool operation：写脚本、跑脚本、解析输出（无业务判断） |
 
-EDA 工具（yosys、verilator、opensta、magic、netgen、klayout、abc 等）**仅以 skill 实现**，不存在"agent 等价物"。
-Flow owner（如 `babel-yosys-synth-planner`）是 agent，通过调用 skill `babel-invoke-yosys` 完成综合工作。
-反之，skill 内**不允许**调用 Agent 工具或派发 subagent（保持单向依赖）。
+EDA 工具仅以 skill 实现，不存在"agent 等价物"。CDC / 综合 / 仿真 / PR 等执行细节均封装在 skill 内；agent 负责"调用哪条 skill、什么时候停"。
+
+> v1.3 注：bb-architect 直接复用既有 `ic-prd` / `ic-arch` / `ic-mas` skill；bb-guru-rtl 直接复用 `ic-rtl-coder`（ADR-014）。
 
 ### 3.0.1 命名规则
 
-- Agent：`babel-{name}` — 单 token name（v1.0 的 `babel-{domain}-{role}` 双层修饰过度冗余）
-- 每个 agent 配置 YAML 包含：
-  - `tools`: 允许使用的 Claude Code 工具 allowlist
-  - `write_paths`: 可写路径 glob
-  - `read_denylist`: 禁读路径
-  - `max_tokens`: 单次任务上下文预算
-  - `output_schema`: 输出 JSON Schema 引用
+- Top-level architect：`bb-architect`
+- Flow owner：`bb-guru-{flow}`（`bb-guru-rtl` / `bb-guru-verification` / `bb-guru-synthesis` / `bb-guru-pd`）
+- Skill：`bb-{action}-{target}`（Babel 原生）或 `ic-{name}`（外部复用，ADR-014）
+- Hook：`bb-hook-{trigger}-{action}`
 
-### 3.1 MVP Agents (Phase 1-2, 4 个)
+### 3.1 MVP Agents (Phase 1-4, 5 个)
 
-#### 3.1.1 babel-spec-planner
+#### 3.1.1 bb-architect
 
 ```yaml
-name: babel-spec-planner
-description: 规格生成模块 — 需求探索、规格定义、架构评估
-tools: [Read, Write, Grep, Glob]
+name: bb-architect
+description: 架构 flow owner — 输出 PRD / arch_spec / MAS 三类文档
+tools: [Read, Write, Edit, Grep, Glob, Bash]
 write_paths:
-  - "idea/**"
-  - "spec/**"
-  - "${OUTPUT_DIR}/spec/**"
+  - "designs/*/PRD.md"
+  - "designs/*/arch_spec/**"
+  - "designs/*/mas/**"
+  - "designs/*/ADR/*.md"
 read_denylist:
   - "~/.ssh/**"
   - "~/.aws/**"
-  - "/etc/shadow"
-max_tokens: 80000
-output_schema: schemas/spec.schema.json
-artifacts: [PRD.md, spec.json, "ADR-*.md"]
-```
-
-职责：需求探索、PRD 生成、架构评估、接口与协议选型（参考 `wiki/protocols/`）。不涉及 RTL 实现细节。
-
-#### 3.1.2 babel-rtl-coder
-
-```yaml
-name: babel-rtl-coder
-description: RTL 生成模块 — 仅生成 RTL 与轻量 lint
-tools: [Read, Write, Edit, Bash, Grep, Glob]
-write_paths:
-  - "rtl/**"
-  - "constraints/**"
-  - "${OUTPUT_DIR}/rtl/**"
-read_denylist:
-  - "~/.ssh/**"
-  - "~/.aws/**"
-  - "/etc/shadow"
-max_tokens: 100000
-output_schema: schemas/rtl_artifact.schema.json
-artifacts: ["rtl/*.sv", "rtl/*.v", "constraints/*.sdc (草稿)"]
-```
-
-职责（边界明确）：
-- 生成 SystemVerilog/Verilog RTL
-- 调用 skill `babel-check-lint` 执行 RTL 语法 lint
-- **不做** CDC/RDC 检查 → 交 `babel-clock-domain-guard`
-- **不做** 综合预检 → 交 `babel-yosys-synth-planner`
-- 输出 SDC 草稿，由 `synth-planner` 最终拍板
-
-#### 3.1.3 babel-test-architect
-
-```yaml
-name: babel-test-architect
-description: 验证 flow owner — 测试规划、动态仿真、覆盖率收集
-tools: [Read, Write, Edit, Bash, Grep, Glob]
-write_paths:
-  - "tb/**"
-  - "sim_results/**"
-  - "${OUTPUT_DIR}/test/**"
-read_denylist:
-  - "~/.ssh/**"
-  - "~/.aws/**"
-max_tokens: 80000
-output_schema: schemas/test_report.schema.json
-artifacts: ["tb/*.sv", coverage.json, "sim_results/*.log"]
-```
-
-职责：cocotb/UVM 测试台生成、调用 skill `babel-invoke-verilator` 执行仿真、覆盖率收集与分析。**不做** 形式验证（交 future `babel-property-prover`）。波形产物（VCD/FST）由用户在 VSCode 中查看（ADR-008）。
-
-#### 3.1.4 babel-cross-domain-coordinator
-
-```yaml
-name: babel-cross-domain-coordinator
-description: 跨域协调模块 — 调度、fix_request 仲裁、唯一 state 写者
-tools: [Read, Write, Edit, Bash, Grep, Glob, Task]
-write_paths:
-  - "${OUTPUT_DIR}/state/**"
-  - "${OUTPUT_DIR}/events/_merged_offset.json"
-read_denylist:
-  - "~/.ssh/**"
-  - "~/.aws/**"
-max_tokens: 60000
-output_schema: schemas/design_state.schema.json
+max_tokens: 120000
+output_schema: schemas/mas.schema.json
+artifacts:
+  - PRD.md                # 产品需求（ic-prd 产出）
+  - arch_spec/            # 架构规格（ic-arch 产出，含 arch_doc.md / data_flow.md / workflow.md）
+  - mas/                  # 微架构规格（ic-mas 产出，含 mas.md / mas.json / fsm/ / datapath/ / verif_plan_seed.md / dft_plan_seed.md）
+  - ADR/*.md              # 关键决策
+invokes_skills:
+  - ic-prd                # 外部 skill（ADR-014）
+  - ic-arch               # 外部 skill
+  - ic-mas                # 外部 skill
+  - bb-search-protocol
+  - bb-search-cbb
+  - bb-get-interface-template
+  - bb-create-issue
 ```
 
 职责：
-- **唯一可写 `design_state.json` 的 agent**
-- 周期性合并 `events/*.jsonl` 到 state
-- fix_request 优先级仲裁
-- 控制 cross-domain 迭代次数（见 §10.4）
+- 用户 prompt → 调用 `ic-prd` 产 PRD.md
+- PRD → 调用 `ic-arch` 产架构规格（含模块划分、信号流、workflow）
+- 架构规格 → 调用 `ic-mas` 产微架构规格（含 FSM、datapath、接口信号表、verification plan 种子、DFT plan 种子）
+- 不写 RTL，不做综合 / 验证 / PD
 
-### 3.2 Phase 3 Agents (2 个 flow owner)
+完成后：写 git issue `label=ready-for-rtl`，引用 mas/mas.json 路径 + sha256。
 
-#### 3.2.1 babel-yosys-synth-planner
+> 关键变化：MAS 是后续 3 个 guru agent 的共同输入（rtl/synth/pd 都需 read mas.json）。
+
+#### 3.1.2 bb-guru-rtl
 
 ```yaml
-name: babel-yosys-synth-planner
-description: 综合 flow owner — 调用 yosys skill、QoR 分析、SDC 最终化
+name: bb-guru-rtl
+description: RTL 生成 flow owner — 输入 MAS，输出 hierarchical SV + file list
 tools: [Read, Write, Edit, Bash, Grep, Glob]
 write_paths:
-  - "synth/**"
-  - "${OUTPUT_DIR}/synth/**"
-max_tokens: 60000
-output_schema: schemas/synth_report.schema.json
-artifacts: ["synth/netlist.v", "synth/qor.json", "constraints/*.sdc (final)"]
+  - "designs/*/rtl/**"
+  - "designs/*/rtl_artifact.json"
+  - "designs/*/file_list.f"
+max_tokens: 100000
+output_schema: schemas/rtl_artifact.schema.json
+artifacts:
+  - rtl/*.sv              # hierarchical SystemVerilog HDL
+  - rtl/*/*.sv            # 子层级模块
+  - file_list.f           # 综合 / 仿真工具输入文件清单
+  - rtl_artifact.json     # 元数据（schema-validated）
+invokes_skills:
+  - ic-rtl-coder          # 外部 skill（ADR-014）
+  - bb-check-lint
+  - bb-find-module-deps
+  - bb-list-issues
+  - bb-create-issue
+  - bb-close-issue
+optimization_loop:
+  trigger: lint error
+  max_iter: 3
+  param_strategy: 根据 lint error 类型反馈给 ic-rtl-coder 重新生成
 ```
 
-职责：综合流程唯一 flow owner。调用 skill `babel-invoke-yosys` 完成综合执行；接收 `rtl-coder` 的 SDC 草稿后最终拍板。
+职责：
+- 输入：mas/mas.json + mas/fsm/* + mas/datapath/*（从 git issue 拾起 MAS 路径）
+- 调 `ic-rtl-coder` 生成 hierarchical SV RTL（顶层 + 各子模块）
+- 调 `bb-check-lint` 跑 verible-verilog-lint
+- 生成 `file_list.f`（按 hierarchy 排序，顶层在最后；含 `+incdir+` / `+define+` 必要项）
+- lint error → optimization loop（≤ 3 次重生成）
+- 写 rtl_artifact.json + 开 issue `ready-for-verification`
 
-#### 3.2.2 babel-clock-domain-guard
+不做：
+- CDC 检查（交 bb-guru-synthesis 用 skill `bb-check-cdc`）
+- 综合预检（交 bb-guru-synthesis）
+- SDC 草稿（**v1.3 变化**：SDC 由 bb-guru-synthesis 从 MAS 派生，详见 ADR-016）
+- TB 生成（交 bb-guru-verification）
+
+#### 3.1.3 bb-guru-verification
 
 ```yaml
-name: babel-clock-domain-guard
-description: 跨时钟域 flow owner — 调用 AST/lint skill、综合 CDC/RDC 报告
-tools: [Read, Write, Bash, Grep, Glob]
+name: bb-guru-verification
+description: 动态验证 flow owner — Cov-driven simulation，target coverage 100%
+tools: [Read, Write, Edit, Bash, Grep, Glob]
 write_paths:
-  - "${OUTPUT_DIR}/cdc/**"
-max_tokens: 40000
-output_schema: schemas/cdc_report.schema.json
+  - "designs/*/verif/**"
+  - "designs/*/tb/**"
+  - "designs/*/sim_results/**"
+  - "designs/*/test_report.json"
+max_tokens: 100000
+output_schema: schemas/test_report.schema.json
+artifacts:
+  - verif/verification_plan.md   # 验证计划（从 mas/verif_plan_seed.md 衍生）
+  - verif/test_cases.md          # 测试用例清单
+  - tb/*.sv                      # SystemVerilog UVM / cocotb TB
+  - tb/*.py                      # cocotb 测试驱动（备选）
+  - sim_results/*.log
+  - sim_results/*.vcd            # 用户用 VSCode 看（ADR-008）
+  - coverage.json
+  - test_report.json
+invokes_skills:
+  - bb-create-verif-plan         # 新 skill：从 mas verif_plan_seed → 完整验证计划
+  - bb-generate-tb               # TB / test case 生成
+  - bb-invoke-verilator          # 仿真执行
+  - bb-collect-coverage          # 覆盖率解析
+  - bb-list-issues
+  - bb-create-issue
+  - bb-close-issue
+optimization_loop:
+  trigger: coverage < 100% 或 sim failure
+  max_iter: 8
+  param_strategy:
+    - 增加约束随机种子数 (常规)
+    - 添加 corner-case 用例（针对 uncovered bins）
+    - 调整 testbench constraints
+    - 反复仍失败（functional bug） → rtl-needs-fix issue
 ```
 
-职责：CDC/RDC 检查唯一 flow owner。调用 skill `babel-parse-ast` + `babel-check-cdc` 执行检查。
+职责：
+- 输入：rtl_artifact.json + file_list.f + mas/verif_plan_seed.md
+- 调 `bb-create-verif-plan` 完整化验证计划
+- 调 `bb-generate-tb` 产生 TB + test cases
+- 调 `bb-invoke-verilator` 跑 coverage-driven simulation
+- 调 `bb-collect-coverage` 解析覆盖率
+- coverage < 100% → optimization loop（加 corner case 或调约束，≤ 8 次）
+- 收敛（**functional + code coverage = 100%**）→ 写 test_report.json + 开 issue `ready-for-synth`
 
-### 3.3 Future Agents (附录 A)
+不做形式验证（Future: bb-guru-formal）；不分析波形（用户用 VSCode）。
 
-| Agent | 描述 | 触发条件 |
-|-------|------|---------|
-| babel-power-optimizer | 功耗优化 flow owner (ICG / UPF) | Phase 4+；rtl-coder 完成 + synth 报告功耗超标 |
-| babel-property-prover | 形式验证 flow owner (SVA / 等价性) | Phase 4+；test-architect 动态验证完成后 |
-| babel-layout-planner | 物理设计 flow owner | Phase 4+ |
-| babel-scan-chain-planner | DFT flow owner (扫描链 + ATPG) | Phase 4+ |
-| babel-top-integration-planner | 顶层集成 flow owner | Phase 5+ |
+> v1.3 变化：coverage target 提升至 100%（v1.2 是 ≥95%）；位置移到综合之前（先验证再综合）。
 
-> v1.0 把这 5 个 agent 列入 "辅助域 Specialists" → 12 agent MVP。v1.1 收敛为 4 agent MVP（参考 MAGE=4、VerilogCoder=3）。
+#### 3.1.4 bb-guru-synthesis
 
-### 3.4 Agent IO Contracts
+```yaml
+name: bb-guru-synthesis
+description: 综合 flow owner — 从 MAS 派生 SDC，跑综合，迭代时序+面积
+tools: [Read, Write, Edit, Bash, Grep, Glob]
+write_paths:
+  - "designs/*/synth/**"
+  - "designs/*/cdc/**"
+  - "designs/*/constraints/*.sdc"
+  - "designs/*/synth_report.json"
+max_tokens: 100000
+output_schema: schemas/synth_report.schema.json
+artifacts:
+  - constraints/*.sdc          # SDC 时序约束（从 MAS 派生，最终化）
+  - cdc/cdc_report.json        # CDC 子结果（嵌入 synth_report）
+  - synth/netlist.v            # 综合网表
+  - synth/qor.json             # WNS / Area / Power 估算
+  - synth_report.json          # 合并产物（含 cdc / sdc / qor 子段）
+invokes_skills:
+  - bb-create-sdc              # 新 skill：MAS → SDC（替代 v1.2 rtl-coder 起草）
+  - bb-check-cdc               # CDC / RDC 检查
+  - bb-parse-ast
+  - bb-invoke-yosys            # 综合
+  - bb-invoke-opensta          # STA
+  - bb-list-issues
+  - bb-create-issue
+  - bb-close-issue
+optimization_loop:
+  trigger: WNS < 0 或 area > target_area × 1.2
+  max_iter: 6
+  param_strategy:
+    - 调 yosys synth 参数（abc_options / mapping_effort / retiming）
+    - 调 SDC 余量与例外（false_path / multi_cycle）
+    - 严重时回退给 rtl-needs-fix 或 arch-needs-fix
+```
 
-每个 agent 的输入与输出契约由 JSON Schema 强制。**部分 agent 有多个 upstream**（合并多 schema），下表显式列出：
+职责：
+1. SDC 派生：调 `bb-create-sdc` 从 mas/mas.json 提取 clock domain / IO timing / exception → 写 constraints/*.sdc
+2. CDC 阶段：调 `bb-check-cdc` skill；若 unwaived violation → 开 issue `rtl-needs-fix`；退出
+3. 综合阶段：调 `bb-invoke-yosys` 写综合脚本 + 跑 yosys + 解析 QoR
+4. STA 阶段：调 `bb-invoke-opensta` 验证时序
+5. 优化循环：WNS < 0 或 area 超标 → 调参 / 调 SDC 重综合（≤ 6 次）
+6. 收敛后写 synth_report.json（含 cdc / sdc / qor 子段）+ 开 issue `ready-for-pd`
 
-| Agent | Inputs (upstream → schema) | Output Schema |
-|-------|----------------------------|---------------|
-| spec-planner | user → idea.schema.json | spec.schema.json |
-| rtl-coder | spec-planner → spec.schema.json | rtl_artifact.schema.json |
-| clock-domain-guard | rtl-coder → rtl_artifact.schema.json | cdc_report.schema.json |
-| **yosys-synth-planner** | rtl-coder → rtl_artifact.schema.json; clock-domain-guard → cdc_report.schema.json | synth_report.schema.json |
-| **test-architect** | rtl-coder → rtl_artifact.schema.json; yosys-synth-planner → synth_report.schema.json | test_report.schema.json |
-| coordinator | any agent → event.schema.json | design_state.schema.json |
+> v1.3 变化（ADR-016）：SDC 来源由 `bb-guru-rtl` 转为 `bb-guru-synthesis`，因为 SDC 的源头是 MAS（时钟 / 复位 / IO timing），而非 RTL。RTL 阶段不应该假定时序约束。
 
-> 多 input agent（synth-planner / test-architect）的输入由 coordinator 在派发时打包成 composite payload；
-> 各 input 必须分别通过 schema 校验。
+#### 3.1.5 bb-guru-pd（新增）
 
-启动 hook `babel-hook-validate-input-schema` 校验**每一个** input；任一不通过则阻断 agent 启动。
+```yaml
+name: bb-guru-pd
+description: 物理设计 flow owner — floorplan / place / route / DRC / LVS / timing closure / GDSII
+tools: [Read, Write, Edit, Bash, Grep, Glob]
+write_paths:
+  - "designs/*/pd/**"
+  - "designs/*/pd_report.json"
+  - "designs/*/gdsii/*.gds"
+max_tokens: 100000
+output_schema: schemas/pd_report.schema.json
+artifacts:
+  - pd/floorplan.def           # Floorplan DEF
+  - pd/placed.def              # Placement DEF
+  - pd/routed.def              # 路由后 DEF
+  - pd/drc_report.txt          # DRC 检查报告
+  - pd/lvs_report.txt          # LVS 对比报告
+  - pd/timing_signoff.json     # post-PD STA（含 OCV / PVT corners）
+  - gdsii/*.gds                # 最终 GDSII（signoff 产物）
+  - pd_report.json             # 汇总报告（含 DRC clean / LVS match / timing closure status）
+invokes_skills:
+  - bb-create-floorplan        # 新 skill：从 MAS + netlist 生成 floorplan 脚本
+  - bb-invoke-magic            # DRC / 版图操作
+  - bb-invoke-netgen           # LVS
+  - bb-invoke-qrouter          # 详细布线
+  - bb-invoke-opensta          # post-route STA
+  - bb-invoke-klayout          # GDSII 查看 / 流式 export
+  - bb-list-issues
+  - bb-create-issue
+  - bb-close-issue
+optimization_loop:
+  trigger: DRC violation 或 LVS mismatch 或 post-PD WNS < 0
+  max_iter: 5
+  param_strategy:
+    - 调 floorplan（utilization / aspect ratio / IO 位置）
+    - 调 placement constraints（macro placement / region constraints）
+    - 调 routing strategy（layer assignment / spacing rules）
+    - 严重时退回 synth-needs-fix（如 timing 无法 close）
+```
+
+职责：
+- 输入：synth_report.json + synth/netlist.v + mas/mas.json（IO ring / clock plan / pad-list）
+- Floorplan：调 `bb-create-floorplan` 生成 floorplan 脚本 → 调 `bb-invoke-magic` 执行
+- Placement：调用 `bb-invoke-magic` 跑 placement（或外部 PR 工具 wrapper）
+- Routing：调用 `bb-invoke-qrouter` 跑详细布线
+- DRC：调 `bb-invoke-magic` 跑 DRC，零 violation 才通过
+- LVS：调 `bb-invoke-netgen` 对比 netlist vs layout，必须 match
+- Post-PD STA：调 `bb-invoke-opensta` 验证 OCV / corner timing
+- GDSII export：调 `bb-invoke-klayout` 输出最终 `*.gds`
+- 任一项失败 → optimization loop 或 retreat（开 `synth-needs-fix` issue）
+- 收敛 → 写 pd_report.json + 开 issue `signoff`（最终 ack）
+
+#### 3.1 总结对比表
+
+| Agent | 上游产物消费 | 主要产物 | 主要外部 skill | 关键 metric |
+|-------|------------|----------|---------------|-----------|
+| bb-architect | user prompt | PRD / arch_spec / MAS | ic-prd / ic-arch / ic-mas | MAS schema valid + 3 量化 KPI |
+| bb-guru-rtl | MAS | rtl/*.sv + file_list.f | ic-rtl-coder + bb-check-lint | lint 0 error |
+| bb-guru-verification | rtl + file_list + verif_plan_seed | tb + sim_results + coverage.json | bb-generate-tb + bb-invoke-verilator | **coverage = 100%** |
+| bb-guru-synthesis | MAS + rtl + test signoff | sdc + netlist + qor | bb-create-sdc + bb-invoke-yosys + bb-invoke-opensta | WNS ≥ 0 + area target |
+| bb-guru-pd | MAS + netlist + sdc | GDSII + DRC/LVS/timing reports | bb-invoke-magic + bb-invoke-netgen + bb-invoke-qrouter + bb-invoke-klayout | DRC clean + LVS match + WNS ≥ 0 |
+
+### 3.2 Future Agents (Phase 5+)
+
+| Agent | 触发条件 |
+|-------|---------|
+| bb-guru-formal | 形式验证（SVA + 等价性）；test 完成后 |
+| bb-guru-power | 功耗优化（ICG / UPF）；synth 报告功耗超标后 |
+| bb-guru-dft | 扫描链插入 + ATPG（从 mas/dft_plan_seed.md） |
+| bb-guru-integration | 顶层集成 / IP 集成 |
+
+> v1.3 调整：原 v1.2 `bb-guru-physical` Future agent **晋升为 MVP** 并更名 `bb-guru-pd`。
+
+### 3.3 Agent IO 契约
+
+| Agent | Inputs（schema） | Output Schema |
+|-------|-----------------|---------------|
+| bb-architect | user prompt → idea.schema.json | mas.schema.json (顶层；arch_spec + PRD 嵌入或链接) |
+| bb-guru-rtl | mas.schema.json | rtl_artifact.schema.json |
+| bb-guru-verification | rtl_artifact.schema.json + mas.schema.json (读 verif_plan_seed) | test_report.schema.json |
+| bb-guru-synthesis | rtl_artifact + mas (读 timing/IO) + test_report (signoff gate) | synth_report.schema.json |
+| bb-guru-pd | synth_report + mas (读 IO ring / clock plan) | pd_report.schema.json |
+
+启动 hook `bb-hook-validate-input-schema` 校验上游 artifact；不通过 → 写 issue `<upstream>-needs-fix` 并退出。
 
 ---
 
-## 四、Skill 定义框架
+## 四、Skill 定义
 
-命名规则：`babel-{action}-{target}`
+命名：`bb-{action}-{target}`（Babel 原生）或 `ic-{name}`（外部复用 ADR-014）
 
 每个 skill frontmatter 必含：
+
 ```yaml
 input_args:
-  - { name: <arg>, type: <type>, required: <bool>, description: ... }
+  - { name: <arg>, type: <type>, required: <bool> }
 output_contract:
   artifact_path: <glob>
   schema_ref: <path>
+forbidden_tools: [Task, Agent, Skill]   # 单向依赖强制
 ```
 
-> **重申 ADR-009**：skill 是"工具操作"，不做业务判断。任何"何时调用、调用结果是否可接受"由 flow owner agent 决定。
+### 4.1 Design Generation Skills（部分复用外部）
 
-### 4.1 Core Workflow Skills (MVP)
+| Skill | 来源 | 调用方 | 职责 |
+|-------|------|--------|------|
+| ic-prd | 外部（既有） | bb-architect | 用户 prompt → PRD.md |
+| ic-arch | 外部（既有） | bb-architect | PRD → architecture spec（arch_doc / data_flow / workflow） |
+| ic-mas | 外部（既有） | bb-architect | arch → 微架构规格（fsm / datapath / 接口表 / verif_plan_seed / dft_plan_seed） |
+| ic-rtl-coder | 外部（既有） | bb-guru-rtl | MAS → hierarchical SV RTL |
+| bb-check-lint | Babel 原生 | bb-guru-rtl | verible-verilog-lint |
+| bb-create-verif-plan | Babel 原生（新） | bb-guru-verification | verif_plan_seed → 完整验证计划 |
+| bb-generate-tb | Babel 原生 | bb-guru-verification | mas + rtl → testbench / test cases |
+| bb-collect-coverage | Babel 原生 | bb-guru-verification | 覆盖率解析（functional + code） |
+| bb-create-sdc | Babel 原生（新） | bb-guru-synthesis | MAS → SDC（替代 v1.2 rtl-coder 起草） |
+| bb-check-cdc | Babel 原生 | bb-guru-synthesis | CDC / RDC |
+| bb-create-floorplan | Babel 原生（新） | bb-guru-pd | MAS + netlist → floorplan 脚本 |
 
-| Skill | Domain | 输入 | 输出契约 |
-|-------|--------|------|----------|
-| babel-plan-spec | spec | idea.md | spec.json (schemas/spec.schema.json) |
-| babel-generate-rtl | rtl | spec.json | rtl/*.sv (schemas/rtl_artifact.schema.json) |
-| babel-check-lint | rtl | rtl/*.sv | lint_report.json |
-| babel-check-cdc | rtl | rtl/*.sv | cdc_report.json |
-| babel-generate-tb | test | rtl/*.sv | tb/*.sv |
-| babel-collect-coverage | test | sim logs | coverage.json |
+### 4.2 EDA Tool Skills (Bash + CLI；ADR-001 / ADR-009 / ADR-013)
 
-### 4.2 EDA Tool Skills (替代 v1.0 MCP-EDA — ADR-001 + ADR-009)
+全部封装为 Babel 原生 skill；v1.3 因 PD 加入，magic / netgen / qrouter / klayout 升为 MVP。
 
-每个 EDA 工具一个 skill，通过 **Bash + CLI** 调用：
+| Skill | CLI | Version | 调用方 |
+|-------|-----|---------|--------|
+| bb-invoke-yosys | yosys | 0.35.x (prefix match) | bb-guru-synthesis |
+| bb-invoke-verilator | verilator | 5.012 | bb-guru-verification |
+| bb-invoke-opensta | sta | 2.5.0 | bb-guru-synthesis + bb-guru-pd |
+| bb-invoke-magic | magic | 8.3.641 | bb-guru-pd (floorplan / DRC) |
+| bb-invoke-netgen | netgen | 1.5.275 | bb-guru-pd (LVS) |
+| bb-invoke-klayout | klayout | 0.30.8 | bb-guru-pd (GDSII export) |
+| bb-invoke-qrouter | qrouter | 1.4 | bb-guru-pd (routing) |
+| bb-invoke-abc | abc | Phase 1 commit-pin | bb-guru-synthesis (内嵌 yosys) |
 
-| Skill | CLI | Pinned Version |
-|-------|-----|---------------|
-| babel-invoke-yosys | yosys | 0.35 |
-| babel-invoke-verilator | verilator | 5.012 |
-| babel-invoke-opensta | sta | 2.5.0 |
-| babel-invoke-magic | magic | 8.3.641 |
-| babel-invoke-netgen | netgen | 1.5.275 |
-| babel-invoke-klayout | klayout | 0.30.8 |
-| babel-invoke-abc | abc | latest (TBD pin) |
-| babel-invoke-qrouter | qrouter | 1.4 |
+### 4.3 AST Analysis Skills
 
-Skill 模板示例：
+| Skill | 工具 | 调用方 |
+|-------|------|--------|
+| bb-parse-ast | pyverilog（主） | bb-guru-synthesis（CDC 用） |
+| bb-parse-ast-fallback | verible-verilog-syntax / slang（ADR-005） | bb-guru-synthesis |
+| bb-trace-signal-path | pyverilog AST visitor | bb-guru-synthesis |
+| bb-find-module-deps | pyverilog + python script | bb-guru-rtl（file_list.f 排序） |
 
-```markdown
----
-name: babel-invoke-yosys
-input_args:
-  - { name: rtl_files, type: array<path>, required: true }
-  - { name: top_module, type: string, required: true }
-  - { name: liberty, type: path, required: true }
-output_contract:
-  artifact_path: ${OUTPUT_DIR}/synth/netlist.v
-  report_path: ${OUTPUT_DIR}/synth/qor.json
-  schema_ref: schemas/synth_report.schema.json
----
-
-执行：
-Bash: yosys -p "read_verilog {rtl_files}; synth -top {top_module}; ..."
-```
-
-> **关键约束**：这些 skill 没有对应的 agent 包装。flow owner agent（如 `babel-yosys-synth-planner`）直接调用 skill。
-
-### 4.3 AST Analysis Skills (替代 v1.0 MCP-AST)
-
-通过 Pyverilog + bash 包装，**非 MCP**：
-
-| Skill | 工具 |
-|-------|------|
-| babel-parse-ast | pyverilog |
-| babel-trace-signal-path | pyverilog AST visitor |
-| babel-find-module-deps | pyverilog + python script |
-
-**Pyverilog 已知不支持的 SystemVerilog 子集**（见 ADR-005）：
-- SV interface / modport
-- SV class / virtual class
-- Covergroup
-- Bind / configuration
-
-Fallback skill `babel-parse-ast-fallback`：使用 `verible-verilog-syntax` 或 `slang`。主 skill 解析失败时自动回落。
-
-> Waveform 解析（VCD/FST → 用户可视化）**不**作为 babel skill 实现（ADR-008）。
-
-### 4.4 Knowledge Base Skills (替代 v1.0 MCP-Knowledge)
-
-Wiki 通过 bash + ripgrep 检索：
+### 4.4 Knowledge Search Skills
 
 | Skill | 实现 |
 |-------|------|
-| babel-search-protocol | `rg -i {pattern} wiki/protocols/` |
-| babel-search-cbb | `rg -i {pattern} wiki/cbb/` |
-| babel-get-interface-template | Read wiki/cbb/{template}.md |
+| bb-search-protocol | `rg -i {pattern} wiki/protocols/` |
+| bb-search-cbb | `rg -i {pattern} wiki/cbb/` |
+| bb-get-interface-template | Read wiki/cbb/{template}.md |
 
-### 4.5 Quality Gate Skills
+### 4.5 Issue Comms Skills（ADR-011）
+
+| Skill | 实现 | 用途 |
+|-------|------|------|
+| bb-create-issue | `gh issue create --label <label> --body <yaml>` | agent 完成阶段开 issue |
+| bb-list-issues | `gh issue list --label <label> --json ...` | agent 启动查待处理 issue |
+| bb-close-issue | `gh issue close <num> --comment <body>` | 任务完成关 issue |
+
+### 4.6 Quality Gate Skills
 
 | Skill | 检查项 | 通过标准 |
 |-------|--------|----------|
-| babel-gate-rtl-quality | Lint + CDC + 综合 | 0 error, 0 unwaived CDC |
-| babel-gate-test-quality | 覆盖率 + 断言 | 100% functional, 95% code |
-| babel-gate-synth-quality | WNS + Area | WNS > -0.5ns, Area < 120% (依据见 §14.1) |
-| babel-challenge-code | 对抗性评审 | ruthless / linus / balanced |
+| bb-gate-rtl-quality | lint + 基础结构 | 0 error |
+| bb-gate-test-quality | 覆盖率 + 断言 | functional **100%**, code **100%** |
+| bb-gate-synth-quality | WNS + Area | WNS ≥ 0, Area < 120% baseline |
+| bb-gate-pd-quality | DRC + LVS + post-PD timing | 0 DRC, LVS match, post-PD WNS ≥ 0 |
+| bb-challenge-code | 对抗评审 | ruthless / linus / balanced |
 
 ---
 
-## 五、Hooks 定义
+## 五、Hooks
 
-命名规则：`babel-hook-{trigger}-{action}`
+命名：`bb-hook-{trigger}-{action}`
 
-### 5.1 PreToolUse / PostToolUse / Session
-
-| Hook | 触发 | 动作 |
-|------|------|------|
-| babel-hook-write-arch-freeze-check | PreToolUse Write/Edit RTL | 检查是否违背架构冻结 |
-| babel-hook-instantiate-cbb-search | PreToolUse 实例化 CBB | 强制 wiki 检索 |
-| babel-hook-commit-quality-gate | PreToolUse git commit RTL | 执行 lint + 综合 |
-| babel-hook-validate-input-schema | Agent 启动 | 校验上游输出符合 schema |
-| babel-hook-change-propagate | PostToolUse 上游文档变更 | 检查级联更新 |
-| babel-hook-bug-escalate-fix-request | PostToolUse 验证发现 bug | 创建 fix_request |
-| babel-hook-session-sync-state | SessionStart/End | 同步 design_state.json |
-| babel-hook-session-summarize | SessionEnd | 生成执行摘要 |
-
-> 跨会话记忆由 `claude-mem` 插件托管（ADR-007）；Babel 不再自定义 experience-record hook。
-
-### 5.2 Bypass 缓解
-
-`babel-hook-commit-quality-gate` 可被 `git commit --no-verify` 绕过。缓解措施：
-- 服务端 `pre-receive` hook 强制重跑 quality gate（部署在远端 git server）
-- CI 流水线再跑一次（兜底）
-- 文档明确：`--no-verify` 仅用于紧急情况，需在 commit message 附 ADR 引用
+| Hook | Trigger | 动作 |
+|------|---------|------|
+| bb-hook-write-arch-freeze-check | PreToolUse Write/Edit RTL | 检查是否违背架构冻结 |
+| bb-hook-instantiate-cbb-search | PreToolUse 实例化 CBB | 强制 wiki 检索 |
+| bb-hook-commit-quality-gate | PreToolUse git commit RTL | lint + 综合 |
+| bb-hook-validate-input-schema | Agent 启动 | 校验上游 artifact schema |
+| bb-hook-validate-bash-cmd | PreToolUse Bash | 软警告越界命令（不阻断，ADR-010） |
+| bb-hook-pipeline-advance | PostToolUse agent 完成 | 检查 git issues 自动触发下一 agent（可选） |
+| bb-hook-change-propagate | PostToolUse 上游变更 | 触发下游 invalidate |
+| bb-hook-create-fix-issue | PostToolUse agent 失败 | 自动开 `<upstream>-needs-fix` issue |
+| bb-hook-session-summarize | SessionEnd | 生成执行摘要 |
+| bb-hook-validate-wiki | PreToolUse wiki 读取 | 校验 frontmatter content_hash |
 
 ---
 
 ## 六、EDA 工具集成
 
-> **关键决策 ADR-001 + ADR-009**：EDA 工具通过 Bash + CLI 调用，封装为 skill；**不**使用 MCP server，**不**为单个工具创建 agent。原 v1.0 §6.1 babel-eda MCP 定义已删除。
+> 关键决策（ADR-001 + ADR-009）：EDA 工具通过 Bash + CLI 调用，封装为 skill；不使用 MCP server；不为单个工具创建 agent。
+> v1.3 PD 引入 magic / netgen / qrouter / klayout 至 MVP（详见 §4.2）。
 
-### 6.1 集成方式
+### 6.1 集成约定
 
 - 每个 EDA 工具一个 skill（命名见 §4.2）
-- 通过 Bash 工具执行 CLI
+- skill 内通过 Bash 工具调用 CLI
 - 标准输出位置：
-  - 日志 → `${OUTPUT_DIR}/{tool}/{stamp}.log`
-  - 结构化结果（JSON）→ `${OUTPUT_DIR}/{tool}/{stamp}.json`
-- 调用者：flow owner agent（见 §3.2、§3.3）
+  - 日志 → `designs/<name>/<tool>/{stamp}.log`
+  - 结构化结果（JSON）→ `designs/<name>/<tool>/{stamp}.json`
+- 调用者：flow owner agent
 
-### 6.2 Environment Setup
+### 6.2 Environment
 
-- Babel 启动前必须 source `~/wrk/eda_opensources/eda_env.sh`
-- 启动 hook `babel-hook-session-sync-state` 同时验证版本：
-  ```bash
-  yosys -V | grep "0.35" || abort
-  verilator --version | grep "5.012" || abort
-  ```
+```bash
+source ~/wrk/eda_opensources/eda_env.sh
 
-### 6.3 AST / Knowledge 同样改 skill+bash
+# 启动期 hook 同步验证（v1.3 扩展含 PD 工具）：
+yosys -V | grep -E "^Yosys 0\.35"
+verilator --version | grep "5.012"
+magic --version | grep "8.3"
+netgen -batch lvs --version 2>&1 | grep "1.5"
+qrouter -v 2>&1 | grep "1.4"
+klayout -v 2>&1 | grep "0.30"
+```
 
-原 v1.0 §6.2 babel-ast MCP 与 §6.3 babel-knowledge MCP 删除，改为 skill+bash 形态（见 §4.3、§4.4）。**MCP server 全部从 Babel 设计中移除。**
+### 6.3 AST / Knowledge 同样为 skill
+
+原 v1.0 MCP 化设计已废弃；AST / wiki 全部以 skill 实现（见 §4.3 / §4.4）。
 
 ---
 
-## 七、状态管理设计
+## 七、状态管理（v1.2 简化，v1.3 扩展）
 
-### 7.1 design_state.json (v1.1)
+> ADR-003（单写者 state.json）废弃；各 agent 独立 schema-validated artifact + GitHub issues 协作（ADR-012）。
 
-Schema 引用：`schemas/design_state.schema.json`
+### 7.1 Per-Agent Artifact
+
+每个 agent 写自己的产物到 `designs/<name>/`：
+
+```
+designs/<name>/
+├── PRD.md                       # bb-architect (via ic-prd)
+├── arch_spec/                   # bb-architect (via ic-arch)
+│   ├── arch_doc.md
+│   ├── data_flow.md
+│   └── workflow.md
+├── mas/                         # bb-architect (via ic-mas)
+│   ├── mas.md
+│   ├── mas.json                 # 结构化 MAS (schema: mas.schema)
+│   ├── fsm/
+│   ├── datapath/
+│   ├── verif_plan_seed.md       # 给 bb-guru-verification 用
+│   └── dft_plan_seed.md         # 给 future bb-guru-dft 用
+├── ADR/*.md                     # bb-architect
+├── rtl/                         # bb-guru-rtl
+│   ├── *.sv                     # hierarchical SV
+│   └── ...
+├── file_list.f                  # bb-guru-rtl (工具输入文件清单)
+├── rtl_artifact.json            # bb-guru-rtl
+├── verif/                       # bb-guru-verification
+│   ├── verification_plan.md
+│   └── test_cases.md
+├── tb/                          # bb-guru-verification
+├── sim_results/                 # bb-guru-verification (含 *.vcd 给用户)
+├── coverage.json                # bb-guru-verification
+├── test_report.json             # bb-guru-verification
+├── constraints/                 # bb-guru-synthesis (SDC 由 MAS 派生)
+│   └── *.sdc
+├── cdc/                         # bb-guru-synthesis via bb-check-cdc
+│   └── cdc_report.json
+├── synth/                       # bb-guru-synthesis
+│   ├── netlist.v
+│   └── qor.json
+├── synth_report.json            # bb-guru-synthesis
+├── pd/                          # bb-guru-pd
+│   ├── floorplan.def
+│   ├── placed.def
+│   ├── routed.def
+│   ├── drc_report.txt
+│   ├── lvs_report.txt
+│   └── timing_signoff.json
+├── gdsii/                       # bb-guru-pd（最终 signoff 产物）
+│   └── *.gds
+├── pd_report.json               # bb-guru-pd
+└── design_summary.json          # 各 agent 完成后追加自己的 signoff 行
+```
+
+### 7.2 design_summary.json (append-only)
 
 ```json
 {
-  "format_version": "1.1",
-  "design_name": "uart_chiplet",
   "design_id": "design_01HW2K3M4N5P6Q7R8S9TABCDEF",
-  "babel_session_id": "01HW2K3M4N5P6Q7R8S9TABCDEF",
-  "lock_token": "coord-pid-12345-2026-05-16T17:00:00+08:00",
-  "last_writer": "babel-cross-domain-coordinator",
+  "design_name": "uart",
   "created_at": "2026-05-16T15:00:00+08:00",
-  "updated_at": "2026-05-16T16:00:00+08:00",
-  "cross_domain_iteration_count": 0,
-  "babel_config": {
-    "max_cross_domain_iterations": 3,
-    "on_max_iter_reached": "escalate_user",
-    "history_capacity": 200
-  },
-  "pending_approval": null,
-  "spec": { "top_module": "uart_top", "interfaces": ["axi4-lite", "uart"] },
-  "rtl": { "files": ["rtl/uart.sv"], "lint_clean": false, "signoff": false },
-  "cdc_status": { "report_path": null, "signoff": false },
-  "synth_status": { "wns": null, "area": null, "signoff": false },
-  "test_status": { "coverage_pct": null, "sim_signoff": false, "signoff": false },
-  "babel_fix_requests": [],
-  "archive_fix_requests": [],
-  "history": []
+  "stages": [
+    { "agent": "bb-architect",        "ts": "2026-05-16T15:10:00+08:00", "artifact": "mas/mas.json",      "sha256": "<hex>", "signoff": true },
+    { "agent": "bb-guru-rtl",         "ts": "2026-05-16T15:30:00+08:00", "artifact": "rtl_artifact.json", "sha256": "<hex>", "signoff": true },
+    { "agent": "bb-guru-verification","ts": "2026-05-16T16:00:00+08:00", "artifact": "test_report.json",  "sha256": "<hex>", "signoff": true, "coverage_pct": 100 },
+    { "agent": "bb-guru-synthesis",   "ts": "2026-05-16T16:30:00+08:00", "artifact": "synth_report.json", "sha256": "<hex>", "signoff": true, "wns_ns": 0.12 },
+    { "agent": "bb-guru-pd",          "ts": "2026-05-16T17:30:00+08:00", "artifact": "pd_report.json",    "sha256": "<hex>", "signoff": true, "gdsii": "gdsii/uart.gds" }
+  ]
 }
 ```
 
-变更要点：
-- `babel_session_id` / `design_id`：UUIDv7（替代 v1.0 时间戳格式，消除分钟级碰撞）
-- `lock_token` + `last_writer`：单写者乐观锁
-- `history_capacity = 200`：环形缓冲上限
-- `on_max_iter_reached` enum：`halt` | `escalate_user` | `force_signoff`
+### 7.3 Git Issues 协作模式（ADR-011）
 
-**Schema 迁移**（v1.0 → v1.1）：脚本 `scripts/migrate_state_1.0_to_1.1.py`，详见 ADR-006（Phase 1 实施时落档）。
+#### Label 体系
 
-### 7.2 fix_request schema (v1.1)
+| Label | 含义 | 拾起方 |
+|-------|------|--------|
+| `ready-for-rtl` | bb-architect 完成（MAS 就绪） | bb-guru-rtl |
+| `ready-for-verification` | bb-guru-rtl 完成 | bb-guru-verification |
+| `ready-for-synth` | bb-guru-verification 完成（cov=100%） | bb-guru-synthesis |
+| `ready-for-pd` | bb-guru-synthesis 完成（timing 收敛） | bb-guru-pd |
+| `signoff` | bb-guru-pd 完成（GDSII 出炉） | 用户 |
+| `arch-needs-fix` | 下游报告 MAS 问题 | bb-architect |
+| `rtl-needs-fix` | verification / synth / pd 报告 RTL 问题 | bb-guru-rtl |
+| `synth-needs-fix` | pd 报告 netlist 问题 | bb-guru-synthesis |
 
-```json
-{
-  "id": "bfr_01HW2K3M4N5P6Q7R8S9TABCDEF",
-  "priority": "P0",
-  "status": "open",
-  "created_at": "2026-05-16T16:00:00+08:00",
-  "created_by": "babel-test-architect",
-  "summary": "TX data corruption under backpressure"
-}
+#### Issue Body 格式
+
+```yaml
+---
+design_name: uart
+design_id: design_01HW2K3M4N5P6Q7R8S9TABCDEF
+from_agent: bb-guru-pd
+to_agent: bb-guru-synthesis
+artifact_ref: designs/uart/synth_report.json
+artifact_sha256: <hex>
+fix_iteration: 2
+---
+
+## Summary
+Post-PD timing fails: critical path A to B has WNS = -0.3ns at SS 0.7V -40C corner.
+
+## Details
+- Path: uart_top/u_rx/sync_ff to uart_top/u_baudgen/cnt[3]
+- post-route delay: 11.2ns (target: 10.0ns @ 100MHz)
+- Suggested fix: re-synthesize with mapping_effort=high + retiming, or break path via pipeline register in MAS
+
+## Acceptance
+After fix, re-open issue with label `ready-for-pd`.
 ```
 
-字段说明：
-- `id`：UUIDv7 前缀 `bfr_`
-- `priority`：enum `P0 | P1 | P2`
-- `status`：enum `open | in_progress | resolved | wontfix | escalated`
+#### Issue 生命周期
 
-**MVP 仅含上述 6 字段**。`failure_class` / `suspected_rtl` / `expected_behavior` / `observed_behavior` / `rtl_response` / `history` 转为 P1 可选字段，Phase 3+ 启用。
+1. 创建：agent 调用 skill `bb-create-issue` 通过 `gh issue create --label <X> --body <yaml>`
+2. 拾起：下游 agent 启动时调 `bb-list-issues --label <X>` 拉取
+3. 关闭：完成后 `bb-close-issue <num> --comment "resolved at sha=..."`
 
-### 7.3 events/ 目录
+#### fix_iteration 上限
 
-```
-${OUTPUT_DIR}/events/
-├── 01HW2K3M-spec-planner.jsonl       # 每个 agent 一个 append-only 文件
-├── 01HW2K3M-rtl-coder.jsonl
-├── 01HW2K3M-test-architect.jsonl
-└── _merged_offset.json               # coordinator 已合并偏移
-```
-
-事件 schema：`schemas/event.schema.json`
+每条 fix-chain max 3 次（design-config）。超出则升级为 `escalate-user` label。
 
 ---
 
-## 八、Memory System — 复用 claude-mem（ADR-007）
+## 八、Memory — 复用 claude-mem (ADR-007，不变)
 
-> 简化决策：Babel **不**自建 Two-tier Memory System。所有跨会话记忆委托给现有 `claude-mem` 插件。
-
-### 8.1 集成方式
-
-- `claude-mem` 插件已在 `~/.claude/settings.json` 中默认 enable
-- 项目级记忆存储路径由 claude-mem 管理（典型路径 `~/.claude/projects/-home-lxx-wrk-Babel/memory/`）
-- agent 经由 claude-mem 自身机制读写记忆（mcp tool / file API 视 claude-mem 实现而定）
-
-### 8.2 Babel 特定需求
-
-- agent 失败 / 成功的关键经验通过 claude-mem 自动持久化
-- 不维护 `babel_experiences.jsonl` / `babel_knowledge.md` 自定义结构
-- 不创建 `babel_memory/` 目录
-
-### 8.3 残留风险与回退
-
-| spec-review 原 issue | 解决方式 |
-|---------------------|---------|
-| M003 (rotation policy) | 由 claude-mem 自身管理；若 gap，叠加 wrapper hook（新增 ADR） |
-| H015 (experience pollution) | 由 claude-mem 自身管理；同上 |
-| L004 (rtl-coding vs rtl naming) | N/A — 无自建 memory dir |
-
-若 Phase 2 实施中发现 claude-mem 行为不满足 chip 设计场景需求，再新增 ADR 评估是否：
-(a) 给 claude-mem 提 PR；(b) 局部 wrapper；(c) 必要时仍可自建 — 但需新 ADR supersede ADR-007。
+跨会话记忆全权交给 `claude-mem` 插件。失败降级到 stateless + 警告横幅。
 
 ---
 
 ## 九、Wiki 知识库
 
-### 9.1 MVP 范围与优先级
-
-MVP 阶段仅维护与首批设计相关的最小集合：
+### 9.1 MVP 范围
 
 ```
 wiki/protocols/
-├── uart.md           # MVP - 首批设计
-├── axi4-lite.md      # MVP
-└── ucie.md           # MVP - chiplet 互连核心
+├── uart.md
+├── axi4-lite.md
+└── ucie-overview.md         # 完整 UCIe 拆分到 Phase 5+
 
 wiki/cbb/
-├── sync-fifo.md      # MVP
-├── 2ff-sync.md       # MVP - CDC 必备
-└── clock-gate.md     # MVP - ICG 必备
-```
+├── sync-fifo.md
+├── 2ff-sync.md
+└── clock-gate.md
 
-其余协议与 CBB 模板（axi4、axi-stream、ahb、apb、spi、i2c、async-fifo、arbiter、reset-ctrl、ram-1p、ram-2p、crc、ecc）转 Future，按设计需求逐步补全。
+wiki/pdk/                    # v1.3 新增（PD MVP 依赖）
+├── asap7-overview.md        # ASAP7 LEF / Liberty / tech file 路径与版本
+├── asap7-rules.md           # DRC rule 摘要
+└── asap7-metal-stack.md     # M1-M7 层定义
+```
 
 ### 9.2 完整性保护
 
-每个 wiki 文件 frontmatter 必含：
+frontmatter `schema_version` + 外置 `wiki/.hashes.txt`；pre-commit hook 校验。
 
-```yaml
-schema_version: "1.0"
-content_hash: <sha256 of body>
-last_verified: 2026-05-16
+---
+
+## 十、Skill 执行范式 (ADR-013)
+
+> v1.2 引入：skill 写脚本 → 跑脚本 → 解析输出 → 回传 四阶段执行器。
+
+### 10.1 Skill 四阶段
+
+```mermaid
+flowchart LR
+    args["agent input args"] --> p1[Phase 1<br/>write_script]
+    p1 -->|script file| p2[Phase 2<br/>run_script via Bash]
+    p2 -->|stdout/stderr/files| p3[Phase 3<br/>parse_output to JSON]
+    p3 -->|structured result| p4[Phase 4<br/>return to agent]
 ```
 
-- pre-commit hook 校验 frontmatter 与 schema
-- `babel-hook-validate-wiki` 在 agent 读取前验签
-- 不通过则记录到 `wiki/.integrity_violations.log`
+| 阶段 | 职责 | 产物 |
+|------|------|------|
+| 1. write_script | 根据 args 模板填充 / 动态生成可执行脚本 | `designs/<n>/<tool>/{stamp}.{ext}` |
+| 2. run_script | 通过 Bash 工具调用解释器 / CLI 执行脚本 | stdout / stderr → log；artifact → 目标目录 |
+| 3. parse_output | 用正则 / json parser / pyverilog 解析输出 | 结构化 JSON（符合 skill output schema） |
+| 4. return | 把结果 JSON 返回给 agent；skill 退出 | agent context |
+
+### 10.2 示例：bb-invoke-magic（PD DRC）
+
+```markdown
+---
+name: bb-invoke-magic
+description: 用 magic 跑 DRC / 版图操作
+input_args:
+  - { name: tech_file,  type: path, required: true }   # asap7 tech
+  - { name: layout_def, type: path, required: true }
+  - { name: action,     type: string, enum: [drc, extract, place], required: true }
+output_contract:
+  script_path:   designs/<n>/pd/<stamp>.magic.tcl
+  log_path:      designs/<n>/pd/<stamp>.log
+  report_path:   designs/<n>/pd/drc_report.txt
+  schema_ref:    schemas/pd_report.schema.json
+forbidden_tools: [Task, Agent, Skill]
+---
+
+## Phase 1: write_script
+Template fill drc commands; write to <script_path>
+
+## Phase 2: run_script
+Bash: `magic -dnull -noconsole -T <tech_file> -rcfile /dev/null < <script_path>`
+
+## Phase 3: parse_output
+Regex 抽取 DRC violation 数量与坐标
+Output JSON
+
+## Phase 4: return
+Agent 决定是否进一步迭代
+```
+
+### 10.3 Optimization Loop 示例（bb-guru-pd）
+
+```
+loop iter = 1..5:
+  if iter == 1:
+    call bb-create-floorplan(util=0.65, aspect=1.0)
+  call bb-invoke-magic(action=place)
+  call bb-invoke-qrouter(strategy=default)
+  call bb-invoke-magic(action=drc)
+  parse drc_report
+  if drc.violations == 0:
+    call bb-invoke-netgen (LVS)
+    if lvs.match:
+      call bb-invoke-opensta (post-PD timing)
+      if wns >= 0:
+        break (signoff)
+      else:
+        adjust placement (cell density / clock tree)
+    else:
+      bb-create-issue --label synth-needs-fix --body "<LVS diff>"
+      exit
+  else:
+    adjust floorplan (util / aspect / IO 位置)
+end
+if iter > 5:
+  bb-create-issue --label synth-needs-fix --body "<PD diverge data>"
+  exit
+```
+
+### 10.4 Skill 收敛保证
+
+每条 skill 的 Phase 2 必含超时（默认 10min；PD skill 默认 30min）；Phase 3 解析失败 → 重试 1 次再失败 → 返回 `{ valid: false, error: ... }`。
 
 ---
 
-## 十、Graph-based Planning 实现
-
-VerilogCoder 提出的 graph planning 模式映射到 Claude Code 原生能力：
-
-### 10.1 Graph Node → TodoWrite
-
-每个子任务作为 todo 条目，含：
-- `subject`、`activeForm`
-- `blocks` / `blockedBy`（图边）
-- `metadata`: `{ agent, est_tokens, est_minutes, schema_ref }`
-
-### 10.2 Dispatch → Agent (Subagent) 工具
-
-- `coordinator` 调用 Claude Code 的 `Agent` 工具派发子任务给指定 flow owner agent
-- 派发前由 `babel-hook-validate-input-schema` 校验输入
-- subagent 返回结构化 JSON（符合 `output_schema`）
-
-### 10.3 Re-plan on Failure
-
-- subagent 失败 → 创建 `fix_request` → coordinator 调整 todo 图
-- 最多 `max_cross_domain_iterations` 次重排
-
-### 10.4 max_iter 超出行为
-
-`on_max_iter_reached` enum：
-
-| 值 | 行为 |
-|----|------|
-| `halt` | 停止并写错误报告到 `${OUTPUT_DIR}/halt_report.md`（CI 模式默认） |
-| `escalate_user` | 暂停，写 `pending_approval` 字段，等待用户决策（交互模式默认） |
-| `force_signoff` | 强制 sign-off（高风险，仅 manual override） |
-
----
-
-## 十一、End-to-End Example: UART 设计
+## 十一、End-to-End Example: UART 设计（Sequential, 5-agent v1.3）
 
 ### 11.1 用户调用
 
 ```
-$ babel design uart "UART tx/rx, 115200 baud, 8N1, AXI4-Lite slave config, single clock domain"
+/bb-design uart "UART tx/rx, 115200 baud, 8N1, AXI4-Lite slave config, single clock @100MHz, ASAP7 PDK"
 ```
 
-### 11.2 调用链 (MVP 4-agent 流程)
+### 11.2 Pipeline 执行
 
-| Step | Agent (flow owner) | 调用的 Skill | Input | Output | 数据量 |
-|------|--------------------|--------------|-------|--------|--------|
-| 1 | spec-planner | babel-plan-spec | 用户提示 | `PRD.md`, `spec.json` | ~10KB |
-| 2 | coordinator | — | spec.json | 更新 `design_state.json` (spec 部分) | <5KB delta |
-| 3 | rtl-coder | babel-generate-rtl, babel-check-lint | spec.json | `rtl/uart_tx.sv`, `rtl/uart_rx.sv`, `rtl/uart_top.sv`, `constraints/uart.sdc` | ~80KB |
-| 4 | clock-domain-guard | babel-parse-ast, babel-check-cdc | rtl/*.sv | `cdc_report.json`（单时钟域 → pass） | ~5KB |
-| 5 | yosys-synth-planner | babel-invoke-yosys | rtl_artifact (rtl/*.sv + SDC draft) + cdc_report | `synth/netlist.v`, `synth/qor.json` (final SDC 内含) | ~500KB |
-| 6 | test-architect | babel-generate-tb, babel-invoke-verilator, babel-collect-coverage | rtl_artifact + synth_report (netlist) | `tb/uart_tb.sv`, `sim_results/`, `coverage.json` | ~200KB |
-| 7 | (coverage<95%) | — | — | fix_request → coordinator 重排 → step 3 (rtl-coder 补充) | |
-| 8 | (收敛) | — | — | final signoff in design_state.json | |
+| Step | Agent | 调用 Skill | Input | Output | Issue Open |
+|------|-------|-----------|-------|--------|------------|
+| 1 | bb-architect | ic-prd → ic-arch → ic-mas + bb-search-protocol(uart) + bb-search-cbb(sync-fifo) | user prompt | PRD.md, arch_spec/*, mas/* (含 verif_plan_seed) | `ready-for-rtl` |
+| 2 | bb-guru-rtl | ic-rtl-coder + bb-check-lint + bb-find-module-deps | mas/* | rtl/*.sv (hierarchical), file_list.f, rtl_artifact.json | `ready-for-verification` |
+| 3 | bb-guru-verification | bb-create-verif-plan + bb-generate-tb + bb-invoke-verilator + bb-collect-coverage | rtl_artifact + file_list + verif_plan_seed | verif/*, tb/*, sim_results/*, coverage.json (=100%), test_report.json | `ready-for-synth` |
+| 4 | bb-guru-synthesis | bb-create-sdc + bb-check-cdc + bb-invoke-yosys + bb-invoke-opensta | mas (timing) + rtl + test signoff | constraints/uart.sdc, cdc_report, synth/netlist.v, synth/qor.json, synth_report.json | `ready-for-pd` |
+| 5 | bb-guru-pd | bb-create-floorplan + bb-invoke-magic + bb-invoke-qrouter + bb-invoke-netgen + bb-invoke-opensta + bb-invoke-klayout | mas (IO ring) + synth_report + netlist | pd/floorplan/place/routed.def, drc_report, lvs_report, timing_signoff, **gdsii/uart.gds** | `signoff` |
 
-> 波形（VCD / FST）由 step 6 的 verilator skill 产出，**由用户在 VSCode 打开**（ADR-008，不由 agent 分析）。
+### 11.3 失败回退示例
 
-### 11.3 关键 metric (验收依据)
+若 step 5 LVS mismatch：
+1. bb-guru-pd 调 bb-create-issue --label synth-needs-fix --body <yaml> 描述 LVS diff
+2. bb-guru-synthesis 拾起 → 调研（mapping issue / blackbox 配置不当）→ 重综合
+3. 关 synth-needs-fix issue + 重开 ready-for-pd
 
-- 端到端时间：≤ 2h
-- coordinator iteration: ≤ 5
-- coverage：≥ 95%
+若 step 4 综合 WNS 长期不收敛：
+1. bb-guru-synthesis 多次 yosys 调参均失败 → 开 rtl-needs-fix 或 arch-needs-fix（critical path 在 MAS 层面就过长）
 
-### 11.4 失败回退
+### 11.4 关键 metric
 
-- subagent 卡死 / 异常 → coordinator 记 fix_request
-- 超 `max_cross_domain_iterations` → 默认 `escalate_user`
-- 用户在终端看到 `pending_approval`，可选 retry / abort / manual override
+| Stage | metric | target |
+|-------|--------|--------|
+| verification | functional cov | **100%** |
+| verification | code cov | **100%** |
+| synthesis | WNS @ ASAP7 1GHz | ≥ 0 |
+| synthesis | Area | < 120% baseline |
+| pd | DRC | 0 violation |
+| pd | LVS | match |
+| pd | post-PD WNS | ≥ 0 (SS / TT / FF corner) |
+| pd | GDSII | exist + 可被 klayout 打开 |
+| 端到端时间 | | ≤ 4h（v1.3 因 PD 延长） |
+| 平均 fix-issue 链长 | | ≤ 3 |
+
+### 11.5 用户中途手动修改
+
+任意 agent 完成后，用户可手工修改产物（vim rtl/*、调 mas 等）；下游 agent 启动时 SHA256 比对触发 invalidate，重跑链。
 
 ---
 
 ## 十二、Performance & Scalability
 
-### 12.1 系统吞吐目标
+### 12.1 系统吞吐
 
 | Phase | 目标 |
 |-------|------|
-| Phase 1-2 (MVP) | 单实例每日完成 1 个中等模块（500-2000 行 RTL）端到端 |
-| Phase 3 | 每日 3 个模块 |
-| Phase 4+ | 并行多设计（design_id 隔离） |
+| Phase 1-2 (MVP 雏形) | 单实例每日完成 1 个简单模块（架构 + RTL + verify） |
+| Phase 3-4 (MVP 全) | 单实例每日完成 1 个中等模块端到端（含 PD 出 GDSII） |
+| Phase 5+ | 多设计并行（按 design_id 隔离目录） |
 
 ### 12.2 Per-Agent Context Budget
 
-| Agent | max_tokens |
-|-------|-----------|
-| spec-planner | 80,000 |
-| rtl-coder | 100,000 |
-| test-architect | 80,000 |
-| coordinator | 60,000 |
-| yosys-synth-planner | 60,000 |
-| clock-domain-guard | 40,000 |
-
-参考 `~/.claude/ctx_budget.env` 调整。
+| Agent | max_tokens | optim_max_iter |
+|-------|-----------|----------------|
+| bb-architect | 120,000 | n/a |
+| bb-guru-rtl | 100,000 | 3 |
+| bb-guru-verification | 100,000 | 8 |
+| bb-guru-synthesis | 100,000 | 6 |
+| bb-guru-pd | 100,000 | 5 |
 
 ### 12.3 并发设计
 
-- MVP：单 Babel 实例处理单设计
-- Phase 4+：多设计需求通过 `design_id` namespace 隔离，各自独立 state.json
+MVP：sequential pipeline 自然串行；多 design 需求通过 `design_id` namespace 隔离不同目录，可并行启动多个 pipeline。
 
 ---
 
@@ -753,61 +952,51 @@ $ babel design uart "UART tx/rx, 115200 baud, 8N1, AXI4-Lite slave config, singl
 
 ### 13.1 Agent 权限模型
 
-每个 agent yaml 必含三字段（见 §3.1 各 agent 配置）：
-- `tools`: 工具 allowlist
-- `write_paths`: 可写路径 glob
-- `read_denylist`: 禁读路径
+每 agent yaml 含 `tools` / `write_paths` / `read_denylist` 三字段。默认 fail-closed；威胁模型见 ADR-010。
 
-默认 fail-closed：未声明的 tool / path 不可访问。运行时由 Claude Code agent runtime 强制（不支持时由 `babel-hook-validate-tool-call` 兜底拒绝）。
+### 13.2 并发
 
-> **威胁模型（ADR-010）**：本模型假定 agent 诚实但可能 buggy，**不防御恶意 agent**。
-> `write_paths` / `read_denylist` 在持有 `Bash` 工具的 agent 上是软提示 — Bash 可经路径变形、
-> symlink、临时脚本等方式绕过 glob 检查。Babel 用例为用户本机芯片设计开发，接受此残留风险；
-> 详见 `harness_spec/idea/decisions.md` ADR-010。若部署到不信任环境，须新增 ADR 引入进程级 sandbox。
+- Sequential pipeline 内同一时刻仅 1 agent 在跑
+- design_summary.json 只 append + atomic-rename
+- 多设计目录隔离
 
-### 13.2 状态并发控制
+### 13.3 Multi-Session 锁
 
-- 单写者：仅 coordinator 写 state.json
-- Events：其他 agent 通过 `events/*.jsonl`（append-only）提交
-- 写时 `flock(state.json)`，避免 coordinator 自身多线程冲突
-- 乐观锁 `lock_token`：读时记录，写时校验
+`designs/<id>/.babel_session.lock`（PID + ts + host）阻拦同 design_id 第二实例。
 
-### 13.3 Memory 完整性
+### 13.4 Memory / Wiki 完整性
 
-由 claude-mem 自身机制承担（ADR-007）。Babel 不重复造轮子。
-
-### 13.4 Wiki 完整性
-
-见 §9.2：frontmatter schema_version + content_hash、pre-commit + 读取期 hook 双层校验。
-
-### 13.5 Hook 绕过缓解
-
-见 §5.2。
+claude-mem 自身（ADR-007）+ wiki 外置 hash（§9.2）。
 
 ---
 
 ## 十四、Acceptance Criteria
 
-### 14.1 系统级验收 metric
+### 14.1 系统级 metric
 
-| Metric | Target | 依据 (rationale) |
-|--------|--------|------------------|
-| UART 端到端时间 | ≤ 2h | 内部目标；人工设计基线约 8h |
-| 平均 coordinator iteration | ≤ 5 | 参考 VerilogCoder benchmark（Fix Loop 平均 3-4 次） |
-| RTL lint clean rate | 100% (no waived) | 业界 ASIC 设计标准 |
-| Functional coverage | ≥ 95% | ASIC 行业惯例（流片前最低门槛） |
-| Code coverage | ≥ 95% | 同上 |
-| Synthesis WNS @ ASAP7 1GHz | > -0.5ns | ASAP7 内部 ring oscillator sample 实测 |
-| Area overhead vs hand-coded | < 120% | 自动综合工业基线（≈ DC 实测） |
+| Metric | Target | 依据 |
+|--------|--------|------|
+| UART 端到端时间（含 PD） | ≤ 4h | 内部目标；含 PD 流程 |
+| 平均 fix-issue 链长 | ≤ 3 | 类比 VerilogCoder Fix Loop |
+| RTL lint clean rate | 100% (no waived) | ASIC 业界标准 |
+| **Functional coverage** | **100%** | v1.3 加严 |
+| **Code coverage** | **100%** | v1.3 加严 |
+| Synthesis WNS @ ASAP7 1GHz | ≥ 0 | timing closure |
+| Area vs hand-coded | < 120% | 自动综合工业基线 |
+| **DRC violations** | **0** | Tape-out 门槛 |
+| **LVS** | **match** | Tape-out 门槛 |
+| **Post-PD WNS (SS/TT/FF)** | **≥ 0** | timing closure across corners |
+| **GDSII 输出** | **exist + klayout 可开** | signoff 产物 |
 
 ### 14.2 Per-Phase DoD
 
-| Phase | Definition of Done |
-|-------|--------------------|
-| Phase 1 (基础框架, 2w + 0.5w buffer) | 4 个 MVP agent yaml + 7 个 schema 文件均通过 jsonschema CLI 校验；design_state.schema.json 与 sample state 互验通过；claude-mem 集成 smoke test 通过 |
-| Phase 2 (MVP 实现, 3w + 0.5w buffer) | UART 模块完成 spec→rtl→test 端到端；至少 1 次 fix_request 闭环；UART 端到端时间 ≤ 4h（Phase 2 放宽，Phase 4 收紧到 2h） |
-| Phase 3 (yosys + cdc 接入, 3w + 1w buffer) | UART 收敛到 WNS > -0.5ns；cdc_report.json 通过；coordinator iteration ≤ 7 |
-| Phase 4 (验证与优化, 2w + 0.5w buffer) | 3 个不同协议模块（uart / spi / i2c）端到端通过；coordinator iteration ≤ 5；端到端时间 ≤ 2h |
+| Phase | DoD |
+|-------|-----|
+| 1: 基础框架（2w + 0.5w） | 5 agent yaml + 8 schema 通过 jsonschema CLI；claude-mem smoke；gh CLI；ic-* skills 接入验证 |
+| 2: arch+rtl MVP（3w + 0.5w） | UART 完成 bb-architect (ic-prd/ic-arch/ic-mas 全跑) → bb-guru-rtl 端到端；至少 1 次 fix-issue 闭环 |
+| 3: verify+synth（3w + 1w） | UART cov=100%；synth WNS ≥ 0 + cdc clean |
+| 4: PD（3w + 1w） | UART 跑完 PD：DRC 0 + LVS match + post-PD WNS ≥ 0；GDSII 输出 |
+| 5: 优化与扩展（2w + 0.5w） | 3 协议（uart / spi / i2c）端到端通过；端到端 ≤ 4h |
 
 ---
 
@@ -815,124 +1004,80 @@ $ babel design uart "UART tx/rx, 115200 baud, 8N1, AXI4-Lite slave config, singl
 
 ### 15.1 命名约定
 
-- Agent：`babel-{name}`
-- Skill：`babel-{action}-{target}`
-- Hook：`babel-hook-{trigger}-{action}`
+- Architect：`bb-architect`
+- Flow owner：`bb-guru-{flow}`（`bb-guru-rtl` / `bb-guru-verification` / `bb-guru-synthesis` / `bb-guru-pd` / future `bb-guru-formal` / `bb-guru-power` / `bb-guru-dft` / `bb-guru-integration`）
+- Skill：`bb-{action}-{target}`（Babel 原生）或 `ic-{name}`（外部复用，ADR-014）
+- Hook：`bb-hook-{trigger}-{action}`
 
-### 15.2 唯一性保证
+### 15.2 唯一性 CI
 
-原 v1.0 §11 "命名差异化验证" 表删除，理由：
-- 部分原参考命名（如 `sta-orchestrator`）在引用仓库中未必存在，虚构引用风险
-- 人工自评 PASS 无外部验证依据
-
-替代：CI 脚本 `scripts/check_name_uniqueness.py`
-- 扫描 `agents/*.yaml` + `skills/**/*.md`
-- 与参考项目 yaml 名单（白名单：从 §17 附录 B commit 自动 fetch）对比
-- 任何冲突或前缀模糊匹配 → CI 红灯
+`scripts/check_name_uniqueness.py` 扫描 `agents/*.yaml` + `skills/**/*.md`，与参考项目白名单对比，冲突 → CI 红灯。
+ic-* skill 由外部提供，仅校验"未被 bb-* 重复实现"。
 
 ---
 
 ## 十六、实施路线图
 
-| Phase | 任务 | 周数 | Buffer | DoD |
-|-------|------|------|--------|-----|
-| 1: 基础框架 | 4 agent yaml + 7 schema + state 模块 + claude-mem 集成验证 | 2 | 0.5 | 见 §14.2 |
-| 2: MVP 实现 | spec-planner / rtl-coder / test-architect / coordinator 实现；UART 端到端 | 3 | 0.5 | 见 §14.2 |
-| 3: Phase 3 agent + EDA skill | yosys-synth-planner + clock-domain-guard + EDA skill 全集 + hooks | 3 | 1 | 见 §14.2 |
-| 4: 验证与优化 | 3 协议样例；memory 调优；性能调优 | 2 | 0.5 | 见 §14.2 |
-| **总计** | | **10w + 2.5w buffer** | | |
+| Phase | 任务 | 周数 | Buffer |
+|-------|------|------|--------|
+| 1: 基础框架 | 5 agent yaml + 8 schema + design_summary + gh CLI + ic-* skill 接入测试 | 2 | 0.5 |
+| 2: arch+rtl MVP | bb-architect (3 ic-* skill 链) + bb-guru-rtl + UART step 1-2 | 3 | 0.5 |
+| 3: verify+synth | bb-guru-verification (cov=100%) + bb-guru-synthesis (timing closure + SDC 派生) | 3 | 1 |
+| 4: PD | bb-guru-pd + PDK 集成 + GDSII 出炉 | 3 | 1 |
+| 5: 优化扩展 | 3 协议样例；optimization loop 调优；性能 | 2 | 0.5 |
+| **总计** | | **13w + 3.5w buffer** | |
 
 ---
 
 ## 十七、附录
 
-### A. Future Agents (Phase 4+)
+### A. Future Agents
 
-见 §3.3 表格。
+见 §3.2 表格。
 
 ### B. 参考文献
 
-| Repo | URL | Access Date | Commit (TBD by Phase 1) |
-|------|-----|-------------|-------------------------|
+| Repo | URL | Access Date | Commit |
+|------|-----|-------------|--------|
 | digital-chip-design-agents | https://github.com/chuanseng-ng/digital-chip-design-agents | 2026-05-16 | TBD |
 | fnw | https://github.com/zhaixin244-wq/fnw | 2026-05-16 | TBD |
 | MAGE | https://github.com/stable-lab/MAGE | 2026-05-16 | TBD |
 | VerilogCoder | https://github.com/NVlabs/VerilogCoder | 2026-05-16 | TBD |
 | RTL-Coder | https://github.com/hkust-zhiyao/RTL-Coder | 2026-05-16 | TBD |
 | OriGen | https://github.com/pku-liang/OriGen | 2026-05-16 | TBD |
-| claude-mem (依赖插件) | (官方插件 marketplace) | 2026-05-16 | TBD |
-
-> Phase 1 实施时由 `scripts/lock_references.sh` 自动 fetch 每个 repo 当前 HEAD 并填充 Commit 列；之后通过 git submodule 或 pinning 保证可复现。
+| claude-mem | (官方插件 marketplace) | 2026-05-16 | TBD |
+| ic-prd / ic-arch / ic-mas / ic-rtl-coder | 用户既有 ECC skill ecosystem | 2026-05-16 | TBD |
 
 ### C. 关联文档
 
 | 路径 | 用途 |
 |------|------|
-| `harness_spec/idea/decisions.md` | ADR 决策日志（ADR-001~010，本文档 §0.3 引用） |
-| `harness_spec/idea/.review/issues.md` | v1.0 spec-review 评审 issue 清单 |
-| `schemas/` | JSON Schema 定义（Phase 1 创建） |
-| `scripts/migrate_state_1.0_to_1.1.py` | 状态格式迁移脚本（Phase 1 创建） |
-| `scripts/check_name_uniqueness.py` | 命名唯一性 CI 脚本（Phase 1 创建） |
-| `scripts/lock_references.sh` | 参考项目 commit pin 脚本（Phase 1 创建） |
+| `harness_spec/idea/decisions.md` | ADR 决策日志 |
+| `harness_spec/idea/.review/issues.md` | v1.0 review |
+| `harness_spec/idea/.review/issues_v1.1.md` | v1.1 review |
+| `harness_spec/arch_spec/` | arch_spec 输出（v1 已生成，**v1.3 后需重做**） |
 
-### D. Issue 修复对照表
+### D. v1.2 → v1.3 变化对照
 
-| Issue ID | 修复位置 |
-|----------|---------|
-| C001 | §6 EDA 工具集成（替代 MCP）；ADR-001 + ADR-009 |
-| C002 | §3 各 agent description（去人格化）；ADR-002 |
-| C003 | §2.3, §7.1 (lock_token), §13.2；ADR-003 |
-| C004 | §3.1 各 agent yaml (tools / write_paths / read_denylist)；§13.1 |
-| H001 | §14.1 acceptance metric |
-| H002 | §11 UART walkthrough（含 agent×skill 矩阵） |
-| H003 | §14.2 Per-Phase DoD |
-| H004 | §12.1 throughput target |
-| H005 | §7.1 history_capacity ring buffer |
-| H006 | §10 graph planning 映射 |
-| H007 | §4.3 Pyverilog 不支持子集 + fallback；ADR-005 |
-| H008 | §3.1 MVP=4 agent + §3.3 Future agents；ADR-004 |
-| H009 | §4.3 / §4.4 AST / Knowledge 改 skill+bash；§6.3 |
-| H010 | §3.1.2 rtl-coder 不做 CDC；§3.2.2 clock-domain-guard 唯一 flow owner |
-| H011 | §3.1.2 rtl-coder 不做综合；§3.2.1 synth-planner 唯一 flow owner |
-| H012 | §3.4 IO Contracts；各 agent output_schema 字段 |
-| H013 | §4 skill frontmatter input_args + output_contract |
-| H014 | §15.2 删除原命名对比表 |
-| H015 | §8.3 delegated to claude-mem (ADR-007) |
-| M001 | §0.3 决策日志；§14.2 Phase DoD |
-| M002 | §0.1 glossary |
-| M003 | §8.3 delegated to claude-mem (ADR-007) |
-| M004 | §12.2 per-agent budget |
-| M005 | §12.3 concurrent designs |
-| M006 | §4.2 pinned versions |
-| M007 | §16 buffer 列 |
-| M008 | §10.4 on_max_iter_reached enum |
-| M009 | §15.2 删除自评表 |
-| M010 | §7 state / §8 claude-mem / §9 wiki 各层职责分离 |
-| M011 | §15.1 简化命名规则 |
-| M012 | §3.3 power-optimizer 触发条件明确 |
-| M013 | §3.1.3 test-architect 不做形式验证；§3.3 property-prover 划归 |
-| M014 | §7.1 schema 迁移说明（ADR-006 占位） |
-| M015 | §7.2 priority 字段 |
-| M016 | §7.1 UUIDv7 |
-| M017 | §2.1 §2.2 mermaid 英文 ID |
-| M018 | §17.B 含 access date + commit |
-| M019 | §5.2 bypass 缓解 |
-| M020 | §9.2 + §13.4 wiki 完整性 |
-| L001 | §2.1 §2.2 mermaid 数据量标注 |
-| L002 | §17.B commit 列 |
-| L003 | §7.2 MVP 仅 6 字段 |
-| L004 | §8.3 N/A（无自建 memory dir） |
-| L005 | §7.2 status enum |
-| L006 | §0.2 优先级语义 |
-| L007 | §11 改为步骤表 + §0.4 版本表 |
+| v1.2 实体 / 决策 | v1.3 实体 / 决策 | 备注 |
+|-----------------|-------------------|------|
+| MVP = 4 agent (architect/rtl/synth/verify) | **MVP = 5 agent** (architect/rtl/**verify**/synth/**pd**) | 新增 PD 至 MVP |
+| 顺序 architect→rtl→synth→verify | **architect→rtl→verify→synth→pd** | 验证在综合前；signoff 在 PD（ADR-015） |
+| bb-plan-arch (Babel 原生) | **ic-prd + ic-arch + ic-mas** (外部复用) | 直接调用现有 ECC skills（ADR-014） |
+| bb-generate-rtl (Babel 原生) | **ic-rtl-coder** (外部复用) | 同上 |
+| bb-guru-rtl 输出 SDC 草稿 | **bb-guru-synthesis 从 MAS 派生 SDC** (新 skill bb-create-sdc) | ADR-016 |
+| coverage ≥ 95% | **coverage = 100%** | 加严 |
+| 4 phase roadmap (10w + 2.5w) | **5 phase roadmap (13w + 3.5w)** | 增加 PD phase |
+| schema 7 个 | **schema 8 个** (新增 pd_report.schema.json) | |
+| EDA tool skills (yosys/verilator/opensta/cdc) | + **magic/netgen/qrouter/klayout 升 MVP** | PD 工具栈 |
+| wiki/protocols + cbb | + **wiki/pdk/** (asap7) | PD 必需 PDK 知识 |
 
-共计 46 项全部覆盖。
-
-### E. 用户简化决策对照
+### E. 用户决策对照（v1.3 五项流水线变更）
 
 | 用户指令 | 落点 |
 |---------|------|
-| memory 复用 claude-mem | §8 重写；ADR-007；§13.3 |
-| waveform 用 VSCode 扩展 | §1.2 备注；§3.1.3 备注；§4.3 备注；§11.2 备注；ADR-008 |
-| 开源工具链只用 skill 不用 agent | §3.0 agent/skill 分离；§4.2 EDA skill；ADR-009 |
-| EDA 操作=skill, flow owner=agent | §3.0 表格；§3.2.1/3.2.2 命名"flow owner"；ADR-009 |
+| (1) bb-architect 输出 PRD/arch_spec/MAS，调 ic-prd/ic-arch/ic-mas | §3.1.1；§4.1；ADR-014 |
+| (2) bb-guru-rtl 以 MAS 为输入，输出 hierarchical SV + file list | §3.1.2；artifacts 含 file_list.f |
+| (3) bb-guru-verification 创建 verif plan / TB / test case，cov 100% | §3.1.3；§14.1；optimization loop max_iter=8 |
+| (4) bb-guru-synthesis 从 MAS spec 创建 SDC，跑综合迭代时序/面积 | §3.1.4；新 skill bb-create-sdc；ADR-016 |
+| (5) bb-guru-pd 跑 PD flow，DRC + timing closure + GDSII | §3.1.5（新 agent）；§14.1；§16 Phase 4 |
