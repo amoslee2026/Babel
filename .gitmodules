@@ -1,3 +1,18 @@
 [submodule "llama2.c"]
 	path = llama2.c
 	url = https://github.com/karpathy/llama2.c.git
+[submodule "ventus-gpgpu"]
+	path = ventus-gpgpu
+	url = https://gitlink.org.cn/THU-DSP-LAB/ventus-gpgpu.git
+[submodule "ventus-gpgpu-doc"]
+	path = ventus-gpgpu-doc
+	url = https://gitlink.org.cn/THU-DSP-LAB/ventus-gpgpu-doc.git
+[submodule "ventus-gpgpu-isa-sim"]
+	path = ventus-gpgpu-isa-sim
+	url = https://gitlink.org.cn/THU-DSP-LAB/ventus-gpgpu-isa-simulator.git
+[submodule "riscv-gnu-toolchain"]
+	path = riscv-gnu-toolchain
+	url = https://gitlink.org.cn/THU-DSP-LAB/riscv-gnu-toolchain.git
+[submodule "llvm-project"]
+	path = llvm-project
+	url = https://gitlink.org.cn/THU-DSP-LAB/llvm-project.git
