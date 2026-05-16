@@ -1,3 +1,9 @@
+# ---> Project-specific directories and symlinks
+libs
+temp
+thanos
+mySkills
+
 # ---> Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
