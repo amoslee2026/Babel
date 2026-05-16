@@ -1,0 +1,3 @@
+[submodule "llama2.c"]
+	path = llama2.c
+	url = https://github.com/karpathy/llama2.c.git
