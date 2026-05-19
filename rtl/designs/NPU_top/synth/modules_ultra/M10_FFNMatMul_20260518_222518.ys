@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M10/src/M10_FFNMatMul.sv
+hierarchy -check -top M10_FFNMatMul
+synth -top M10_FFNMatMul -flatten
+opt_clean -purge
+stat

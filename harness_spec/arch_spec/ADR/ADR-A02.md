@@ -1,41 +1,41 @@
 ---
 id: ADR-A02
-status: Accepted
+status: Accepted (v2)
 date: 2026-05-16
-resolves: v1.1-issue H2
+resolves: Schema 规范
 ---
 
-# ADR-A02 — Schema 规范、版本与位置
+# ADR-A02 — Schema 标准、位置与演进规则
 
 ## Status
-Accepted (2026-05-16)
+Accepted (2026-05-16, arch_spec v2)
 
 ## Context
-v1.1-issue H2：design_doc.md 引用 7+ schema 但全部 "TBD Phase 1"，无字段骨架。Phase 1 无落地起点。
+v1.3 design_doc 引用 8 个 schema (idea / mas / rtl_artifact / test_report / synth_report / pd_report / design_summary / issue_body)。Phase 1 需要明确实施基线。
 
 ## Decision
-1. Schema 标准：**JSON Schema Draft 2020-12**
-2. 位置：`harness_spec/arch_spec/schemas/*.schema.json`
-3. 字段骨架：见 `schemas_seed.md`（本 arch_spec 阶段输出）
-4. 版本化：每 schema 内 `$id` 含 `babel://schemas/<name>`，演进通过 `format_version` 字段（不是 $schema $id）
-5. 校验工具：python `jsonschema` CLI（M201 wrapper）
-6. 样例：每 schema 配 ≥1 valid + ≥1 invalid sample (`schemas/sample_*.json`)
-7. 数量：10 个 schema（idea / spec / rtl_artifact / cdc_report / synth_input / synth_report / test_report / event / design_state / fix_request）
+1. **标准**: JSON Schema Draft 2020-12
+2. **位置**: `harness_spec/arch_spec/schemas/*.schema.json`
+3. **字段骨架**: 见 `schemas_seed.md`（v2）
+4. **版本化**: 每 schema `$id` 含 `babel://schemas/<name>`；演进通过 schema 内 `format_version` 字段（v1.3 base = "1.0"）
+5. **校验工具**: python `jsonschema` CLI（M201 wrapper）
+6. **样例**: 每 schema ≥ 1 valid + ≥ 1 invalid (`schemas/sample_<name>_<n>.json`)
+7. **跨引用**: 使用 `$ref: babel://schemas/<other>#/properties/...` 内部解析；Phase 1 测试 jsonschema 实现支持
 
 ## Trade-offs
-| 维度 | JSON Schema | YAML Schema (内部) | Protobuf |
-|------|------------|---------------------|----------|
-| 工具生态 | 强（python/JS/Go 全套） | 弱 | 强但偏 RPC |
-| 与 LLM agent 兼容 | LLM 训练数据多 | 中等 | 低（二进制） |
-| 演进策略 | 较成熟 | 自行设计 | proto2/3 兼容规则严格 |
+| 维度 | JSON Schema | YAML 内部规范 | Protobuf |
+|------|------------|---------------|----------|
+| 工具生态 | 强 | 弱 | 强（RPC 偏向） |
+| LLM 训练兼容 | 强 | 中 | 弱（二进制） |
+| 演进 | 成熟 | 自研 | proto2/3 严格 |
 | **选择** | ✅ | ❌ | ❌ |
 
 ## Consequences
-- (+) Phase 1 接手者有具体字段骨架，无歧义
-- (+) jsonschema CLI 通用工具链，无需自研
-- (-) JSON Schema $ref 跨文件解析在某些 jsonschema 实现中需配置；Phase 1 验证可行性
+- (+) Phase 1 接手者有具体字段骨架
+- (+) jsonschema CLI 通用工具链
+- (-) $ref 跨文件解析需要 Phase 1 测试不同实现兼容性
 
 ## Affected
-- `harness_spec/arch_spec/schemas_seed.md`（完整字段骨架）
-- M201 schema_validator（包装 jsonschema CLI）
-- Phase 1 DoD：7+ schema 通过 jsonschema CLI + sample 互验
+- `schemas_seed.md` 完整骨架
+- M201 schema_validator
+- Phase 1 DoD: 8 schema + sample 互验通过

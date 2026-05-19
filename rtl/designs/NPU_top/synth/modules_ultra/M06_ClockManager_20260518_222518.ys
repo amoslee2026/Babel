@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M06/src/M06_ClockManager.sv
+hierarchy -check -top M06_ClockManager
+synth -top M06_ClockManager -flatten
+opt_clean -purge
+stat

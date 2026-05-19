@@ -1,0 +1,9 @@
+read_verilog -sv rtl/M11/src/M11_RMSNormRoPE.sv
+hierarchy -check -top M11_RMSNormRoPE
+synth -top M11_RMSNormRoPE
+opt
+opt_clean -purge
+abc -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib -g AND,OR,NAND,NOR,XOR
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules/M11_RMSNormRoPE_20260518_205803.v
+stat -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babel.local/schemas/pd_report.schema.json",
+  "title": "PDReport",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["design_name", "drc_violations", "lvs_match", "timing_corners", "gds_path", "inputs"],
+  "properties": {
+    "design_name": {"type": "string"},
+    "drc_violations": {"type": "integer", "minimum": 0},
+    "drc_clean":      {"type": "boolean"},
+    "lvs_match":      {"type": "boolean"},
+    "timing_corners": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["corner", "wns_ns", "met"],
+        "properties": {
+          "corner": {"type": "string"},
+          "wns_ns": {"type": "number"},
+          "tns_ns": {"type": "number"},
+          "met":    {"type": "boolean"}
+        }
+      }
+    },
+    "timing_all_met": {"type": "boolean"},
+    "area_um2":       {"type": "number"},
+    "density":        {"type": "number"},
+    "gds_path":       {"type": "string"},
+    "gds_size_bytes": {"type": "integer", "minimum": 0},
+    "klayout_verify_ok": {"type": "boolean"},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path":   {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "iteration_count": {"type": "integer", "minimum": 0, "maximum": 8}
+  }
+}

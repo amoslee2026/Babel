@@ -18,14 +18,14 @@ graph LR
     end
 
     subgraph M00_SystolicArray
-        WIB[Weight Input Buffer\n32×32×32bit]
-        AIB[Activation Input Buffer\n32×32×32bit\nskew delay]
-        subgraph PE_ARRAY[PE Array 32x32]
+        WIB[Weight Input Buffer\n16×32×32bit]
+        AIB[Activation Input Buffer\n16×32×32bit\nskew delay]
+        subgraph PE_ARRAY[PE Array 16x16]
             PE00[PE 0,0] --> PE01[PE 0,1]
             PE10[PE 1,0] --> PE11[PE 1,1]
         end
-        ACC[Accumulator\n32×32×64bit]
-        OB[Output Buffer\n32×32×32bit]
+        ACC[Accumulator\n16×32×64bit]
+        OB[Output Buffer\n16×32×32bit]
     end
 
     W_MEM -->|weight_in| WIB
@@ -64,14 +64,14 @@ INT8 模式下 MAC_UNIT 内部拆分为 2 个并行 INT8 乘加器，共享 psum
 | 流水线阶段 | 级数 | 延迟 (cycles) | 说明 |
 |------------|------|---------------|------|
 | 输入缓冲 + skew | 1 | 1 | 激活值按列错位输入，补偿传播延迟 |
-| PE 阵列对角线传播 | 32 | 32 | 数据沿 32×32 阵列对角线传播 |
+| PE 阵列对角线传播 | 16 | 16 | 数据沿 16×16 阵列对角线传播 |
 | K 维度累加 | K | K | 可流水，每 cycle 产生 1 个部分和 |
 | 输出缓冲 | 1 | 1 | 结果收集与格式转换 |
 
-首次有效输出延迟：34 + K cycles（K 为矩阵内积维度）
+首次有效输出延迟：18 + K cycles（K 为矩阵内积维度）
 
-稳态吞吐量（M=N=K=32，FP32）：
-- 1024 MAC/cycle × 500 MHz = 512 GFLOPS = 0.512 TOPS ≥ 0.5 TOPS 目标
+稳态吞吐量（M=N=K=16，FP32）：
+- 256 MAC/cycle × 500 MHz = 128 GFLOPS ≈ 0.25 TOPS 目标
 
 ## 4. 关键路径分析
 
@@ -89,9 +89,9 @@ FP32 MAC 为关键路径，需在综合时对 FP32 乘法树施加 max_delay 约
 
 | 节点 | FP32 | FP16 | INT8 |
 |------|------|------|------|
-| weight_in 总线 | 32×32 bit | 32×16 bit | 32×8 bit |
-| act_in 总线 | 32×32 bit | 32×16 bit | 32×8 bit |
+| weight_in 总线 | 16×32 bit | 16×16 bit | 16×8 bit |
+| act_in 总线 | 16×32 bit | 16×16 bit | 16×8 bit |
 | psum（PE 内） | 64 bit | 32 bit | 32 bit |
-| result_out 总线 | 32×32 bit | 32×16 bit | 32×32 bit |
+| result_out 总线 | 16×32 bit | 16×16 bit | 16×32 bit |
 
 result_out 在 INT8 模式下输出 32bit 累加结果（量化前）。

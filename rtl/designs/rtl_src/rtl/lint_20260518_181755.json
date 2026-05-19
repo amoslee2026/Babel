@@ -1,0 +1,19 @@
+{
+  "stamp": "20260518_181755",
+  "design_name": "rtl_src",
+  "lint_mode": "src_only",
+  "target_dir": "rtl/",
+  "script_path": "rtl/designs/rtl_src/rtl/lint_20260518_181755.sh",
+  "log_path": "rtl/designs/rtl_src/rtl/lint_20260518_181755.log",
+  "artifact_path": "rtl/designs/rtl_src/rtl/lint_20260518_181755.json",
+  "errors": 0,
+  "warnings": 1,
+  "src_clean": true,
+  "tb_clean": null,
+  "clean": true,
+  "valid": true,
+  "iteration": 1,
+  "fixes": {
+    "M04_SystemBus.sv": "wire logic -> logic (verible parser compatibility)"
+  }
+}

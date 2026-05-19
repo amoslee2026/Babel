@@ -1,0 +1,6 @@
+read_verilog -sv rtl/M12/src/M12_SoftMax.sv
+hierarchy -check -top M12_SoftMax
+synth -top M12_SoftMax -flatten
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules_simple/M12_SoftMax_20260518_220045.v
+stat

@@ -1,4 +1,54 @@
 {
   "mcpServers": {},
-  "enabledPlugins": {}
+  "enabledPlugins": {},
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-commit-quality-gate.sh"},
+          {"type": "command", "command": ".claude/hooks/bb-hook-validate-bash-cmd.sh"}
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-write-arch-freeze-check.sh"},
+          {"type": "command", "command": ".claude/hooks/bb-hook-instantiate-cbb-search.sh"}
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-validate-wiki.sh"}
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-change-propagate.sh"},
+          {"type": "command", "command": ".claude/hooks/bb-hook-pipeline-advance.sh"},
+          {"type": "command", "command": ".claude/hooks/bb-hook-create-fix-issue.sh"}
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-validate-input-schema.sh"}
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {"type": "command", "command": ".claude/hooks/bb-hook-session-summarize.sh"}
+        ]
+      }
+    ]
+  }
 }

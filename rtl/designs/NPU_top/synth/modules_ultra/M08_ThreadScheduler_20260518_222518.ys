@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M08/src/M08_ThreadScheduler.sv
+hierarchy -check -top M08_ThreadScheduler
+synth -top M08_ThreadScheduler -flatten
+opt_clean -purge
+stat

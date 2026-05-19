@@ -1,0 +1,6 @@
+read_verilog -sv rtl/M16/src/M16_ISAInterface.sv
+hierarchy -check -top M16_ISAInterface
+synth -top M16_ISAInterface -flatten
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules_simple/M16_ISAInterface_20260518_220045.v
+stat

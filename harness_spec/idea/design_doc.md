@@ -17,8 +17,8 @@ related:
 > v1.3 修订摘要：
 > - 流水线扩展至 **5 个 agent**：新增 `bb-guru-pd`（物理设计 flow owner）
 > - 顺序调整为 `architect → rtl → verification → synthesis → pd`（RTL-level 验证在综合之前；signoff 在 PD 完成）
-> - `bb-architect` **复用既有 ic-* skills**：`ic-prd` / `ic-arch` / `ic-mas`（不重写 bb- 版本）
-> - `bb-guru-rtl` 复用 `ic-rtl-coder` skill；输出 hierarchical SV + file list；**不再**输出 SDC
+> - `bb-architect` **复用既有 ic-* skills**：`bb-prd` / `bb-arch` / `bb-mas`（不重写 bb- 版本）
+> - `bb-guru-rtl` 复用 `bb-rtl-coder` skill；输出 hierarchical SV + file list；**不再**输出 SDC
 > - `bb-guru-synthesis` 从 MAS 推导 SDC（新 skill `bb-create-sdc`）；跑综合 + 迭代时序/面积优化
 > - `bb-guru-pd` 跑物理设计 flow（floorplan / place / route / DRC / LVS / timing closure / GDSII）
 > - Coverage target **100%**（替代 v1.2 ≥95%）
@@ -74,7 +74,7 @@ related:
 | ADR-011 | Inter-agent comms = GitHub issues | Accepted (v1.2) |
 | ADR-012 | Sequential pipeline 作为 MVP 协作模型 | Accepted (v1.2) |
 | ADR-013 | Skill 执行范式 (write-script → run → parse) | Accepted (v1.2) |
-| **ADR-014** | **复用既有 ic-* skills（ic-prd / ic-arch / ic-mas / ic-rtl-coder）；不重新实现 bb- 版本** | **Accepted (v1.3)** |
+| **ADR-014** | **复用既有 ic-* skills（bb-prd / bb-arch / bb-mas / bb-rtl-coder）；不重新实现 bb- 版本** | **Accepted (v1.3)** |
 | **ADR-015** | **流水线顺序：architect → rtl → verification → synthesis → pd（验证在综合前；signoff 落在 PD GDSII）** | **Accepted (v1.3)** |
 | **ADR-016** | **SDC 来源：bb-guru-synthesis 从 MAS 派生 SDC（不再由 bb-guru-rtl 起草）** | **Accepted (v1.3)** |
 
@@ -207,7 +207,7 @@ flowchart TD
 
 EDA 工具仅以 skill 实现，不存在"agent 等价物"。CDC / 综合 / 仿真 / PR 等执行细节均封装在 skill 内；agent 负责"调用哪条 skill、什么时候停"。
 
-> v1.3 注：bb-architect 直接复用既有 `ic-prd` / `ic-arch` / `ic-mas` skill；bb-guru-rtl 直接复用 `ic-rtl-coder`（ADR-014）。
+> v1.3 注：bb-architect 直接复用既有 `bb-prd` / `bb-arch` / `bb-mas` skill；bb-guru-rtl 直接复用 `bb-rtl-coder`（ADR-014）。
 
 ### 3.0.1 命名规则
 
@@ -235,14 +235,14 @@ read_denylist:
 max_tokens: 120000
 output_schema: schemas/mas.schema.json
 artifacts:
-  - PRD.md                # 产品需求（ic-prd 产出）
-  - arch_spec/            # 架构规格（ic-arch 产出，含 arch_doc.md / data_flow.md / workflow.md）
-  - mas/                  # 微架构规格（ic-mas 产出，含 mas.md / mas.json / fsm/ / datapath/ / verif_plan_seed.md / dft_plan_seed.md）
+  - PRD.md                # 产品需求（bb-prd 产出）
+  - arch_spec/            # 架构规格（bb-arch 产出，含 arch_doc.md / data_flow.md / workflow.md）
+  - mas/                  # 微架构规格（bb-mas 产出，含 mas.md / mas.json / fsm/ / datapath/ / verif_plan_seed.md / dft_plan_seed.md）
   - ADR/*.md              # 关键决策
 invokes_skills:
-  - ic-prd                # 外部 skill（ADR-014）
-  - ic-arch               # 外部 skill
-  - ic-mas                # 外部 skill
+  - bb-prd                # 外部 skill（ADR-014）
+  - bb-arch               # 外部 skill
+  - bb-mas                # 外部 skill
   - bb-search-protocol
   - bb-search-cbb
   - bb-get-interface-template
@@ -250,9 +250,9 @@ invokes_skills:
 ```
 
 职责：
-- 用户 prompt → 调用 `ic-prd` 产 PRD.md
-- PRD → 调用 `ic-arch` 产架构规格（含模块划分、信号流、workflow）
-- 架构规格 → 调用 `ic-mas` 产微架构规格（含 FSM、datapath、接口信号表、verification plan 种子、DFT plan 种子）
+- 用户 prompt → 调用 `bb-prd` 产 PRD.md
+- PRD → 调用 `bb-arch` 产架构规格（含模块划分、信号流、workflow）
+- 架构规格 → 调用 `bb-mas` 产微架构规格（含 FSM、datapath、接口信号表、verification plan 种子、DFT plan 种子）
 - 不写 RTL，不做综合 / 验证 / PD
 
 完成后：写 git issue `label=ready-for-rtl`，引用 mas/mas.json 路径 + sha256。
@@ -277,7 +277,7 @@ artifacts:
   - file_list.f           # 综合 / 仿真工具输入文件清单
   - rtl_artifact.json     # 元数据（schema-validated）
 invokes_skills:
-  - ic-rtl-coder          # 外部 skill（ADR-014）
+  - bb-rtl-coder          # 外部 skill（ADR-014）
   - bb-check-lint
   - bb-find-module-deps
   - bb-list-issues
@@ -286,12 +286,12 @@ invokes_skills:
 optimization_loop:
   trigger: lint error
   max_iter: 3
-  param_strategy: 根据 lint error 类型反馈给 ic-rtl-coder 重新生成
+  param_strategy: 根据 lint error 类型反馈给 bb-rtl-coder 重新生成
 ```
 
 职责：
 - 输入：mas/mas.json + mas/fsm/* + mas/datapath/*（从 git issue 拾起 MAS 路径）
-- 调 `ic-rtl-coder` 生成 hierarchical SV RTL（顶层 + 各子模块）
+- 调 `bb-rtl-coder` 生成 hierarchical SV RTL（顶层 + 各子模块）
 - 调 `bb-check-lint` 跑 verible-verilog-lint
 - 生成 `file_list.f`（按 hierarchy 排序，顶层在最后；含 `+incdir+` / `+define+` 必要项）
 - lint error → optimization loop（≤ 3 次重生成）
@@ -460,8 +460,8 @@ optimization_loop:
 
 | Agent | 上游产物消费 | 主要产物 | 主要外部 skill | 关键 metric |
 |-------|------------|----------|---------------|-----------|
-| bb-architect | user prompt | PRD / arch_spec / MAS | ic-prd / ic-arch / ic-mas | MAS schema valid + 3 量化 KPI |
-| bb-guru-rtl | MAS | rtl/*.sv + file_list.f | ic-rtl-coder + bb-check-lint | lint 0 error |
+| bb-architect | user prompt | PRD / arch_spec / MAS | bb-prd / bb-arch / bb-mas | MAS schema valid + 3 量化 KPI |
+| bb-guru-rtl | MAS | rtl/*.sv + file_list.f | bb-rtl-coder + bb-check-lint | lint 0 error |
 | bb-guru-verification | rtl + file_list + verif_plan_seed | tb + sim_results + coverage.json | bb-generate-tb + bb-invoke-verilator | **coverage = 100%** |
 | bb-guru-synthesis | MAS + rtl + test signoff | sdc + netlist + qor | bb-create-sdc + bb-invoke-yosys + bb-invoke-opensta | WNS ≥ 0 + area target |
 | bb-guru-pd | MAS + netlist + sdc | GDSII + DRC/LVS/timing reports | bb-invoke-magic + bb-invoke-netgen + bb-invoke-qrouter + bb-invoke-klayout | DRC clean + LVS match + WNS ≥ 0 |
@@ -510,10 +510,10 @@ forbidden_tools: [Task, Agent, Skill]   # 单向依赖强制
 
 | Skill | 来源 | 调用方 | 职责 |
 |-------|------|--------|------|
-| ic-prd | 外部（既有） | bb-architect | 用户 prompt → PRD.md |
-| ic-arch | 外部（既有） | bb-architect | PRD → architecture spec（arch_doc / data_flow / workflow） |
-| ic-mas | 外部（既有） | bb-architect | arch → 微架构规格（fsm / datapath / 接口表 / verif_plan_seed / dft_plan_seed） |
-| ic-rtl-coder | 外部（既有） | bb-guru-rtl | MAS → hierarchical SV RTL |
+| bb-prd | 外部（既有） | bb-architect | 用户 prompt → PRD.md |
+| bb-arch | 外部（既有） | bb-architect | PRD → architecture spec（arch_doc / data_flow / workflow） |
+| bb-mas | 外部（既有） | bb-architect | arch → 微架构规格（fsm / datapath / 接口表 / verif_plan_seed / dft_plan_seed） |
+| bb-rtl-coder | 外部（既有） | bb-guru-rtl | MAS → hierarchical SV RTL |
 | bb-check-lint | Babel 原生 | bb-guru-rtl | verible-verilog-lint |
 | bb-create-verif-plan | Babel 原生（新） | bb-guru-verification | verif_plan_seed → 完整验证计划 |
 | bb-generate-tb | Babel 原生 | bb-guru-verification | mas + rtl → testbench / test cases |
@@ -637,12 +637,12 @@ klayout -v 2>&1 | grep "0.30"
 
 ```
 designs/<name>/
-├── PRD.md                       # bb-architect (via ic-prd)
-├── arch_spec/                   # bb-architect (via ic-arch)
+├── PRD.md                       # bb-architect (via bb-prd)
+├── arch_spec/                   # bb-architect (via bb-arch)
 │   ├── arch_doc.md
 │   ├── data_flow.md
 │   └── workflow.md
-├── mas/                         # bb-architect (via ic-mas)
+├── mas/                         # bb-architect (via bb-mas)
 │   ├── mas.md
 │   ├── mas.json                 # 结构化 MAS (schema: mas.schema)
 │   ├── fsm/
@@ -885,8 +885,8 @@ if iter > 5:
 
 | Step | Agent | 调用 Skill | Input | Output | Issue Open |
 |------|-------|-----------|-------|--------|------------|
-| 1 | bb-architect | ic-prd → ic-arch → ic-mas + bb-search-protocol(uart) + bb-search-cbb(sync-fifo) | user prompt | PRD.md, arch_spec/*, mas/* (含 verif_plan_seed) | `ready-for-rtl` |
-| 2 | bb-guru-rtl | ic-rtl-coder + bb-check-lint + bb-find-module-deps | mas/* | rtl/*.sv (hierarchical), file_list.f, rtl_artifact.json | `ready-for-verification` |
+| 1 | bb-architect | bb-prd → bb-arch → bb-mas + bb-search-protocol(uart) + bb-search-cbb(sync-fifo) | user prompt | PRD.md, arch_spec/*, mas/* (含 verif_plan_seed) | `ready-for-rtl` |
+| 2 | bb-guru-rtl | bb-rtl-coder + bb-check-lint + bb-find-module-deps | mas/* | rtl/*.sv (hierarchical), file_list.f, rtl_artifact.json | `ready-for-verification` |
 | 3 | bb-guru-verification | bb-create-verif-plan + bb-generate-tb + bb-invoke-verilator + bb-collect-coverage | rtl_artifact + file_list + verif_plan_seed | verif/*, tb/*, sim_results/*, coverage.json (=100%), test_report.json | `ready-for-synth` |
 | 4 | bb-guru-synthesis | bb-create-sdc + bb-check-cdc + bb-invoke-yosys + bb-invoke-opensta | mas (timing) + rtl + test signoff | constraints/uart.sdc, cdc_report, synth/netlist.v, synth/qor.json, synth_report.json | `ready-for-pd` |
 | 5 | bb-guru-pd | bb-create-floorplan + bb-invoke-magic + bb-invoke-qrouter + bb-invoke-netgen + bb-invoke-opensta + bb-invoke-klayout | mas (IO ring) + synth_report + netlist | pd/floorplan/place/routed.def, drc_report, lvs_report, timing_signoff, **gdsii/uart.gds** | `signoff` |
@@ -993,7 +993,7 @@ claude-mem 自身（ADR-007）+ wiki 外置 hash（§9.2）。
 | Phase | DoD |
 |-------|-----|
 | 1: 基础框架（2w + 0.5w） | 5 agent yaml + 8 schema 通过 jsonschema CLI；claude-mem smoke；gh CLI；ic-* skills 接入验证 |
-| 2: arch+rtl MVP（3w + 0.5w） | UART 完成 bb-architect (ic-prd/ic-arch/ic-mas 全跑) → bb-guru-rtl 端到端；至少 1 次 fix-issue 闭环 |
+| 2: arch+rtl MVP（3w + 0.5w） | UART 完成 bb-architect (bb-prd/bb-arch/bb-mas 全跑) → bb-guru-rtl 端到端；至少 1 次 fix-issue 闭环 |
 | 3: verify+synth（3w + 1w） | UART cov=100%；synth WNS ≥ 0 + cdc clean |
 | 4: PD（3w + 1w） | UART 跑完 PD：DRC 0 + LVS match + post-PD WNS ≥ 0；GDSII 输出 |
 | 5: 优化与扩展（2w + 0.5w） | 3 协议（uart / spi / i2c）端到端通过；端到端 ≤ 4h |
@@ -1046,7 +1046,7 @@ ic-* skill 由外部提供，仅校验"未被 bb-* 重复实现"。
 | RTL-Coder | https://github.com/hkust-zhiyao/RTL-Coder | 2026-05-16 | TBD |
 | OriGen | https://github.com/pku-liang/OriGen | 2026-05-16 | TBD |
 | claude-mem | (官方插件 marketplace) | 2026-05-16 | TBD |
-| ic-prd / ic-arch / ic-mas / ic-rtl-coder | 用户既有 ECC skill ecosystem | 2026-05-16 | TBD |
+| bb-prd / bb-arch / bb-mas / bb-rtl-coder | 用户既有 ECC skill ecosystem | 2026-05-16 | TBD |
 
 ### C. 关联文档
 
@@ -1063,8 +1063,8 @@ ic-* skill 由外部提供，仅校验"未被 bb-* 重复实现"。
 |-----------------|-------------------|------|
 | MVP = 4 agent (architect/rtl/synth/verify) | **MVP = 5 agent** (architect/rtl/**verify**/synth/**pd**) | 新增 PD 至 MVP |
 | 顺序 architect→rtl→synth→verify | **architect→rtl→verify→synth→pd** | 验证在综合前；signoff 在 PD（ADR-015） |
-| bb-plan-arch (Babel 原生) | **ic-prd + ic-arch + ic-mas** (外部复用) | 直接调用现有 ECC skills（ADR-014） |
-| bb-generate-rtl (Babel 原生) | **ic-rtl-coder** (外部复用) | 同上 |
+| bb-plan-arch (Babel 原生) | **bb-prd + bb-arch + bb-mas** (外部复用) | 直接调用现有 ECC skills（ADR-014） |
+| bb-generate-rtl (Babel 原生) | **bb-rtl-coder** (外部复用) | 同上 |
 | bb-guru-rtl 输出 SDC 草稿 | **bb-guru-synthesis 从 MAS 派生 SDC** (新 skill bb-create-sdc) | ADR-016 |
 | coverage ≥ 95% | **coverage = 100%** | 加严 |
 | 4 phase roadmap (10w + 2.5w) | **5 phase roadmap (13w + 3.5w)** | 增加 PD phase |
@@ -1076,7 +1076,7 @@ ic-* skill 由外部提供，仅校验"未被 bb-* 重复实现"。
 
 | 用户指令 | 落点 |
 |---------|------|
-| (1) bb-architect 输出 PRD/arch_spec/MAS，调 ic-prd/ic-arch/ic-mas | §3.1.1；§4.1；ADR-014 |
+| (1) bb-architect 输出 PRD/arch_spec/MAS，调 bb-prd/bb-arch/bb-mas | §3.1.1；§4.1；ADR-014 |
 | (2) bb-guru-rtl 以 MAS 为输入，输出 hierarchical SV + file list | §3.1.2；artifacts 含 file_list.f |
 | (3) bb-guru-verification 创建 verif plan / TB / test case，cov 100% | §3.1.3；§14.1；optimization loop max_iter=8 |
 | (4) bb-guru-synthesis 从 MAS spec 创建 SDC，跑综合迭代时序/面积 | §3.1.4；新 skill bb-create-sdc；ADR-016 |

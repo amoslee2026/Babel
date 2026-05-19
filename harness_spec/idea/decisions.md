@@ -38,7 +38,7 @@ related:
 
 ---
 
-## ADR-002 — Agent 命名与描述：去人格化
+## ADR-002 — Agent 命名与描述：去人格化（v1.2 扩展 bb- 前缀；v1.3 扩展 bb-architect / bb-guru-*）
 
 - **Status**: Accepted (2026-05-16)
 - **Context**:
@@ -78,7 +78,7 @@ related:
 
 ---
 
-## ADR-004 — MVP 范围：4 个 agent，其余转 Future
+## ADR-004 — MVP 范围（v1.3 更新为 5 个 agent）
 
 - **Status**: Accepted (2026-05-16)
 - **Context**:
@@ -231,6 +231,162 @@ related:
 - **Note**: 若未来 Babel 用例扩展到不信任环境（共享部署 / 公网 SaaS / 第三方 agent），
   新增 ADR supersede 本 ADR 并实施进程级 sandbox。
   Tracking trigger：(a) 多用户共享部署；(b) 公网 SaaS 化；(c) agent 来源不可信。
+
+---
+
+## ADR-011 — Inter-Agent Communication = GitHub Issues
+
+- **Status**: Accepted (2026-05-16, v1.2)
+- **Context**:
+  v1.1.1 设计了 `babel_fix_request` schema + `events/*.jsonl` 协议作为 agent 间协作机制，
+  由 `babel-cross-domain-coordinator` 统一仲裁。v1.2 取消 coordinator（见 ADR-012），
+  需要新的 inter-agent comms 载体。
+- **Decision**:
+  使用 **GitHub issues**（通过 `gh` CLI）作为 agent 间通信通道：
+  - Label 表示阶段：`ready-for-{rtl,verification,synth,pd}` / `signoff` / `{X}-needs-fix`
+  - Issue body 结构化（yaml frontmatter + Markdown body）
+  - 三个新 skill：`bb-create-issue` / `bb-list-issues` / `bb-close-issue`
+  - 每条 fix-chain `max_fix_iteration: 3`；超出升级 `escalate-user`
+- **Consequences**:
+  - (+) 使用既有 GitHub 基础设施（无新组件）
+  - (+) 天然 audit trail（issue 历史）
+  - (+) 用户可直接观察 / 介入（issue 是 first-class UI）
+  - (-) 依赖 `gh` CLI 可用 + 仓库已配置 issues
+  - (-) 跨组织 / 离线场景需 fallback（Phase 5 评估 Linear / Jira 适配器）
+- **Affected**: design_doc.md §2.1 / §7.3 / §4.5；arch_spec / impl_spec 未来产出
+- **Supersedes**: 无（替代 v1.1.1 fix_request schema + jsonl events 协议）
+
+---
+
+## ADR-012 — Sequential Pipeline 作为 MVP 协作模型
+
+- **Status**: Accepted (2026-05-16, v1.2)
+- **Context**:
+  v1.1.1 设计了 `babel-cross-domain-coordinator` agent + 单写者 `design_state.json` 作为
+  中央协调器（ADR-003）。用户决策："不需要 cross-domain-coordinator，agents co-work
+  with git issues。先实现一个 design flow pipeline，顺序执行即可"。
+- **Decision**:
+  采用 **sequential pipeline**：
+  - 各 agent 按固定顺序执行（v1.2: arch→rtl→synth→verify；v1.3 ADR-015 调整为 arch→rtl→verify→synth→pd）
+  - 无中央 coordinator 进程
+  - 每个 agent 独立写自己的 schema-validated artifact 到 `designs/<name>/`
+  - 上游完成 → 创建 git issue (label=ready-for-<next>)
+  - 下游 agent 启动时 `bb-list-issues` 拾起 → 完成 → 关 issue + 开下一阶段
+  - 用 `design_summary.json` (append-only) 作为整体进度可见快照
+- **Consequences**:
+  - (+) 大幅简化：取消 coordinator agent / state.json 单写者锁 / event log merge 协议
+  - (+) ADR-003 (单写者 state) + 由其衍生的 watchdog / event offset 复杂度全部消除
+  - (+) 用户可逐 step 介入（每个 issue 都可暂停 / 手动调整）
+  - (-) 失去并行可能性（v1.1 设想的多 agent 同时跑被禁用；但 MVP 用例下不需要）
+  - (-) issue 拾起需要轮询或人工触发（不像 coord 那样 push-based）
+- **Affected**: design_doc.md §2.2；ADR-003 标 **Deprecated by ADR-012**；
+  arch_spec/architecture_specification.md M004 / M301 / M302 设计被取消
+- **Supersedes**: ADR-003（单写者 state.json）
+
+---
+
+## ADR-013 — Skill 执行范式：Write-Script → Run → Parse → Return
+
+- **Status**: Accepted (2026-05-16, v1.2)
+- **Context**:
+  用户决策："typical workflow should be: sub-agents call skills to write a script to do some
+  jobs, then run the scripts and check the output, maybe from eda tools. then do some
+  optimization and re-run the workflow, until the goal achieved。"
+  v1.1.1 把 skill 看作简单 CLI wrapper，但实际 EDA flow 需要写脚本（.ys / .tcl / .py），
+  执行后解析输出，agent 根据结果决定是否调优 + 重调。
+- **Decision**:
+  每个 skill 实现 **四阶段**：
+  1. **write_script** — 根据 args 生成可执行脚本到 `designs/<n>/<tool>/{stamp}.{ext}`
+  2. **run_script** — Bash 执行（10min 默认超时；PD skill 30min）
+  3. **parse_output** — 用正则 / json parser / pyverilog 解析；输出符合 skill output schema 的 JSON
+  4. **return** — 把结构化 JSON 返回 agent
+
+  **关键约束**：skill 不做"成功 / 失败"业务判断，只回传结果；optimization loop 在 **agent** 内。
+
+  Agent 端实现 optimization loop：循环调 skill → 判结果 → 调 args → 重调，直到收敛或超 max_iter。
+- **Consequences**:
+  - (+) skill 可被独立单测（mock args，对脚本与 parse 做 snapshot 测试）
+  - (+) Agent 与 skill 职责清晰（业务 vs 工具）
+  - (+) 脚本是 first-class artifact（可被用户复现、改进、调试）
+  - (-) skill 实现比 wrapper 复杂；template engine + parser 都要写
+  - (-) 多阶段失败处理需要在 skill 内实现（如 parser fallback）
+- **Affected**: design_doc.md §10；所有 bb-invoke-* skill 实现规范
+- **Supersedes**: 无
+
+---
+
+## ADR-014 — 复用既有 ic-* skills（不重新实现 bb- 版本）
+
+- **Status**: Accepted (2026-05-16, v1.3)
+- **Context**:
+  用户决策："bb-architect 负责输出 PRD/architecture spec/MAS 等文档（调用 bb-prd, bb-arch,
+  bb-mas 等 skills）"、"bb-guru-rtl 调用 bb-rtl-coder"。
+  用户既有 ECC skill 库已含 `bb-prd` / `bb-arch` / `bb-mas` / `bb-rtl-coder`，
+  覆盖了 v1.2 中 `bb-plan-arch` / `bb-generate-rtl` 等 Babel 原生 skill 的设计意图。
+- **Decision**:
+  - bb-architect 直接调用既有 `bb-prd` / `bb-arch` / `bb-mas`（**不**重新实现 bb-* 版本）
+  - bb-guru-rtl 直接调用 `bb-rtl-coder`
+  - v1.2 设计的 `bb-plan-arch` / `bb-generate-rtl` skill **删除**（不再实现）
+  - 命名规则扩展：`bb-{action}-{target}` 用于 Babel 原生 skill；`ic-{name}` 用于外部复用
+- **Consequences**:
+  - (+) 利用既有 skill 库，减少重复设计 / 实现 / 维护
+  - (+) ic-* skill 已被多个项目验证，质量有保证
+  - (+) Babel 专注于自己的"原生"能力（lint / cdc / sdc / floorplan / invoke / issue comms）
+  - (-) 对 ic-* skill 的演进有外部依赖；版本变更需同步评估
+  - (-) ic-* skill 的 input/output 契约可能与 Babel agent IO schema 不完全一致；
+    Phase 1 实施时需写 adapter（如 bb-mas 输出 → mas.schema.json 校验）
+- **Affected**: design_doc.md §3.1.1 / §3.1.2 / §4.1；ADR-013 skill 范式仍适用（ic-* skill 也应遵守）
+- **Supersedes**: 无（v1.2 设想的 bb-plan-arch / bb-generate-rtl 不再实施）
+
+---
+
+## ADR-015 — Pipeline 顺序：architect → rtl → verification → synthesis → pd
+
+- **Status**: Accepted (2026-05-16, v1.3)
+- **Context**:
+  v1.2 顺序为 `architect → rtl → synth → verify`。用户决策（v1.3）将其调整为
+  `architect → rtl → **verify** → **synth** → **pd**`：先做 RTL 级 functional 验证，
+  再做综合，最后 PD 输出 GDSII。
+- **Decision**:
+  采用 5 阶段顺序：
+  1. **bb-architect** — PRD / arch / MAS
+  2. **bb-guru-rtl** — 输入 MAS，输出 hierarchical SV + file_list.f
+  3. **bb-guru-verification** — coverage-driven sim, target=**100%**（functional + code）
+  4. **bb-guru-synthesis** — 从 MAS 派生 SDC（ADR-016），跑综合，迭代 timing/area
+  5. **bb-guru-pd** — floorplan/place/route/DRC/LVS/timing closure/GDSII
+  Signoff 在 PD 完成（GDSII 出炉 + DRC clean + LVS match + post-PD WNS ≥ 0）。
+- **Consequences**:
+  - (+) RTL-level functional 验证在综合前完成，符合业界标准 ASIC flow
+  - (+) synth 拿到的 RTL 是 functionally verified，可避免 "综合通过但功能错"
+  - (+) PD 输入是 timing-closed netlist，物理设计目标聚焦在 PD 自身问题（DRC / LVS / placement）
+  - (+) Signoff 落在 PD GDSII，是真正的 tape-out 候选
+  - (-) verification → synthesis 失败时（如发现 functional bug 需改 RTL）回退链较长
+  - (-) 5 阶段串行总时长较 v1.2 4 阶段更长（estimated +1.5h on UART）
+- **Affected**: design_doc.md §2.1 / §2.2 / §11；arch_spec 完整结构需重做
+- **Supersedes**: 无（v1.2 4 阶段顺序虽未 ADR 化但被本 ADR 取代）
+
+---
+
+## ADR-016 — SDC 来源：bb-guru-synthesis 从 MAS 派生（不再由 RTL agent 起草）
+
+- **Status**: Accepted (2026-05-16, v1.3)
+- **Context**:
+  v1.1 / v1.2 把 SDC 起草职责放在 `babel-rtl-coder` / `bb-guru-rtl`（产出 SDC 草稿，
+  由 synth-planner 最终化）。但 SDC 的源头是 MAS 中的时钟规划、复位策略、IO timing —
+  与 RTL 实现无关。在 RTL agent 内起草 SDC 等于让 RTL 假设时序约束，违反职责分离。
+- **Decision**:
+  - SDC 文件由 `bb-guru-synthesis` 从 MAS 直接派生
+  - 新增 skill `bb-create-sdc`（Babel 原生）：input = mas/mas.json, output = constraints/*.sdc
+  - `bb-guru-rtl` 输出中 **删除** SDC 草稿；仅输出 rtl/*.sv + file_list.f + rtl_artifact.json
+- **Consequences**:
+  - (+) 职责清晰：SDC 是 timing / IO domain 知识，归 synth agent
+  - (+) RTL agent 输出更专注：纯 HDL + file list；无 timing 假设
+  - (+) MAS 变更（时钟 / IO timing）→ 自动反映到 SDC 重生成（不需要改 RTL）
+  - (-) bb-create-sdc skill 需要解析 mas.json 的 clock_domains / interfaces / timing_constraints 字段；
+    schemas/mas.schema.json 需明确这些字段
+  - (-) v1.2 已设计的 rtl-coder 输出 SDC 草稿的逻辑需要从 Phase 1 设计中拿掉
+- **Affected**: design_doc.md §3.1.2 / §3.1.4 / §4.1；新 skill bb-create-sdc 实施
+- **Supersedes**: 无
 
 ---
 

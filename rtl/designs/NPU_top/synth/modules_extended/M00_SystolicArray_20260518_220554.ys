@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M00/src/M00_SystolicArray.sv
+hierarchy -check -top M00_SystolicArray
+synth -top M00_SystolicArray -flatten
+opt_clean -purge
+stat

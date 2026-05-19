@@ -1,0 +1,38 @@
+{
+  "stamp": "20260518_180523",
+  "design_name": "rtl_all",
+  "target_dir": "rtl/",
+  "script_path": "rtl/designs/rtl_all/rtl/lint_20260518_180523.sh",
+  "log_path": "rtl/designs/rtl_all/rtl/lint_20260518_180523.log",
+  "artifact_path": "rtl/designs/rtl_all/rtl/lint_20260518_180523.json",
+  "errors": 224,
+  "warnings": 914,
+  "clean": false,
+  "valid": true,
+  "summary": {
+    "syntax_errors": {
+      "total": 224,
+      "files": {
+        "M00_tb": 24,
+        "M04_src": 7,
+        "M04_tb": 3,
+        "M08_tb": 183,
+        "M09_tb": 6,
+        "M12_tb": 1
+      },
+      "root_causes": {
+        "covergroup_unsupported": "verible does not support SystemVerilog coverage constructs (covergroup/coverpoint/bins)",
+        "wire_logic_syntax": "M04 uses 'wire logic' declaration which verible parser doesn't fully support"
+      }
+    },
+    "style_warnings": {
+      "total": 914,
+      "top_rules": [
+        "explicit-parameter-storage-type",
+        "case-missing-default",
+        "always-ff-non-blocking",
+        "posix-eof"
+      ]
+    }
+  }
+}

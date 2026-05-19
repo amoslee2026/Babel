@@ -9,8 +9,16 @@ This document lists all installed EDA tools in `/eda_tools/`, including their ex
 | Verilator | Wilson Snyder | 5.024 | Installed |
 | JasperGold | Cadence | 2025.12, 2025.09p002 | Installed |
 | Innovus | Cadence | 25.12-s079 | Installed (tarball) |
+| Xcelium | Cadence | 25.01 | Tarball |
+| Conformal LEC | Cadence | 25.20-s200 | Installed |
+| Joules | Cadence | 25.13-s066 | Installed |
+| JStudio | Cadence | 25.13-s066 | Installed |
+| DDI | Cadence | 25.10.000 | Tarball (7 parts) |
+| SSV | Cadence | 25.12-s082 | Tarball |
+| Sigrity | Cadence | 25.10.0201, 25.1.2 | Installed |
 | VSCode | Microsoft | 1.117.0 | RPM Package |
-| Sigrity | Cadence | 25.10.0201 | Tarball (not extracted) |
+
+See [commercial-eda-tools.md](commercial-eda-tools.md) for full details.
 
 ---
 

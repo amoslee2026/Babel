@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babel.local/schemas/mas.schema.json",
+  "title": "MAS",
+  "description": "Module Architecture Specification produced by bb-architect (post bb-mas adapter).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "design_name", "top_module", "modules", "clock_domains",
+    "io_timing", "io_ring", "cdc_waivers", "inputs"
+  ],
+  "properties": {
+    "design_name": {"type": "string"},
+    "top_module": {"type": "string"},
+    "target_freq_mhz": {"type": "number"},
+    "target_pdk": {"type": "string", "enum": ["asap7"]},
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "interface"],
+        "properties": {
+          "name": {"type": "string"},
+          "reuse": {"type": "string", "description": "CBB name reused, or 'none'"},
+          "interface": {
+            "type": "object",
+            "properties": {
+              "ports": {"type": "array"},
+              "parameters": {"type": "array"}
+            }
+          },
+          "fsm_ref": {"type": "string"},
+          "datapath_ref": {"type": "string"}
+        }
+      }
+    },
+    "clock_domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "freq_mhz"],
+        "properties": {
+          "name": {"type": "string"},
+          "freq_mhz": {"type": "number"},
+          "source": {"type": "string"}
+        }
+      }
+    },
+    "io_timing": {
+      "type": "object",
+      "properties": {
+        "inputs":  {"type": "array", "items": {"type": "object"}},
+        "outputs": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "io_ring": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["side", "pads"],
+        "properties": {
+          "side": {"enum": ["N", "S", "E", "W"]},
+          "pads": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "clock_plan": {"type": "object"},
+    "pad_list":   {"type": "array"},
+    "cdc_waivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from_clk", "to_clk", "signal", "justification"],
+        "properties": {
+          "from_clk": {"type": "string"},
+          "to_clk":   {"type": "string"},
+          "signal":   {"type": "string"},
+          "justification": {"type": "string"}
+        }
+      }
+    },
+    "path_exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {"enum": ["false_path", "multicycle"]},
+          "from": {"type": "string"},
+          "to":   {"type": "string"},
+          "cycles": {"type": "integer"}
+        }
+      }
+    },
+    "area_budget_um2":  {"type": "number"},
+    "power_budget_mw":  {"type": "number"},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path":   {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  }
+}

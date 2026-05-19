@@ -1,0 +1,70 @@
+{
+  "rtl_files": [
+    "rtl/M00/src/M00_SystolicArray.sv",
+    "rtl/M01/src/M01_DataflowController.sv",
+    "rtl/M02/src/M02_SRAMScratchpad.sv",
+    "rtl/M03/src/M03_DRAMController.sv",
+    "rtl/M04/src/M04_SystemBus.sv",
+    "rtl/M05/src/M05_PowerManager.sv",
+    "rtl/M06/src/M06_ClockManager.sv",
+    "rtl/M07/src/M07_ResetManager.sv",
+    "rtl/M08/src/M08_ThreadScheduler.sv",
+    "rtl/M09/src/M09_AttentionUnit.sv",
+    "rtl/M10/src/M10_FFNMatMul.sv",
+    "rtl/M11/src/M11_RMSNormRoPE.sv",
+    "rtl/M12/src/M12_SoftMax.sv",
+    "rtl/M13/src/M13_ISADecoder.sv",
+    "rtl/M14/src/M14_SecureBoot.sv",
+    "rtl/M15/src/M15_JTAGInterface.sv",
+    "rtl/M16/src/M16_ISAInterface.sv"
+  ],
+  "hashes": {
+    "rtl/M00/src/M00_SystolicArray.sv": "48bbed3347ee2f3d480aebe6b9ec755e63efe35072f40810fb118d856ac71a29",
+    "rtl/M01/src/M01_DataflowController.sv": "e542359eea899a31dc08d26e3fb4ad08534e8f746081a0f4109b06fa2a6e9f6e",
+    "rtl/M02/src/M02_SRAMScratchpad.sv": "a19ca4048943012811be91cc76fb5816469bb154396bdf88b2c0f710d0429f18",
+    "rtl/M03/src/M03_DRAMController.sv": "691f4068bbd89dacecdb3aab40b75fe56b4cfbf48605d36109dfdc23194eb0ff",
+    "rtl/M04/src/M04_SystemBus.sv": "bb974688dcd0bc2e1fd00f505832b094ef928b3e42dfe9e1c464126a3f646d97",
+    "rtl/M05/src/M05_PowerManager.sv": "5ec655ac4265417c5df360d057f9a83c80679e6ca725890b59e536342b4c2013",
+    "rtl/M06/src/M06_ClockManager.sv": "0942ff92ed8527a4b0f2a0f764031be86230c93b706316cc30ec1ffc6094c4d5",
+    "rtl/M07/src/M07_ResetManager.sv": "2871ae6332d0d53b4f08296bb1ec20de280231c1fca6603e3a773083e54b2539",
+    "rtl/M08/src/M08_ThreadScheduler.sv": "7f433986a2fde6e98d91b00c8765109d029f155a9f4540504c04c3a71d0d174d",
+    "rtl/M09/src/M09_AttentionUnit.sv": "8e7134a17e00589398261dcdf62f9abb7af6d0a6ae4be6efb25172dce595ff15",
+    "rtl/M10/src/M10_FFNMatMul.sv": "4231f65e01d6f669bb3e09e0f0ff58df891b66698d34383e3a36c2abbeed8688",
+    "rtl/M11/src/M11_RMSNormRoPE.sv": "b4b4fc3dccb9caab41b7ab61b35affe02e000d8275226ab68a7336727d3dc9a9",
+    "rtl/M12/src/M12_SoftMax.sv": "b0517fce50702a2338f25dff9b44255f56c04bf7916636c07e802dffb3012a52",
+    "rtl/M13/src/M13_ISADecoder.sv": "37d6be831c047673e96e1a360ef017b9c9ddc71935945f22034237ebf9820ec6",
+    "rtl/M14/src/M14_SecureBoot.sv": "3727909cbc425c463aa6cf6d398e5df80f144d25e8a90b340607a3c11215ff60",
+    "rtl/M15/src/M15_JTAGInterface.sv": "87b831ab601c1a6000da07f11ddd669287d9416c414c21b1e60e1ced446eaa54",
+    "rtl/M16/src/M16_ISAInterface.sv": "974c203705c31c02660d737e7c0380e727813966109e4943acd02d63ddb45eed"
+  },
+  "generated": "2026-05-17T19:20:00+08:00",
+  "spec_source": "spec_mas",
+  "lint_status": {
+    "pass": [
+      "M06",
+      "M07",
+      "M10",
+      "M15",
+      "M16"
+    ],
+    "medium": [
+      "M00",
+      "M01",
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M09",
+      "M11",
+      "M13",
+      "M14"
+    ],
+    "high": [
+      "M08",
+      "M12"
+    ]
+  },
+  "review_passed": true,
+  "critical_issues": 0,
+  "high_issues": 2
+}

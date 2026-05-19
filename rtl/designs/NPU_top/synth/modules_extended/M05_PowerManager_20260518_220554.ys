@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M05/src/M05_PowerManager.sv
+hierarchy -check -top M05_PowerManager
+synth -top M05_PowerManager -flatten
+opt_clean -purge
+stat

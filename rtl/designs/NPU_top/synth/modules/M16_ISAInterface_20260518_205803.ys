@@ -1,0 +1,9 @@
+read_verilog -sv rtl/M16/src/M16_ISAInterface.sv
+hierarchy -check -top M16_ISAInterface
+synth -top M16_ISAInterface
+opt
+opt_clean -purge
+abc -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib -g AND,OR,NAND,NOR,XOR
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules/M16_ISAInterface_20260518_205803.v
+stat -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib

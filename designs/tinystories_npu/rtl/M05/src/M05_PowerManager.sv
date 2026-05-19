@@ -1,0 +1,1 @@
+/home/lxx/wrk/Babel/rtl/M05/src/M05_PowerManager.sv

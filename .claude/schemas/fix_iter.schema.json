@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babel.local/schemas/fix_iter.schema.json",
+  "title": "FixIter",
+  "description": "Per-agent and global fix iteration counters with correlation_id de-dup.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["per_agent", "global", "correlation_ids"],
+  "properties": {
+    "per_agent": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0},
+      "description": "{ agent_name: iter_count }, e.g. { bb-guru-rtl: 2 }"
+    },
+    "global": {"type": "integer", "minimum": 0, "maximum": 10},
+    "correlation_ids": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+      "description": "sha256 of each unique failing artifact; same correlation_id counted once."
+    },
+    "last_updated": {"type": "string", "format": "date-time"}
+  }
+}
