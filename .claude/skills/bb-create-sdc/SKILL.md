@@ -1,6 +1,6 @@
 ---
 name: bb-create-sdc
-description: "从 MAS（clock_domains / io_timing / path_exceptions）派生 Synopsys SDC 时序约束文件，OpenSTA 语法校验。触发场景：(1) bb-guru-synthesis 综合前；(2) post-PD timing fail 修订约束；(3) 显式 /bb-create-sdc。"
+description: "从 MAS（clock_domains / io_timing / path_exceptions）派生 Synopsys SDC 时序约束文件，OpenSTA 语法校验。触发场景：(1) bba-guru-synthesis 综合前；(2) post-PD timing fail 修订约束；(3) 显式 /bb-create-sdc。"
 ---
 
 # bb-create-sdc
@@ -9,7 +9,7 @@ description: "从 MAS（clock_domains / io_timing / path_exceptions）派生 Syn
 
 按 MAS clock_domains / io_timing / path_exceptions + target_freq 生成 SDC，OpenSTA 解析校验。ADR-016：SDC 来源是 MAS，不从 RTL 推断。
 
-- 调用者：`bb-guru-synthesis`
+- 调用者：`bba-guru-synthesis`
 - 上游：`bb-mas`
 - 下游：`bb-check-cdc`、`bb-invoke-yosys`、`bb-invoke-opensta`
 - 禁止使用：Task / Agent / Skill
@@ -86,7 +86,7 @@ sta -exit "read_sdc <artifact_path>; exit" 2>&1
 |------|------|
 | valid=true | 进 `bb-check-cdc` → `bb-invoke-yosys` |
 | valid=false | 重试 1 次，仍失败 `error="sdc invalid"` |
-| post-PD timing fail | `bb-guru-pd` 触发本 skill 加 false_path / multicycle |
+| post-PD timing fail | `bba-guru-pd` 触发本 skill 加 false_path / multicycle |
 
 ## 资源索引
 

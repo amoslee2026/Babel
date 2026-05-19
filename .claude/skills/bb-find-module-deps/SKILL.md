@@ -1,6 +1,6 @@
 ---
 name: bb-find-module-deps
-description: "扫描 RTL 目录提取模块层次依赖，拓扑排序后写 file_list.f（叶模块在前，top 在最后），供 Yosys/Verilator 使用。触发场景：(1) bb-guru-rtl 生成 RTL 后生成 file_list；(2) 显式 /bb-find-module-deps。"
+description: "扫描 RTL 目录提取模块层次依赖，拓扑排序后写 file_list.f（叶模块在前，top 在最后），供 Yosys/Verilator 使用。触发场景：(1) bba-guru-rtl 生成 RTL 后生成 file_list；(2) 显式 /bb-find-module-deps。"
 ---
 
 # bb-find-module-deps
@@ -9,7 +9,7 @@ description: "扫描 RTL 目录提取模块层次依赖，拓扑排序后写 fil
 
 扫 `designs/<name>/rtl/*.sv`，构建 module → file 映射 + module instantiation 图，Kahn 拓扑排序，写 `file_list.f`。
 
-- 调用者：`bb-guru-rtl`
+- 调用者：`bba-guru-rtl`
 - 下游：`bb-check-lint`、`bb-invoke-yosys`、`bb-invoke-verilator`
 - 禁止使用：Task / Agent / Skill
 
@@ -74,7 +74,7 @@ except Exception:
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-rtl` 直接把 `artifact_path` 传给下游。
+返回 JSON。`bba-guru-rtl` 直接把 `artifact_path` 传给下游。
 
 ## file_list.f 格式
 
@@ -94,7 +94,7 @@ designs/<name>/rtl/uart_top.sv
 |------|------|
 | valid=true | 进 `bb-check-lint` |
 | cyclic | 开 `arch-needs-fix`（模块循环必须重设计） |
-| 找不到 top_module | `error="top not found"`，bb-guru-rtl 修正 |
+| 找不到 top_module | `error="top not found"`，bba-guru-rtl 修正 |
 
 ## 资源索引
 

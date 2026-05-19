@@ -1,6 +1,6 @@
 ---
 name: bb-invoke-magic
-description: "调用 Magic 8.3.641 执行 PD 操作：floorplan / place / DRC / layout extraction。触发场景：(1) bb-guru-pd 做 floorplan 与 placement；(2) routing 后做 DRC；(3) LVS 前 extract SPICE；(4) 显式 /bb-invoke-magic。"
+description: "调用 Magic 8.3.641 执行 PD 操作：floorplan / place / DRC / layout extraction。触发场景：(1) bba-guru-pd 做 floorplan 与 placement；(2) routing 后做 DRC；(3) LVS 前 extract SPICE；(4) 显式 /bb-invoke-magic。"
 ---
 
 # bb-invoke-magic
@@ -9,9 +9,9 @@ description: "调用 Magic 8.3.641 执行 PD 操作：floorplan / place / DRC / 
 
 按 `action` 切换四种模式调 Magic：`floorplan` / `place` / `drc` / `extract`。
 
-> **注（M-05 dedup）**：`action=floorplan` 在本 skill 中保留为底层入口；**bb-guru-pd 实际不直接调 floorplan**，而是先调 `bb-create-floorplan` 生成 TCL，再以 `action=place` 把 TCL 执行（floorplan TCL 被 `place_design` 流程 source）。`action=floorplan` 仅供 ad-hoc 调试场景使用。
+> **注（M-05 dedup）**：`action=floorplan` 在本 skill 中保留为底层入口；**bba-guru-pd 实际不直接调 floorplan**，而是先调 `bb-create-floorplan` 生成 TCL，再以 `action=place` 把 TCL 执行（floorplan TCL 被 `place_design` 流程 source）。`action=floorplan` 仅供 ad-hoc 调试场景使用。
 
-- 调用者：`bb-guru-pd`
+- 调用者：`bba-guru-pd`
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args
@@ -91,7 +91,7 @@ quit
 
 ### Phase 4 — return
 
-按 action 返回对应字段。`bb-guru-pd`：
+按 action 返回对应字段。`bba-guru-pd`：
 - drc.clean=false → optimization loop（调整 utilization）
 - place.valid=false → 重 floorplan
 - extract → 触发 `bb-invoke-netgen`

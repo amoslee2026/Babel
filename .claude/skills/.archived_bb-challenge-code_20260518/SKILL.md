@@ -71,8 +71,8 @@ prompt = build(ROLE_PROMPTS[role], focus, content)
 | Skill | 定位 | 强制 | 评审维度 |
 |-------|------|------|----------|
 | `bb-challenge-code` | **用户级 ad-hoc 工具**，任意目标（代码/文档/spec），用户主动调 | 否（无 pipeline 阻断） | 通用对抗，按 `role` 风格变化 |
-| `bb-code-review`    | RTL pipeline 强制环节，bb-guru-rtl 在 lint 后自动调，pass=false 阻断 | 是（自动阻断 bb-rtl-coder） | RTL 专用：timing / maintainability / synthesis / MAS-alignment |
-| `bb-spec-review`    | Spec pipeline 强制环节，bb-architect 在 MAS frozen 前自动调，pass=false 阻断 | 是（自动阻断 frozen） | 规格专用：consistency / feasibility / coverage |
+| `bb-code-review`    | RTL pipeline 强制环节，bba-guru-rtl 在 lint 后自动调，pass=false 阻断 | 是（自动阻断 bb-rtl-coder） | RTL 专用：timing / maintainability / synthesis / MAS-alignment |
+| `bb-spec-review`    | Spec pipeline 强制环节，bba-architect 在 MAS frozen 前自动调，pass=false 阻断 | 是（自动阻断 frozen） | 规格专用：consistency / feasibility / coverage |
 
 简言之：
 - 用户/agent 想做开放式对抗 → `bb-challenge-code`

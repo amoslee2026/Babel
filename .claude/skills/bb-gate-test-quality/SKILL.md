@@ -1,6 +1,6 @@
 ---
 name: bb-gate-test-quality
-description: "验证质量门禁（v1.3 加严）：functional 100% + line/branch/toggle 100% + assertions 全 pass。通过才允许 ready-for-synth。触发场景：(1) bb-guru-verification 跑完回归；(2) 显式 /bb-gate-test-quality。"
+description: "验证质量门禁（v1.3 加严）：functional 100% + line/branch/toggle 100% + assertions 全 pass。通过才允许 ready-for-synth。触发场景：(1) bba-guru-verification 跑完回归；(2) 显式 /bb-gate-test-quality。"
 ---
 
 # bb-gate-test-quality
@@ -9,7 +9,7 @@ description: "验证质量门禁（v1.3 加严）：functional 100% + line/branc
 
 读 coverage.json / test_report.json / sim_log，校验所有覆盖率 == 100% 且无断言失败。
 
-- 调用者：`bb-guru-verification`
+- 调用者：`bba-guru-verification`
 - 上游：`bb-collect-coverage`、`bb-invoke-verilator`
 - 禁止使用：Task / Agent / Skill
 

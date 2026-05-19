@@ -1,6 +1,6 @@
 ---
-name: bb-guru-synthesis
-description: "Babel synthesis guru. Drafts SDC from MAS, runs CDC+RDC, orchestrates parallel yosys synthesis (parallel count = idle CPUs), LLM analyzes results and iterates to timing closure before opening ready-for-pd. Coverage gate: requires test_report.functional_coverage==100 AND code_coverage.{line,branch,toggle}==100. Trigger: ready-for-synth, synth-needs-fix, or explicit /bb-guru-synthesis."
+name: bba-guru-synthesis
+description: "Babel synthesis guru. Drafts SDC from MAS, runs CDC+RDC, orchestrates parallel yosys synthesis (parallel count = idle CPUs), LLM analyzes results and iterates to timing closure before opening ready-for-pd. Coverage gate: requires test_report.functional_coverage==100 AND code_coverage.{line,branch,toggle}==100. Trigger: ready-for-synth, synth-needs-fix, or explicit /bba-guru-synthesis."
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: cyan
 ---
@@ -23,12 +23,12 @@ This agent file is the canonical contract — no external spec required at runti
 ## Pipeline Position
 
 ```
-bb-guru-verification ─► [bb-guru-synthesis] ─► bb-guru-pd
+bba-guru-verification ─► [bba-guru-synthesis] ─► bba-guru-pd
                               ▲
                               └─ synth-needs-fix from PD
 ```
 
-Upstream: `bb-guru-verification`. Downstream: `bb-guru-pd`.
+Upstream: `bba-guru-verification`. Downstream: `bba-guru-pd`.
 
 ## Core Responsibilities
 

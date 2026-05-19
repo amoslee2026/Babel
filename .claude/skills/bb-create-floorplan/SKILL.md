@@ -1,6 +1,6 @@
 ---
 name: bb-create-floorplan
-description: "从 MAS（io_ring/pad_list/clock_plan）+ 综合网表生成 Magic floorplan TCL，交给 bb-invoke-magic 执行。触发场景：(1) bb-guru-pd 综合后做 floorplan；(2) DRC 失败后调整 utilization 重生成；(3) 显式 /bb-create-floorplan。"
+description: "从 MAS（io_ring/pad_list/clock_plan）+ 综合网表生成 Magic floorplan TCL，交给 bb-invoke-magic 执行。触发场景：(1) bba-guru-pd 综合后做 floorplan；(2) DRC 失败后调整 utilization 重生成；(3) 显式 /bb-create-floorplan。"
 ---
 
 # bb-create-floorplan
@@ -9,7 +9,7 @@ description: "从 MAS（io_ring/pad_list/clock_plan）+ 综合网表生成 Magic
 
 按 MAS IO ring + clock plan + utilization/aspect_ratio 参数渲染 Magic floorplan TCL。
 
-- 调用者：`bb-guru-pd`
+- 调用者：`bba-guru-pd`
 - 上游：`bb-mas`（MAS json）、`bb-invoke-yosys`（netlist）
 - 下游：`bb-invoke-magic`(action=place)
 - 禁止使用：Task / Agent / Skill
@@ -84,7 +84,7 @@ clk_plan  = mas.get("clock_plan", {})
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-pd` 调 `bb-invoke-magic`(action=place, layout_input=artifact)。
+返回 JSON。`bba-guru-pd` 调 `bb-invoke-magic`(action=place, layout_input=artifact)。
 
 ## 收敛 / 失败
 

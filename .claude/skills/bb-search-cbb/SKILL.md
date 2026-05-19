@@ -1,6 +1,6 @@
 ---
 name: bb-search-cbb
-description: "在 wiki/cbb/ 搜索可复用 Common Building Block（sync-fifo / 2ff-sync / clock-gate 等），返回匹配模板路径。bb-architect 在 MAS 中识别复用组件时调用。触发场景：(1) bb-architect 拆分子模块识别 CBB；(2) 显式 /bb-search-cbb。"
+description: "在 wiki/cbb/ 搜索可复用 Common Building Block（sync-fifo / 2ff-sync / clock-gate 等），返回匹配模板路径。bba-architect 在 MAS 中识别复用组件时调用。触发场景：(1) bba-architect 拆分子模块识别 CBB；(2) 显式 /bb-search-cbb。"
 ---
 
 # bb-search-cbb
@@ -9,7 +9,7 @@ description: "在 wiki/cbb/ 搜索可复用 Common Building Block（sync-fifo / 
 
 按 pattern 搜索 `wiki/cbb/` 目录，输出可复用 CBB 列表。调用方据匹配进一步获取接口模板。
 
-- 调用者：`bb-architect`
+- 调用者：`bba-architect`
 - 关联：`bb-get-interface-template`（获取详细接口）
 - 禁止使用：Task / Agent / Skill
 
@@ -50,7 +50,7 @@ rg -i "<pattern>" wiki/cbb/ --include="*.md" -l --max-count=<max_results>
 
 ### Phase 4 — return
 
-返回 JSON。`bb-architect` 据 `cbb_name` 调 `bb-get-interface-template` 取接口表。
+返回 JSON。`bba-architect` 据 `cbb_name` 调 `bb-get-interface-template` 取接口表。
 
 ## 收敛 / 失败
 

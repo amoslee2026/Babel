@@ -1,6 +1,6 @@
 ---
 name: bb-check-cdc
-description: "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains 找跨域信号，检查是否被 2ff-sync CBB 保护。触发场景：(1) bb-guru-synthesis 综合前；(2) 显式 /bb-check-cdc。"
+description: "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains 找跨域信号，检查是否被 2ff-sync CBB 保护。触发场景：(1) bba-guru-synthesis 综合前；(2) 显式 /bb-check-cdc。"
 ---
 
 # bb-check-cdc
@@ -9,7 +9,7 @@ description: "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains 找跨
 
 读 `bb-parse-ast` 的 AST + MAS.clock_domains，识别跨时钟域 register-to-register 路径，检查是否通过 2ff 同步器，输出 violation 报告。
 
-- 调用者：`bb-guru-synthesis`
+- 调用者：`bba-guru-synthesis`
 - 上游：`bb-parse-ast` / `bb-parse-ast-fallback`
 - 禁止使用：Task / Agent / Skill
 
@@ -67,7 +67,7 @@ json.dump({"violations": violations}, open(out, "w"))
 
 ### Phase 4 — return
 
-返回 JSON。`clean=false` → bb-guru-synthesis 开 `rtl-needs-fix`（CDC 不允许 waive）。
+返回 JSON。`clean=false` → bba-guru-synthesis 开 `rtl-needs-fix`（CDC 不允许 waive）。
 
 ## 收敛 / 失败
 

@@ -1,6 +1,6 @@
 ---
 name: bb-invoke-klayout
-description: "调用 KLayout 0.30.8 执行 GDSII 导出（stream out）、GDS-level DRC、或导出后 verify。PD 流程末尾产出最终 .gds（signoff 产物）。触发场景：(1) bb-guru-pd routed 后 GDS export；(2) GDS 层 DRC 检查；(3) 导出后 verify；(4) 显式 /bb-invoke-klayout。"
+description: "调用 KLayout 0.30.8 执行 GDSII 导出（stream out）、GDS-level DRC、或导出后 verify。PD 流程末尾产出最终 .gds（signoff 产物）。触发场景：(1) bba-guru-pd routed 后 GDS export；(2) GDS 层 DRC 检查；(3) 导出后 verify；(4) 显式 /bb-invoke-klayout。"
 ---
 
 # bb-invoke-klayout
@@ -9,7 +9,7 @@ description: "调用 KLayout 0.30.8 执行 GDSII 导出（stream out）、GDS-le
 
 按 `action` 切换三种模式调 KLayout：`gdsii_export`（DEF → GDS，别名 `export_gds`）、`drc`（GDS 层规则检查）、或 `verify`（导出后回读 + 单元完整性校验）。
 
-- 调用者：`bb-guru-pd`
+- 调用者：`bba-guru-pd`
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args
@@ -78,7 +78,7 @@ description: "调用 KLayout 0.30.8 执行 GDSII 导出（stream out）、GDS-le
 |------|------|
 | export valid=true | signoff |
 | export valid=false | 上溯 Magic DRC 定位 |
-| drc violations>0 | bb-guru-pd 开 `synth-needs-fix`（综合冲突）或重布线 |
+| drc violations>0 | bba-guru-pd 开 `synth-needs-fix`（综合冲突）或重布线 |
 | `VERSION_MISMATCH` | 修 eda_env.sh |
 | Phase 2 timeout（1800s） | `error="KLAYOUT_TIMEOUT"` |
 

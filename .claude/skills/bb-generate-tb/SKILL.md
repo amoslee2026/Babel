@@ -1,6 +1,6 @@
 ---
 name: bb-generate-tb
-description: "根据 MAS + verification_plan + RTL 接口描述生成 SystemVerilog UVM 或 cocotb 测试平台与 test cases 清单。触发场景：(1) bb-guru-verification 在 plan 完成后；(2) 补充 corner case TB；(3) 显式 /bb-generate-tb。"
+description: "根据 MAS + verification_plan + RTL 接口描述生成 SystemVerilog UVM 或 cocotb 测试平台与 test cases 清单。触发场景：(1) bba-guru-verification 在 plan 完成后；(2) 补充 corner case TB；(3) 显式 /bb-generate-tb。"
 ---
 
 # bb-generate-tb
@@ -9,7 +9,7 @@ description: "根据 MAS + verification_plan + RTL 接口描述生成 SystemVeri
 
 读 MAS 接口表 + verification_plan FTP 列表 + rtl_artifact 模块清单，生成 TB 顶层 + base sequence + per-FTP sequence + covergroup，并跑 verilator lint-only 预检。
 
-- 调用者：`bb-guru-verification`
+- 调用者：`bba-guru-verification`
 - 上游：`bb-create-verif-plan`
 - 下游：`bb-invoke-verilator`
 - 禁止使用：Task / Agent / Skill
@@ -84,7 +84,7 @@ verilator --lint-only -sv -f designs/<name>/file_list.f designs/<name>/tb/tb_top
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-verification` 据此触发 `bb-invoke-verilator`。
+返回 JSON。`bba-guru-verification` 据此触发 `bb-invoke-verilator`。
 
 ## 收敛 / 失败
 

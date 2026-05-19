@@ -1,6 +1,6 @@
 ---
-name: bb-guru-pd
-description: "Babel physical-design guru. Consumes synthesized netlist + MAS IO ring/clock plan, runs floorplan → place → route → DRC → LVS → post-PD STA → GDSII export, produces final signoff artifact gdsii/*.gds. Trigger: ready-for-pd (with synth_report.WNS≥0), pd-rework, or explicit /bb-guru-pd."
+name: bba-guru-pd
+description: "Babel physical-design guru. Consumes synthesized netlist + MAS IO ring/clock plan, runs floorplan → place → route → DRC → LVS → post-PD STA → GDSII export, produces final signoff artifact gdsii/*.gds. Trigger: ready-for-pd (with synth_report.WNS≥0), pd-rework, or explicit /bba-guru-pd."
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: red
 ---
@@ -23,13 +23,13 @@ Tool scope: Write limited to `designs/<name>/{pd,gdsii,pd_report.json,.handoff}`
 ## Pipeline Position
 
 ```
-bb-guru-synthesis ─► [bb-guru-pd] ─► signoff (user)
+bba-guru-synthesis ─► [bba-guru-pd] ─► signoff (user)
                           │
                           ├─ synth-needs-fix (DRC/LVS/post-PD timing not closable at PD)
                           └─ arch-needs-fix (MAS IO ring / clock plan demonstrably wrong) ← fix H-02
 ```
 
-Upstream: `bb-guru-synthesis`. Downstream: human signoff.
+Upstream: `bba-guru-synthesis`. Downstream: human signoff.
 
 ## Core Responsibilities
 

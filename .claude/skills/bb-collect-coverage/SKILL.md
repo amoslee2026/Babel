@@ -9,7 +9,7 @@ description: "解析 Verilator coverage.dat + sim log，输出 functional + code
 
 读 `coverage.dat`（verilator）+ sim log（covergroup hits），输出 line/branch/toggle/functional 百分比与未覆盖 bin 列表。
 
-- 调用者：`bb-guru-verification`
+- 调用者：`bba-guru-verification`
 - 上游：`bb-invoke-verilator`
 - 禁止使用：Task / Agent / Skill
 
@@ -65,7 +65,7 @@ verilator_coverage --annotate designs/<name>/sim_results/annotate/ <coverage_dat
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-verification`：
+返回 JSON。`bba-guru-verification`：
 - `meets_target=true` → signoff，开 `ready-for-synth`
 - `meets_target=false` → 把 `uncovered_bins` 反馈，追加 corner-case 用例重 sim
 

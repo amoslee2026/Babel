@@ -1,6 +1,6 @@
 ---
 name: bb-invoke-verilator
-description: "调用 Verilator 5.012 编译 RTL + TB 并跑 coverage-driven simulation，产出 sim log / coverage.dat / VCD。触发场景：(1) bb-guru-verification 完成 TB 后跑回归；(2) RTL 修复后回归验证；(3) 显式 /bb-invoke-verilator。"
+description: "调用 Verilator 5.012 编译 RTL + TB 并跑 coverage-driven simulation，产出 sim log / coverage.dat / VCD。触发场景：(1) bba-guru-verification 完成 TB 后跑回归；(2) RTL 修复后回归验证；(3) 显式 /bb-invoke-verilator。"
 ---
 
 # bb-invoke-verilator
@@ -9,7 +9,7 @@ description: "调用 Verilator 5.012 编译 RTL + TB 并跑 coverage-driven simu
 
 把 RTL（`file_list.f`）+ testbench（`tb/tb_top.sv`）编译为 verilator 可执行二进制并运行，产出 sim log、coverage 数据库、VCD 波形。
 
-- 调用者：`bb-guru-verification`
+- 调用者：`bba-guru-verification`
 - 下游消费者：`bb-collect-coverage`（读 `coverage.dat`）
 - 禁止使用：Task / Agent / Skill
 

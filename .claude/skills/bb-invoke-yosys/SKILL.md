@@ -1,6 +1,6 @@
 ---
 name: bb-invoke-yosys
-description: "调用 Yosys 0.35 对 RTL 进行逻辑综合并技术映射到 ASAP7 标准单元，产出门级网表 + QoR 报告。支持并行综合（基于空闲CPU数量）。Workflow: (1)生成综合脚本;(2)并行执行综合;(3)LLM检查结果并迭代优化。触发场景：(1) bb-guru-synthesis 已完成 SDC 与 CDC 检查、需要生成 netlist；(2) PD 反馈 area/path 超标需要重综合；(3) 显式 /bb-invoke-yosys。"
+description: "调用 Yosys 0.35 对 RTL 进行逻辑综合并技术映射到 ASAP7 标准单元，产出门级网表 + QoR 报告。支持并行综合（基于空闲CPU数量）。Workflow: (1)生成综合脚本;(2)并行执行综合;(3)LLM检查结果并迭代优化。触发场景：(1) bba-guru-synthesis 已完成 SDC 与 CDC 检查、需要生成 netlist；(2) PD 反馈 area/path 超标需要重综合；(3) 显式 /bb-invoke-yosys。"
 ---
 
 # bb-invoke-yosys
@@ -14,7 +14,7 @@ description: "调用 Yosys 0.35 对 RTL 进行逻辑综合并技术映射到 ASA
 2. **并行执行综合**: 调用 `run_parallel_synthesis.py`（并行数=空闲CPU数）
 3. **LLM检查迭代**: 分析 `synthesis_summary.json`，修复问题并重试
 
-调用者：`bb-guru-synthesis`。
+调用者：`bba-guru-synthesis`。
 被调用方：`bb-invoke-abc`（间接，由 yosys 内部 `abc` 命令触发）。
 禁止使用：Task / Agent / Skill（本 skill 是叶子 skill，不递归调用其他 agent）。
 
@@ -138,7 +138,7 @@ python3 scripts/run_parallel_synthesis.py \
    - `YOSYS_TIMEOUT` → 降低复杂度、增加 `opt -fast`
    - `VERSION_MISMATCH` → 修复EDA环境
 4. 调整参数重试（最多6次）
-5. 成功后返回给 `bb-guru-synthesis`
+5. 成功后返回给 `bba-guru-synthesis`
 
 ## 命令行用法
 

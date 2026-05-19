@@ -1,6 +1,6 @@
 ---
 name: bb-spec-review
-description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完整性 / 一致性 / 可实现性 / 验证覆盖。默认 role=ruthless（规格阶段错误成本最高）。在 MAS frozen 前调用。触发场景：(1) bb-architect 写完 MAS；(2) 显式 /bb-spec-review。"
+description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完整性 / 一致性 / 可实现性 / 验证覆盖。默认 role=ruthless（规格阶段错误成本最高）。在 MAS frozen 前调用。触发场景：(1) bba-architect 写完 MAS；(2) 显式 /bb-spec-review。"
 ---
 
 # bb-spec-review
@@ -9,7 +9,7 @@ description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完
 
 跨文档检查 PRD ↔ arch_spec ↔ MAS 一致性、可实现性、验证覆盖；输出严重程度分级 issues。
 
-- 调用者：`bb-architect`
+- 调用者：`bba-architect`
 - 关联：`bb-challenge-code`（通用）
 - 禁止使用：Task / Agent / Skill
 
@@ -63,7 +63,7 @@ prompt = render_spec_review_prompt(role, focus, prd, arch, mas)
 
 ### Phase 4 — return
 
-返回 JSON。`pass=false` → bb-architect 修 MAS（≤2 iter），仍失败 → escalate 用户。
+返回 JSON。`pass=false` → bba-architect 修 MAS（≤2 iter），仍失败 → escalate 用户。
 
 ## 维度
 
@@ -86,7 +86,7 @@ prompt = render_spec_review_prompt(role, focus, prd, arch, mas)
 | 状态 | 行动 |
 |------|------|
 | pass=true | frozen MAS + 开 `ready-for-rtl` |
-| pass=false & iter<2 | bb-architect 修 MAS 重评 |
+| pass=false & iter<2 | bba-architect 修 MAS 重评 |
 | iter≥2 | escalate 用户 |
 
 ## 资源索引
