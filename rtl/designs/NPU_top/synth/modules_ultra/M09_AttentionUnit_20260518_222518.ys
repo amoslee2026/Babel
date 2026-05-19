@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M09/src/M09_AttentionUnit.sv
+hierarchy -check -top M09_AttentionUnit
+synth -top M09_AttentionUnit -flatten
+opt_clean -purge
+stat

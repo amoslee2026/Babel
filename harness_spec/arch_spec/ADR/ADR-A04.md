@@ -1,47 +1,50 @@
 ---
 id: ADR-A04
-status: Accepted
+status: Accepted (v2)
 date: 2026-05-16
-resolves: v1.1-issue H5
-extends: ADR-007
+resolves: claude-mem fallback 实现
+extends: project ADR-007
 ---
 
-# ADR-A04 — claude-mem 失败降级 = Stateless + 警告
+# ADR-A04 — claude-mem 不可用时的 Fallback 实现
 
 ## Status
-Accepted (2026-05-16)
+Accepted (2026-05-16, arch_spec v2)
 
 ## Context
-v1.1-issue H5：ADR-007 决定 Babel 复用 claude-mem 插件，但未定义 claude-mem 失败 / disable / API 错误时 babel 行为。需明确降级路径。
+project ADR-007 决定复用 claude-mem 插件。M304 是 Babel 侧 adapter。需要明确：
+- 插件 disabled / API error / timeout 时 Babel 行为
+- 用户感知方式
+- 配置项
 
 ## Decision
-当 claude-mem 不可用（plugin disabled / API error / timeout）：
-1. **Babel 不阻断**主流程
-2. M304 claude-mem-adapter 返回 `degraded` 状态
-3. stderr 输出固定格式警告横幅：
+当 claude-mem 不可用：
+1. M304 adapter 检测失败（API 错误 / 超时 / 插件未启用）
+2. 返回 `degraded` 状态给上层 hook
+3. **不阻断** 主流程（agent 仍能完成本 stage）
+4. stderr 输出固定横幅：
    ```
    ⚠ claude-mem unavailable; cross-session memory disabled.
      Continuing in stateless mode. Past design experiences won't be referenced.
    ```
-4. 配置项 `babel_config.claude_mem_fallback: stateless | abort`，默认 `stateless`
-5. 检测周期：会话启动 + 每次写 experience 失败 3 次
+5. 配置项 `babel_config.claude_mem_fallback: stateless | abort`，**默认 stateless**
+6. 检测周期：会话启动 + 写 experience 失败 3 次后切换 degraded
 
 ## Trade-offs
-| 维度 | stateless 降级 | abort | retry-forever |
-|------|---------------|-------|---------------|
-| 设计可完成 | ✅ | ❌ | ❌（卡死） |
-| 用户感知问题 | ✅ (banner) | ✅ | ❌ |
+| 维度 | stateless | abort | retry-forever |
+|------|-----------|-------|---------------|
+| 设计可完成 | ✅ | ❌ | ❌ (卡死) |
+| 用户感知 | ✅ (banner) | ✅ | ❌ |
 | 历史经验利用 | ❌ | n/a | ❌ |
-| **选择** | ✅ (default) | (opt-in) | ❌ |
+| **选择** | ✅ default | (opt-in) | ❌ |
 
 ## Consequences
-- (+) claude-mem 故障不阻断芯片设计交付
-- (+) 用户明确知晓"无记忆"状态，可决策是否继续
-- (-) agent 不学习历史失败，可能重复同一类 bug
-- (-) `abort` 配置项给企业部署留口，但 MVP 不主推
+- (+) claude-mem 故障不阻断芯片设计
+- (+) 用户明确知晓"无记忆"状态
+- (-) Agent 不能从历史失败学习（同类 bug 可能重复）
+- (-) `abort` 模式给企业部署留口
 
 ## Affected
-- `architecture_specification.md` M304 (fallback)
-- `user_manual.md` §9 Q&A claude-mem 错误
-- `data_flow_diagrams.md` §5
-- `workflow_diagrams.md` §7
+- M304 claude-mem-adapter
+- `data_flow_diagrams.md` §6 fallback 流
+- `user_manual.md` §9 Q&A

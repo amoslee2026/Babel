@@ -1,0 +1,9 @@
+read_verilog -sv rtl/M05/src/M05_PowerManager.sv
+hierarchy -check -top M05_PowerManager
+synth -top M05_PowerManager
+opt
+opt_clean -purge
+abc -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib -g AND,OR,NAND,NOR,XOR
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules/M05_PowerManager_20260518_205803.v
+stat -liberty /home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib

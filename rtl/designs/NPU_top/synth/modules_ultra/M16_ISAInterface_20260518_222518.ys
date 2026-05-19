@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M16/src/M16_ISAInterface.sv
+hierarchy -check -top M16_ISAInterface
+synth -top M16_ISAInterface -flatten
+opt_clean -purge
+stat

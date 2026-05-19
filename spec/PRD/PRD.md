@@ -18,10 +18,6 @@ generated: 2026-05-12T16:45:00+08:00
 
 ## 0. Document Control
 
-| Version | Date | Author | Change |
-|---|---|---|---|
-| 0.1 | 2026-05-12 | TBD | Initial draft from raw_spec.md |
-| 0.2 | 2026-05-12 | TBD | 目标模型改为 TinyStories；移除主机接口；迁移至 spec/PRD/ |
 
 **Sign-off required before**: Architecture Spec v1.0
 
@@ -45,7 +41,7 @@ generated: 2026-05-12T16:45:00+08:00
 |---|---|---|---|
 | UC-01 | 边缘端文本生成 | TinyStories 15M FP32 | TPS >= 100 token/s（decode phase） |
 | UC-02 | 边缘端 prefill | TinyStories 15M，prompt <= 256 tokens | TTFT <= 50 ms |
-| UC-03 | FP16/FP16 推理 | TinyStories 15M FP16 | 精度损失 <= 0.5% vs FP32 baseline |
+| UC-03 | INT8/FP16/FP8 推理 | TinyStories 15M FP16 | 精度损失 <= 0.5% vs FP32 baseline |
 
 ---
 
@@ -55,7 +51,7 @@ generated: 2026-05-12T16:45:00+08:00
 
 | REQ ID | Statement | Metric | Verification Method |
 |---|---|---|---|
-| REQ-COMPUTE-001 | FP32 峰值吞吐量 >= 0.5 TOPS | TOPS @ TT/0.9V，500 MHz | Post-silicon benchmark（GEMM） |
+| REQ-COMPUTE-001 | FP8 峰值吞吐量 >= 2 TOPS | TOPS @ TT/0.9V，500 MHz | Post-silicon benchmark（GEMM） |
 | REQ-COMPUTE-002 | FP16 峰值吞吐量 >= 1 TOPS | TOPS @ TT/0.9V，500 MHz | Post-silicon benchmark（GEMM） |
 | REQ-COMPUTE-003 | INT8 峰值吞吐量 >= 2 TOPS | TOPS @ TT/0.9V，500 MHz | Post-silicon benchmark |
 | REQ-COMPUTE-004 | 支持 Systolic Array（Weight Stationary / Output Stationary） | 功能验证 | RTL simulation |
@@ -196,15 +192,7 @@ generated: 2026-05-12T16:45:00+08:00
 
 ## 12. Milestones & Timeline
 
-| Milestone | Target Date | Deliverable |
-|---|---|---|
-| PRR（Product Readiness Review） | 2026-06-30 | PRD v1.0 frozen |
-| Arch Sign-off | 2026-08-31 | ARCH v1.0 |
-| RTL Freeze | 2026-12-31 | MAS v1.0 + RTL tag |
-| Tape-out | 2027-06-30 | GDSII out |
-| Silicon In | 2027-10-31 | First parts back |
-
-⚠️ 以上日期为推算值，待项目计划确认后更新。
+- 一个月内完成
 
 ---
 
@@ -234,7 +222,7 @@ generated: 2026-05-12T16:45:00+08:00
 
 | ECN ID | Date | Change | Impact |
 |---|---|---|---|
-| ECN-001 | 2026-05-12 | 目标模型从 LLaMA-2 7B 改为 TinyStories 15M；移除 PCIe/DMA 主机接口 | 算力/带宽/功耗需求大幅下调 |
+
 
 ---
 

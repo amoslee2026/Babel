@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M02/src/M02_SRAMScratchpad.sv
+hierarchy -check -top M02_SRAMScratchpad
+synth -top M02_SRAMScratchpad -flatten
+opt_clean -purge
+stat

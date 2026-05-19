@@ -1,0 +1,39 @@
+#!/bin/bash
+set -eo pipefail
+source ~/wrk/eda_opensources/eda_env.sh
+verible-verilog-lint \
+rtl/M00/src/M00_SystolicArray.sv \
+rtl/M00/tb/tb_M00_SystolicArray.sv \
+rtl/M01/src/M01_DataflowController.sv \
+rtl/M01/tb/tb_M01_DataflowController.sv \
+rtl/M02/src/M02_SRAMScratchpad.sv \
+rtl/M02/tb/tb_M02_SRAMScratchpad.sv \
+rtl/M03/src/M03_DRAMController.sv \
+rtl/M03/tb/tb_M03_DRAMController.sv \
+rtl/M04/src/M04_SystemBus.sv \
+rtl/M04/tb/tb_M04_SystemBus.sv \
+rtl/M05/src/M05_PowerManager.sv \
+rtl/M05/tb/tb_M05_PowerManager.sv \
+rtl/M06/src/M06_ClockManager.sv \
+rtl/M06/tb/tb_M06_ClockManager.sv \
+rtl/M07/src/M07_ResetManager.sv \
+rtl/M07/tb/tb_M07_ResetManager.sv \
+rtl/M08/src/M08_ThreadScheduler.sv \
+rtl/M08/tb/tb_M08_ThreadScheduler.sv \
+rtl/M09/src/M09_AttentionUnit.sv \
+rtl/M09/tb/tb_M09_AttentionUnit.sv \
+rtl/M10/src/M10_FFNMatMul.sv \
+rtl/M10/tb/tb_M10_FFNMatMul.sv \
+rtl/M11/src/M11_RMSNormRoPE.sv \
+rtl/M11/tb/tb_M11_RMSNormRoPE.sv \
+rtl/M12/src/M12_SoftMax.sv \
+rtl/M12/tb/tb_M12_SoftMax.sv \
+rtl/M13/src/M13_ISADecoder.sv \
+rtl/M13/tb/tb_M13_ISADecoder.sv \
+rtl/M14/src/M14_SecureBoot.sv \
+rtl/M14/tb/tb_M14_SecureBoot.sv \
+rtl/M15/src/M15_JTAGInterface.sv \
+rtl/M15/tb/tb_M15_JTAGInterface.sv \
+rtl/M16/src/M16_ISAInterface.sv \
+rtl/M16/tb/tb_M16_ISAInterface.sv \
+2>&1

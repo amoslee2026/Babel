@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://babel.local/schemas/idea.schema.json",
+  "title": "ParsedIdea",
+  "description": "Normalized design idea produced by bb-architect Step 1 from a free-form user prompt.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["design_name", "protocols", "target_freq_mhz", "target_pdk"],
+  "properties": {
+    "design_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "description": "Slug used as the designs/<name>/ directory."
+    },
+    "protocols": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$"},
+      "minItems": 1,
+      "description": "Interface protocols, e.g. uart, axi4-lite, ucie."
+    },
+    "target_freq_mhz": {"type": "number", "exclusiveMinimum": 0},
+    "target_pdk": {"type": "string", "enum": ["asap7"]},
+    "clock_domains": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "freq_mhz"],
+        "properties": {
+          "name": {"type": "string"},
+          "freq_mhz": {"type": "number"}
+        }
+      }
+    },
+    "reset_domains": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "area_budget_um2": {"type": "number", "exclusiveMinimum": 0},
+    "power_budget_mw": {"type": "number", "exclusiveMinimum": 0},
+    "notes": {"type": "string"}
+  }
+}

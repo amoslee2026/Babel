@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M03/src/M03_DRAMController.sv
+hierarchy -check -top M03_DRAMController
+synth -top M03_DRAMController -flatten
+opt_clean -purge
+stat

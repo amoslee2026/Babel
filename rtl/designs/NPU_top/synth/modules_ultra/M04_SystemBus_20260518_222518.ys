@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M04/src/M04_SystemBus.sv
+hierarchy -check -top M04_SystemBus
+synth -top M04_SystemBus -flatten
+opt_clean -purge
+stat

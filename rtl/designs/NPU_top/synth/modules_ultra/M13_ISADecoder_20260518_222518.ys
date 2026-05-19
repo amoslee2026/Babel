@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M13/src/M13_ISADecoder.sv
+hierarchy -check -top M13_ISADecoder
+synth -top M13_ISADecoder -flatten
+opt_clean -purge
+stat

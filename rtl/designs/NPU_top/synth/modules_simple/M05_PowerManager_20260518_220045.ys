@@ -1,0 +1,6 @@
+read_verilog -sv rtl/M05/src/M05_PowerManager.sv
+hierarchy -check -top M05_PowerManager
+synth -top M05_PowerManager -flatten
+opt_clean -purge
+write_verilog -noattr rtl/designs/NPU_top/synth/modules_simple/M05_PowerManager_20260518_220045.v
+stat

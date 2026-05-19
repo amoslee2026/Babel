@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M07/src/M07_ResetManager.sv
+hierarchy -check -top M07_ResetManager
+synth -top M07_ResetManager -flatten
+opt_clean -purge
+stat

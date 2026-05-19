@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M11/src/M11_RMSNormRoPE.sv
+hierarchy -check -top M11_RMSNormRoPE
+synth -top M11_RMSNormRoPE -flatten
+opt_clean -purge
+stat

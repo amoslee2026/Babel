@@ -1,0 +1,661 @@
+//-----------------------------------------------------------------------------
+// Module: NPU_top
+// Type:   Top-Level Integration Module
+// Version: v1.1 - Simplified Integration for Synthesis
+//-----------------------------------------------------------------------------
+// Description:
+//   Simplified top-level integration with minimal port connections for synthesis.
+//   All sub-modules instantiated with essential connections only.
+//-----------------------------------------------------------------------------
+
+module NPU_top (
+    //=========================================================================
+    // Primary IO
+    //=========================================================================
+    input  logic        ext_clk_50MHz,
+    input  logic        ext_rst_por_n,
+    input  logic        pll_lock_ext,
+    output logic        pll_pwr_en,
+    output logic        irq_compute_done,
+    output logic        status_sec_boot_done
+);
+
+//=========================================================================
+// Internal Signals
+//=========================================================================
+
+logic        clk_sys;
+logic        clk_aon;
+logic        clk_io;
+logic        rst_sys_n;
+logic        pg_main_en;
+logic        sec_boot_done;
+logic        sec_boot_fail;
+logic        sec_lockdown;
+
+//=========================================================================
+// M06: Clock Manager
+//=========================================================================
+
+M06_ClockManager u_M06_ClockManager (
+    .ext_clk_i       (ext_clk_50MHz),
+    .pll_lock_i      (pll_lock_ext),
+    .dvfs_op_i       (2'b0),
+    .dvfs_req_i      (1'b0),
+    .clk_gating_en_i (14'h3FFF),
+    .pd_aon_vdd_i    (1'b1),
+    .clk_sys_o       (clk_sys),
+    .clk_aon_o       (clk_aon),
+    .clk_io_o        (clk_io),
+    .clk_gating_o    (),
+    .dvfs_ack_o      (),
+    .clk_status_o    (),
+    .pll_pwr_en_o    (pll_pwr_en)
+);
+
+//=========================================================================
+// Reset Distribution
+//=========================================================================
+
+always_ff @(posedge clk_aon or negedge ext_rst_por_n) begin
+    if (!ext_rst_por_n) begin
+        rst_sys_n <= 1'b0;
+    end else begin
+        if (pll_lock_ext && pll_pwr_en) begin
+            rst_sys_n <= 1'b1;
+        end
+    end
+end
+
+//=========================================================================
+// M05: Power Manager
+//=========================================================================
+
+M05_PowerManager u_M05_PowerManager (
+    .clk_aon         (clk_aon),
+    .rst_aon_n       (ext_rst_por_n),
+    .rst_por_n       (ext_rst_por_n),
+    .bus_cmd_valid   (1'b0),
+    .bus_cmd_ready   (),
+    .bus_cmd_addr    (16'b0),
+    .bus_cmd_rw      (1'b0),
+    .bus_cmd_data    (32'b0),
+    .bus_rsp_valid   (),
+    .bus_rsp_data    (),
+    .bus_rsp_error   (),
+    .dvfs_op_req     (),
+    .dvfs_op_ack     (1'b0),
+    .dvfs_vdd_req    (),
+    .dvfs_freq_req   (),
+    .pg_main_en_o    (pg_main_en),
+    .pg_aon_en_o     (),
+    .pg_io_en_o      (),
+    .pg_dram_en_o    (),
+    .pg_status_o     (),
+    .sec_boot_en_i   (sec_boot_done),
+    .sec_lockdown_i  (sec_lockdown),
+    .dvfs_busy_o     ()
+);
+
+//=========================================================================
+// M04: System Bus
+//=========================================================================
+
+M04_SystemBus u_M04_SystemBus (
+    .clk_sys         (clk_sys),
+    .clk_io          (clk_io),
+    .clk_aon         (clk_aon),
+    .rst_por_n       (ext_rst_por_n),
+    .rst_sys_n       (rst_sys_n),
+    .bus_enable      (pg_main_en),
+    .bus_busy        (),
+    .bus_error       (),
+    .arb_winner      (),
+    .route_target    (),
+    .timeout_irq     (),
+    .error_irq       (),
+    .reg_s2_req_valid (),
+    .reg_s2_req_ready (),
+    .reg_s2_req_addr  (),
+    .reg_s2_req_rw    (),
+    .reg_s2_req_wdata (),
+    .reg_s2_rsp_valid (),
+    .reg_s2_rsp_rdata (),
+    .reg_s2_rsp_error (),
+    .reg_s3_req_valid (),
+    .reg_s3_req_ready (),
+    .reg_s3_req_addr  (),
+    .reg_s3_req_rw    (),
+    .reg_s3_req_wdata (),
+    .reg_s3_rsp_valid (),
+    .reg_s3_rsp_rdata (),
+    .reg_s3_rsp_error (),
+    .reg_d2_req_valid (),
+    .reg_d2_req_ready (),
+    .reg_d2_req_addr  (),
+    .reg_d2_req_rw    (),
+    .reg_d2_req_wdata (),
+    .reg_d2_rsp_valid (),
+    .reg_d2_rsp_rdata (),
+    .reg_d2_rsp_error (),
+    .route1_valid (),
+    .route1_ready (),
+    .route1_addr  (),
+    .route1_rw    (),
+    .route1_wdata (),
+    .route1_resp_valid (),
+    .route1_resp_rdata (),
+    .route1_resp_error (),
+    .route2_valid (),
+    .route2_ready (),
+    .route2_addr  (),
+    .route2_rw    (),
+    .route2_wdata (),
+    .route2_resp_valid (),
+    .route2_resp_rdata (),
+    .route2_resp_error (),
+    .route3_valid (),
+    .route3_ready (),
+    .route3_addr  (),
+    .route3_rw    (),
+    .route3_wdata (),
+    .route3_resp_valid (),
+    .route3_resp_rdata (),
+    .route3_resp_error (),
+    .s0_req_valid (),
+    .s0_req_ready (),
+    .s0_req_addr  (),
+    .s0_req_rw    (),
+    .s0_req_wdata (),
+    .s0_resp_valid (),
+    .s0_resp_rdata (),
+    .s0_resp_error (),
+    .s1_req_valid (),
+    .s1_req_ready (),
+    .s1_req_addr  (),
+    .s1_req_rw    (),
+    .s1_req_wdata (),
+    .s1_resp_valid (),
+    .s1_resp_rdata (),
+    .s1_resp_error (),
+    .s2_req_valid (),
+    .s2_req_ready (),
+    .s2_req_addr  (),
+    .s2_req_rw    (),
+    .s2_req_wdata (),
+    .s2_resp_valid (),
+    .s2_resp_rdata (),
+    .s2_resp_error (),
+    .s3_req_valid (),
+    .s3_req_ready (),
+    .s3_req_addr  (),
+    .s3_req_rw    (),
+    .s3_req_wdata (),
+    .s3_resp_valid (),
+    .s3_resp_rdata (),
+    .s3_resp_error ()
+);
+
+//=========================================================================
+// M02: SRAM Scratchpad
+//=========================================================================
+
+M02_SRAMScratchpad u_M02_SRAMScratchpad (
+    .clk_sys_i       (clk_sys),
+    .rst_sys_n_i     (rst_sys_n),
+    .pg_main_en_i    (pg_main_en),
+    .bus_cmd_valid_i (1'b0),
+    .bus_cmd_ready_o (),
+    .bus_cmd_addr_i  (32'b0),
+    .bus_cmd_rw_i    (1'b0),
+    .bus_cmd_width_i (2'b01),
+    .bus_cmd_wdata_i (64'b0),
+    .bus_cmd_wstrb_i (8'b0),
+    .bus_rsp_valid_o (),
+    .bus_rsp_rdata_o (),
+    .bus_rsp_error_o (),
+    .sram_req_valid_i (1'b0),
+    .sram_req_addr_i (16'b0),
+    .sram_req_rw_i   (1'b0),
+    .sram_req_wdata_i(64'b0),
+    .sram_req_wstrb_i(8'b0),
+    .sram_rsp_valid_o(),
+    .sram_rsp_rdata_o(),
+    .sram_rsp_error_o()
+);
+
+//=========================================================================
+// M03: DRAM Controller
+//=========================================================================
+
+M03_DRAMController u_M03_DRAMController (
+    .clk_sys_i       (clk_sys),
+    .rst_sys_n_i     (rst_sys_n),
+    .clk_d2d_i       (clk_sys),
+    .clk_d2d_pll_i   (clk_sys),
+    .bus_cmd_valid_i (1'b0),
+    .bus_cmd_ready_o (),
+    .bus_cmd_addr_i  (32'b0),
+    .bus_cmd_rw_i    (1'b0),
+    .bus_cmd_data_i  (72'b0),
+    .bus_cmd_mask_i  (8'b0),
+    .bus_rsp_valid_o (),
+    .bus_rsp_data_o  (),
+    .bus_rsp_error_o (),
+    .bus_rsp_latency_o(),
+    .d2d_cmd_valid_o (),
+    .d2d_cmd_addr_o  (),
+    .d2d_cmd_rw_o    (),
+    .d2d_cmd_data_o  (),
+    .d2d_rsp_valid_i (1'b0),
+    .d2d_rsp_data_i  (72'b0),
+    .d2d_rsp_error_i (1'b0),
+    .dram_init_done_o(),
+    .dram_cal_done_o ()
+);
+
+//=========================================================================
+// M00: Systolic Array
+//=========================================================================
+
+M00_SystolicArray u_M00_SystolicArray (
+    .clk_i           (clk_sys),
+    .rst_ni          (rst_sys_n),
+    .pe_mode_i       (1'b0),
+    .pe_precision_i  (2'b01),
+    .pe_start_i      (1'b0),
+    .pe_done_o       (),
+    .pe_row_cnt_i    (4'b0),
+    .pe_col_cnt_i    (4'b0),
+    .weight_in_i     ({16*32{1'b0}}),
+    .input_in_i      ({16*32{1'b0}}),
+    .output_out_o    (),
+    .partial_out_o   (),
+    .weight_addr_i   (16'b0),
+    .input_addr_i    (16'b0),
+    .output_addr_i   (16'b0),
+    .fp8_format_i    (1'b0),
+    .round_mode_i    (2'b0),
+    .saturation_i    (1'b0),
+    .mix_precision_en_i(1'b0),
+    .pe_size_error_o (),
+    .pe_overflow_o   (),
+    .pe_underflow_o  (),
+    .pe_busy_o       ()
+);
+
+//=========================================================================
+// M01: Dataflow Controller
+//=========================================================================
+
+M01_DataflowController u_M01_DataflowController (
+    .clk_sys         (clk_sys),
+    .rst_sys_n       (rst_sys_n),
+    .syst_mode       (),
+    .syst_precision  (),
+    .syst_start      (),
+    .syst_done       (1'b0),
+    .syst_err        (2'b0),
+    .syst_row_cnt    (),
+    .syst_col_cnt    (),
+    .syst_src_addr   (),
+    .syst_dst_addr   (),
+    .syst_shape      (),
+    .op_valid        (),
+    .op_ready        (4'b1111),
+    .op_code         (),
+    .op_unit_sel     (),
+    .op_tid          (),
+    .op_precision    (),
+    .op_src_addr     (),
+    .op_dst_addr     (),
+    .sram_req_valid  (),
+    .sram_req_addr   (),
+    .sram_req_rw     (),
+    .sram_req_wdata  (),
+    .sram_req_wstrb  (),
+    .sram_rsp_valid  (1'b0),
+    .sram_rsp_rdata  (64'b0),
+    .thread_start    (1'b0),
+    .thread_done     (),
+    .thread_err      (),
+    .df_busy_o       (),
+    .df_done_o       (irq_compute_done),
+    .df_err_o        ()
+);
+
+//=========================================================================
+// M08: Thread Scheduler
+//=========================================================================
+
+M08_ThreadScheduler u_M08_ThreadScheduler (
+    .clk_sys         (clk_sys),
+    .rst_sys_n       (rst_sys_n),
+    .rst_por_n       (ext_rst_por_n),
+    .clk_enable      (1'b1),
+    .power_gate_n    (pg_main_en),
+    .thread_cmd_valid (4'b0),
+    .thread_cmd_ready (),
+    .thread_cmd_opcode (4'b0),
+    .thread_cmd_thread_id (3'b0),
+    .thread_cmd_priority (3'b0),
+    .thread_cmd_addr   (32'b0),
+    .thread_cmd_data   (64'b0),
+    .reg_req_valid     (1'b0),
+    .reg_req_ready     (),
+    .reg_req_addr      (12'b0),
+    .reg_req_rw        (1'b0),
+    .reg_req_wdata     (32'b0),
+    .reg_rsp_valid     (1'b0),
+    .reg_rsp_rdata     (32'b0),
+    .reg_rsp_error     (1'b0),
+    .dispatch_valid    (),
+    .dispatch_thread_id(),
+    .dispatch_entry_addr(),
+    .dispatch_context_ptr(),
+    .dispatch_cmd      (),
+    .ctx_rd_valid      (),
+    .ctx_rd_ptr        (),
+    .ctx_wr_valid      (),
+    .ctx_wr_ptr        (),
+    .ctx_wr_data       (),
+    .thread_active_id  (),
+    .thread_active_state(),
+    .thread_pending_cnt(),
+    .thread_blocked_cnt(),
+    .thread_irq        ()
+);
+
+//=========================================================================
+// M09: Attention Unit
+//=========================================================================
+
+M09_AttentionUnit u_M09_AttentionUnit (
+    .clk_sys_i       (clk_sys),
+    .rst_sys_n_i     (rst_sys_n),
+    .pg_main_en_i    (pg_main_en),
+    .act_valid_i     (1'b0),
+    .act_data_i      (512'b0),
+    .act_pos_i       (16'b0),
+    .act_layer_i     (8'b0),
+    .act_ready_o     (),
+    .q_valid_i       (1'b0),
+    .q_data_i        (64'b0),
+    .k_valid_i       (1'b0),
+    .k_data_i        (32'b0),
+    .v_valid_i       (1'b0),
+    .v_data_i        (32'b0),
+    .qkv_ready_o     (),
+    .kv_addr_o       (),
+    .kv_wdata_o      (),
+    .kv_wen_o        (),
+    .kv_valid_o      (),
+    .sa_cmd_valid_o  (),
+    .sa_op_o         (),
+    .sa_head_o       (),
+    .sa_pos_o        (),
+    .sa_result_ready_o(),
+    .sm_valid_o      (),
+    .sm_data_o       (),
+    .sm_head_o       (),
+    .out_valid_o     (),
+    .out_data_o      (),
+    .out_layer_o     (),
+    .attn_done_o     (),
+    .attn_busy_o     (),
+    .kv_overflow_o   ()
+);
+
+//=========================================================================
+// M10: FFN MatMul
+//=========================================================================
+
+M10_FFNMatMul u_M10_FFNMatMul (
+    .clk             (clk_sys),
+    .rst_n           (rst_sys_n),
+    .enable          (1'b1),
+    .start           (1'b0),
+    .mode            (2'b0),
+    .busy            (),
+    .done            (),
+    .error           (),
+    .error_code      (),
+    .x_in            (512'b0),
+    .x_valid         (1'b0),
+    .x_ready         (),
+    .y_out           (),
+    .y_valid         (),
+    .y_ready         (1'b1),
+    .sa_cmd_1        (),
+    .sa_dim_1        (),
+    .sa_w_base_1     (),
+    .sa_w_row_1      (),
+    .sa_input_1      (),
+    .sa_cmd_2        (),
+    .sa_dim_2        (),
+    .sa_w_base_2     (),
+    .sa_w_row_2      (),
+    .sa_input_2      ()
+);
+
+//=========================================================================
+// M11: RMSNorm + RoPE
+//=========================================================================
+
+M11_RMSNormRoPE u_M11_RMSNormRoPE (
+    .clk_sys_i       (clk_sys),
+    .rst_sys_n_i     (rst_sys_n),
+    .pg_main_en_i    (pg_main_en),
+    .sram_req_valid_o(),
+    .sram_req_addr_o (),
+    .sram_req_rw_o   (),
+    .sram_req_wdata_o(),
+    .sram_req_wstrb_o(),
+    .sram_rsp_valid_i(1'b0),
+    .sram_rsp_rdata_i(64'b0),
+    .sram_rsp_error_i(1'b0),
+    .op_start_i      (1'b0),
+    .op_type_i       (2'b0),
+    .op_mode_i       (3'b0),
+    .op_dim_i        (8'b0),
+    .op_head_size_i  (8'b0),
+    .op_pos_i        (32'b0),
+    .op_precision_i  (2'b0),
+    .op_done_o       (),
+    .op_busy_o       (),
+    .op_error_o      (),
+    .data_in_valid_i (1'b0),
+    .data_in_addr_i  (32'b0),
+    .data_in_size_i  (16'b0),
+    .weight_addr_i   (32'b0),
+    .data_out_valid_o(),
+    .data_out_addr_o (),
+    .data_out_addr_i (32'b0),
+    .data_out_size_o (),
+    .data_out_done_o (),
+    .rope_table_addr_i(32'b0),
+    .rope_table_size_i(16'b0),
+    .rope_table_en_i (1'b0),
+    .op_status_o     (),
+    .op_irq_o        (),
+    .op_irq_type_o   (),
+    .cycle_count_o   ()
+);
+
+//=========================================================================
+// M12: SoftMax
+//=========================================================================
+
+M12_SoftMax u_M12_SoftMax (
+    .clk_sys         (clk_sys),
+    .rst_sys_n       (rst_sys_n),
+    .score_valid     (1'b0),
+    .score_ready     (),
+    .score_data      (512'b0),
+    .score_len       (8'b0),
+    .prob_valid      (),
+    .prob_ready      (1'b1),
+    .prob_data       (),
+    .prob_len        (),
+    .softmax_start   (1'b0),
+    .softmax_busy    (),
+    .softmax_done    (),
+    .softmax_error   ()
+);
+
+//=========================================================================
+// M13: ISA Decoder
+//=========================================================================
+
+M13_ISADecoder u_M13_ISADecoder (
+    .clk_sys_i       (clk_sys),
+    .rst_sys_n_i     (rst_sys_n),
+    .pg_main_en_i    (pg_main_en),
+    .isa_inst_valid_i (1'b0),
+    .isa_inst_data_i  (32'b0),
+    .isa_inst_ready_o (),
+    .isa_pc_i         (16'b0),
+    .isa_pc_update_o  (),
+    .dec_valid_o      (),
+    .dec_opcode_o     (),
+    .dec_format_o     (),
+    .dec_vd_o         (),
+    .dec_vs1_o        (),
+    .dec_vs2_o        (),
+    .dec_vs3_o        (),
+    .dec_sd_o         (),
+    .dec_imm16_o      (),
+    .dec_imm21_o      (),
+    .dec_base_o       (),
+    .dec_offset_o     (),
+    .dec_func_o       (),
+    .op_valid_o       (),
+    .op_target_o      (),
+    .op_start_o       (),
+    .sa_cmd_valid_o   (),
+    .sa_op_o          (),
+    .mem_addr_o       (),
+    .mem_wen_o        (),
+    .mem_valid_o      (),
+    .dec_done_o       (),
+    .dec_busy_o       (),
+    .error_invalid_opcode_o (),
+    .error_invalid_format_o (),
+    .error_invalid_reg_o    (),
+    .error_secure_boot_fail_o()
+);
+
+//=========================================================================
+// M14: Secure Boot
+//=========================================================================
+
+M14_SecureBoot u_M14_SecureBoot (
+    .clk_sys         (clk_sys),
+    .rst_sys_n       (rst_sys_n),
+    .rst_por_n       (ext_rst_por_n),
+    .fw_addr         (32'b0),
+    .fw_size         (32'b0),
+    .fw_data_req     (),
+    .fw_data_addr    (),
+    .fw_data_valid   (1'b0),
+    .fw_data         (256'b0),
+    .fw_data_last    (1'b0),
+    .sig_r           (256'b0),
+    .sig_s           (256'b0),
+    .sig_valid       (1'b0),
+    .otp_key_addr    (),
+    .otp_key_data    (512'b0),
+    .otp_key_valid   (1'b0),
+    .otp_read_ack    (1'b0),
+    .otp_read_req    (),
+    .otp_locked      (1'b1),
+    .sec_boot_en     (1'b1),
+    .boot_start      (1'b1),
+    .boot_complete   (sec_boot_done),
+    .boot_fail       (sec_boot_fail),
+    .boot_fw_valid   (),
+    .boot_state      (),
+    .sec_status      (),
+    .sec_lock        (sec_lockdown),
+    .test_bypass     (),
+    .isa_decoder_en  (),
+    .isa_decoder_lock(),
+    .bus_cmd_ready   (),
+    .bus_rsp_valid   (),
+    .bus_rsp_data    (),
+    .bus_rsp_error   (),
+    .sec_irq         (),
+    .sec_irq_type    ()
+);
+
+assign status_sec_boot_done = sec_boot_done;
+
+//=========================================================================
+// M15: JTAG Interface
+//=========================================================================
+
+M15_JTAGInterface u_M15_JTAGInterface (
+    .tck             (1'b0),
+    .tms             (1'b0),
+    .tdi             (1'b0),
+    .tdo             (),
+    .trst_n          (ext_rst_por_n),
+    .tdo_en          (),
+    .test_mode_en    (1'b0),
+    .test_mode_valid (sec_boot_done),
+    .sec_boot_en     (sec_boot_done),
+    .test_access_grant (),
+    .test_access_denied (),
+    .scan_select     (),
+    .scan_enable     (),
+    .scan_in         (),
+    .scan_out        (),
+    .scan_capture    (),
+    .scan_update     (),
+    .bsr_select      (),
+    .bsr_capture     (),
+    .bsr_update      (),
+    .bsr_data_in     (24'b0),
+    .bsr_data_out    (),
+    .debug_addr      (),
+    .debug_data_in   (),
+    .debug_data_out  (),
+    .debug_rw        (),
+    .debug_valid     (),
+    .debug_ack       (1'b0),
+    .mbist_start     (),
+    .mbist_stop      (),
+    .mbist_target    (),
+    .mbist_algorithm (),
+    .mbist_status    (),
+    .rst_io_n        (rst_sys_n)
+);
+
+//=========================================================================
+// M16: ISA Interface
+//=========================================================================
+
+M16_ISAInterface u_M16_ISAInterface (
+    .ISA_CLK         (clk_io),
+    .ISA_VALID       (),
+    .ISA_DIR         (),
+    .ISA_READY       (1'b1),
+    .isa_data_sys_o  (),
+    .isa_valid_sys_o (),
+    .isa_ready_sys_i (),
+    .isa_req_sys_o   (),
+    .isa_pc_o        (),
+    .m16_reset_n_i   (rst_sys_n),
+    .m16_enable_i    (1'b1),
+    .m16_mode_i      (2'b00),
+    .sec_boot_done_i (sec_boot_done),
+    .sec_status_pass_i (sec_boot_done),
+    .sec_status_fail_i (sec_boot_fail),
+    .sec_lockdown_i  (sec_lockdown),
+    .isa_access_grant_o (),
+    .isa_access_denied_o (),
+    .isa_crc_error_o  (),
+    .isa_auth_token_i ()
+);
+
+endmodule

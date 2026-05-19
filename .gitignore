@@ -1,8 +1,10 @@
 # ---> Project-specific directories and symlinks
-libs
-temp
-thanos
-mySkills
+libs/
+temp/
+thanos/
+mySkills/
+refs/
+harness_spec/
 
 # ---> Python
 # Byte-compiled / optimized / DLL files

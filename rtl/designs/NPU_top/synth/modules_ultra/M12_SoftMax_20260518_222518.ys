@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M12/src/M12_SoftMax.sv
+hierarchy -check -top M12_SoftMax
+synth -top M12_SoftMax -flatten
+opt_clean -purge
+stat

@@ -1,0 +1,5 @@
+read_verilog -sv rtl/M01/src/M01_DataflowController.sv
+hierarchy -check -top M01_DataflowController
+synth -top M01_DataflowController -flatten
+opt_clean -purge
+stat
