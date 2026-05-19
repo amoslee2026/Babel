@@ -1,6 +1,6 @@
 ---
 name: bb-gate-rtl-quality
-description: "RTL 质量门禁：lint 0 error + file_list.f 顶层在最后 + rtl_artifact.json schema 合法。通过才允许 commit / 开 issue。触发场景：(1) bb-guru-rtl 写完 RTL；(2) 显式 /bb-gate-rtl-quality。"
+description: "RTL 质量门禁：lint 0 error + file_list.f 顶层在最后 + rtl_artifact.json schema 合法。通过才允许 commit / 开 issue。触发场景：(1) bba-guru-rtl 写完 RTL；(2) 显式 /bb-gate-rtl-quality。"
 ---
 
 # bb-gate-rtl-quality
@@ -9,7 +9,7 @@ description: "RTL 质量门禁：lint 0 error + file_list.f 顶层在最后 + rt
 
 综合 lint 结果 + 拓扑序 + artifact schema 三项判定，blocking gate。
 
-- 调用者：`bb-guru-rtl`
+- 调用者：`bba-guru-rtl`
 - 上游：`bb-check-lint`、`bb-find-module-deps`
 - 禁止使用：Task / Agent / Skill
 
@@ -58,7 +58,7 @@ description: "RTL 质量门禁：lint 0 error + file_list.f 顶层在最后 + rt
 
 ### Phase 4 — return
 
-返回 JSON。`pass=false` → bb-guru-rtl 修复后重试。
+返回 JSON。`pass=false` → bba-guru-rtl 修复后重试。
 
 ## 通过标准
 

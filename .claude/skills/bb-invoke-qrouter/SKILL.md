@@ -1,15 +1,15 @@
 ---
 name: bb-invoke-qrouter
-description: "调用 QRouter 1.4 对 placed DEF 执行 detail routing，产出 routed.def。触发场景：(1) bb-guru-pd 在 placement 完成后做布线；(2) 显式 /bb-invoke-qrouter。"
+description: "调用 QRouter 1.4 对 placed DEF 执行 detail routing，产出 routed.def。触发场景：(1) bba-guru-pd 在 placement 完成后做布线；(2) 显式 /bb-invoke-qrouter。"
 ---
 
 # bb-invoke-qrouter
 
 ## 职责
 
-对 placed DEF + tech/cell LEF 跑详细布线，输出 routed DEF。布线失败需 bb-guru-pd 调整 floorplan utilization 后重试。
+对 placed DEF + tech/cell LEF 跑详细布线，输出 routed DEF。布线失败需 bba-guru-pd 调整 floorplan utilization 后重试。
 
-- 调用者：`bb-guru-pd`
+- 调用者：`bba-guru-pd`
 - 上游：`bb-invoke-magic`(action=place)
 - 下游：`bb-invoke-magic`(action=drc)
 - 禁止使用：Task / Agent / Skill
@@ -74,7 +74,7 @@ quit
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-pd`：
+返回 JSON。`bba-guru-pd`：
 - `failed_nets==0` → 调 `bb-invoke-magic`(action=drc)
 - `failed_nets>0` → 增加 utilization margin（-0.05）重 floorplan，≤5 iter
 

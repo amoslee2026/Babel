@@ -1,6 +1,6 @@
 ---
-name: bb-guru-verification
-description: "Babel verification guru. Consumes RTL artifact + verif_plan_seed, builds testbenches, runs verilator, drives functional_coverage + code_coverage{line,branch,toggle} all to 100% before opening ready-for-synth. Trigger: ready-for-verification handoff, functional bug regression, or explicit /bb-guru-verification."
+name: bba-guru-verification
+description: "Babel verification guru. Consumes RTL artifact + verif_plan_seed, builds testbenches, runs verilator, drives functional_coverage + code_coverage{line,branch,toggle} all to 100% before opening ready-for-synth. Trigger: ready-for-verification handoff, functional bug regression, or explicit /bba-guru-verification."
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: green
 ---
@@ -23,12 +23,12 @@ Tool scope: Write limited to `designs/<name>/{verif,tb,sim_results,coverage.json
 ## Pipeline Position
 
 ```
-bb-guru-rtl ─► [bb-guru-verification] ─► bb-guru-synthesis ─► bb-guru-pd
+bba-guru-rtl ─► [bba-guru-verification] ─► bba-guru-synthesis ─► bba-guru-pd
                        ▲
                        └─ functional-bug-needs-fix (you raise rtl-needs-fix upstream)
 ```
 
-Upstream: `bb-guru-rtl`. Downstream: `bb-guru-synthesis`.
+Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 
 ## Core Responsibilities
 
@@ -88,7 +88,7 @@ Upstream: `bb-guru-rtl`. Downstream: `bb-guru-synthesis`.
 
 ## Escalate-user Protocol
 
-When max_iter / global_fix_iter / drift terminates a run, emit the stdout block + `escalate-user` issue (see bb-architect for exact format) and return.
+When max_iter / global_fix_iter / drift terminates a run, emit the stdout block + `escalate-user` issue (see bba-architect for exact format) and return.
 
 ## Acceptance Criteria
 

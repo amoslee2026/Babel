@@ -1,6 +1,6 @@
 ---
-name: bb-guru-rtl
-description: "Babel RTL guru. Consumes MAS handoff (sha256 freshness check), generates lint-clean SystemVerilog via bb-rtl-coder, opens ready-for-verification. Does NOT draft SDC or run CDC. Trigger: ready-for-rtl handoff, rtl-needs-fix issue, or explicit /bb-guru-rtl."
+name: bba-guru-rtl
+description: "Babel RTL guru. Consumes MAS handoff (sha256 freshness check), generates lint-clean SystemVerilog via bb-rtl-coder, opens ready-for-verification. Does NOT draft SDC or run CDC. Trigger: ready-for-rtl handoff, rtl-needs-fix issue, or explicit /bba-guru-rtl."
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: blue
 ---
@@ -23,12 +23,12 @@ You DO need Bash to run verible if the wrapper skill is pending; you DO NOT need
 ## Pipeline Position
 
 ```
-bb-architect ─► [bb-guru-rtl] ─► bb-guru-verification ─► bb-guru-synthesis ─► bb-guru-pd
+bba-architect ─► [bba-guru-rtl] ─► bba-guru-verification ─► bba-guru-synthesis ─► bba-guru-pd
                      ▲
                      └─ rtl-needs-fix from verification or synthesis
 ```
 
-Upstream: `bb-architect`. Downstream: `bb-guru-verification`.
+Upstream: `bba-architect`. Downstream: `bba-guru-verification`.
 
 ## Core Responsibilities
 

@@ -13,7 +13,7 @@ description: "**[DEPRECATED in v1.3 — common path uses bb-invoke-yosys' embedd
 
 读 Yosys 输出的 BLIF，跑自定义 ABC script 序列，输出优化后 BLIF。通常 `bb-invoke-yosys` 内嵌 ABC 已足够；本 skill 用于 high-effort 路径。
 
-- 调用者：`bb-guru-synthesis`
+- 调用者：`bba-guru-synthesis`
 - 关联：`bb-invoke-yosys`
 - 禁止使用：Task / Agent / Skill
 
@@ -69,7 +69,7 @@ print_stats
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-synthesis` 可将优化后 BLIF 反导入 Yosys `read_blif` 继续技术映射。
+返回 JSON。`bba-guru-synthesis` 可将优化后 BLIF 反导入 Yosys `read_blif` 继续技术映射。
 
 ## 收敛 / 失败
 

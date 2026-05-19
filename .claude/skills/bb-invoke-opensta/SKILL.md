@@ -1,6 +1,6 @@
 ---
 name: bb-invoke-opensta
-description: "调用 OpenSTA 2.5.0 做静态时序分析（STA）。综合阶段验证 WNS/TNS；PD 阶段做 post-route signoff（多 PVT corner + SPEF）。触发场景：(1) bb-guru-synthesis 综合后查 timing；(2) bb-guru-pd 布线后跑 multi-corner signoff；(3) 显式 /bb-invoke-opensta。"
+description: "调用 OpenSTA 2.5.0 做静态时序分析（STA）。综合阶段验证 WNS/TNS；PD 阶段做 post-route signoff（多 PVT corner + SPEF）。触发场景：(1) bba-guru-synthesis 综合后查 timing；(2) bba-guru-pd 布线后跑 multi-corner signoff；(3) 显式 /bb-invoke-opensta。"
 ---
 
 # bb-invoke-opensta
@@ -9,7 +9,7 @@ description: "调用 OpenSTA 2.5.0 做静态时序分析（STA）。综合阶段
 
 调用 OpenSTA 做 STA：综合阶段 verify-WNS；PD 阶段 multi-PVT-corner timing signoff（含 SPEF 反标）。
 
-- 调用者：`bb-guru-synthesis`、`bb-guru-pd`
+- 调用者：`bba-guru-synthesis`、`bba-guru-pd`
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args
@@ -85,8 +85,8 @@ report_power
 ### Phase 4 — return
 
 返回 JSON。
-- `bb-guru-synthesis`：`timing_met=false` → 调 SDC / 重综合
-- `bb-guru-pd`：`timing_met=false` → 开 `synth-needs-fix` issue
+- `bba-guru-synthesis`：`timing_met=false` → 调 SDC / 重综合
+- `bba-guru-pd`：`timing_met=false` → 开 `synth-needs-fix` issue
 
 ## 收敛 / 失败
 

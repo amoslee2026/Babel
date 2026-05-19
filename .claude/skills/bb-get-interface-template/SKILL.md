@@ -1,6 +1,6 @@
 ---
 name: bb-get-interface-template
-description: "读取指定 CBB / protocol wiki 文件，解析其 ## Interface / ## Ports section，返回结构化端口表 + 参数表。bb-architect 用于填入 MAS 模块接口。触发场景：(1) bb-search-cbb 命中后取详细接口；(2) 显式 /bb-get-interface-template。"
+description: "读取指定 CBB / protocol wiki 文件，解析其 ## Interface / ## Ports section，返回结构化端口表 + 参数表。bba-architect 用于填入 MAS 模块接口。触发场景：(1) bb-search-cbb 命中后取详细接口；(2) 显式 /bb-get-interface-template。"
 ---
 
 # bb-get-interface-template
@@ -9,7 +9,7 @@ description: "读取指定 CBB / protocol wiki 文件，解析其 ## Interface /
 
 按 `template_name` 查 `wiki/cbb/` 或 `wiki/protocols/` 中对应 `.md`，提取 `## Interface` / `## Ports` 表格 → JSON。
 
-- 调用者：`bb-architect`
+- 调用者：`bba-architect`
 - 上游：`bb-search-cbb` / `bb-search-protocol`
 - 禁止使用：Task / Agent / Skill
 
@@ -52,7 +52,7 @@ Python 直接读取目标文件全文（无需 shell）。
 
 ### Phase 4 — return
 
-返回 JSON。`bb-architect` 把 `ports` 写到 MAS 对应模块的 `interface.ports`。
+返回 JSON。`bba-architect` 把 `ports` 写到 MAS 对应模块的 `interface.ports`。
 
 ## 收敛 / 失败
 

@@ -1,6 +1,6 @@
 ---
 name: bb-check-lint
-description: "调用 verible-verilog-lint 检查 SV 源码。src 必须可综合（零 syntax error），tb 允许 verification constructs。发现 src error 时自动修复重检（max 3 iter）。触发：(1) bb-guru-rtl 生成后；(2) RTL 修复重检；(3) 显式 /bb-check-lint。"
+description: "调用 verible-verilog-lint 检查 SV 源码。src 必须可综合（零 syntax error），tb 允许 verification constructs。发现 src error 时自动修复重检（max 3 iter）。触发：(1) bba-guru-rtl 生成后；(2) RTL 修复重检；(3) 显式 /bb-check-lint。"
 ---
 
 # bb-check-lint
@@ -9,7 +9,7 @@ description: "调用 verible-verilog-lint 检查 SV 源码。src 必须可综合
 
 对 HDL 源码执行 verible lint 检查，提取所有 error / warning 至 JSON。**src 代码必须可综合**，零 error 才通过；tb 代码允许 verification constructs（covergroup 等）。不允许 waive src 错误。
 
-- 调用者：`bb-guru-rtl`
+- 调用者：`bba-guru-rtl`
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args

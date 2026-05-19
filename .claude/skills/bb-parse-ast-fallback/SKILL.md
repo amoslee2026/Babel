@@ -9,7 +9,7 @@ description: "当 pyverilog 失败时切到 verible-verilog-syntax 或 slang 作
 
 pyverilog 失败的兜底：调用 verible 或 slang 解析 RTL，输出与 bb-parse-ast 同 schema 的 JSON，对下游透明。
 
-- 调用者：`bb-guru-synthesis`、`bb-check-cdc`
+- 调用者：`bba-guru-synthesis`、`bb-check-cdc`
 - 上游：`bb-parse-ast`（失败时）
 - 禁止使用：Task / Agent / Skill
 

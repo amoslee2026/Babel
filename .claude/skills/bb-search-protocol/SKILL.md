@@ -1,15 +1,15 @@
 ---
 name: bb-search-protocol
-description: "在 wiki/protocols/ 搜索协议知识（UART/AXI4-Lite/UCIe 等），返回匹配的文档路径与摘要。触发场景：(1) bb-architect 写 PRD/MAS 时需查协议规格；(2) 显式 /bb-search-protocol。"
+description: "在 wiki/protocols/ 搜索协议知识（UART/AXI4-Lite/UCIe 等），返回匹配的文档路径与摘要。触发场景：(1) bba-architect 写 PRD/MAS 时需查协议规格；(2) 显式 /bb-search-protocol。"
 ---
 
 # bb-search-protocol
 
 ## 职责
 
-在项目 `wiki/protocols/` 目录里按关键词搜索协议文档，返回匹配文件、行号、片段，供 bb-architect 用 Read 工具读取细节。
+在项目 `wiki/protocols/` 目录里按关键词搜索协议文档，返回匹配文件、行号、片段，供 bba-architect 用 Read 工具读取细节。
 
-- 调用者：`bb-architect`
+- 调用者：`bba-architect`
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args
@@ -58,7 +58,7 @@ rg -i "<pattern>" wiki/protocols/ --include="*.md" -n -A 2 --max-count=<max_resu
 
 ### Phase 4 — return
 
-返回 JSON。调用方 (`bb-architect`) 据 file 列表 Read 详细内容补充 PRD。
+返回 JSON。调用方 (`bba-architect`) 据 file 列表 Read 详细内容补充 PRD。
 
 ## 收敛 / 失败
 

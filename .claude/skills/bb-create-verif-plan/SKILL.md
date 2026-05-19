@@ -1,6 +1,6 @@
 ---
 name: bb-create-verif-plan
-description: "把 mas/verif_plan_seed.md 扩展为完整验证计划 markdown（功能检查点、覆盖率目标、边界、随机约束、test case 清单）。触发场景：(1) bb-guru-verification 启动时；(2) 显式 /bb-create-verif-plan。"
+description: "把 mas/verif_plan_seed.md 扩展为完整验证计划 markdown（功能检查点、覆盖率目标、边界、随机约束、test case 清单）。触发场景：(1) bba-guru-verification 启动时；(2) 显式 /bb-create-verif-plan。"
 ---
 
 # bb-create-verif-plan
@@ -9,7 +9,7 @@ description: "把 mas/verif_plan_seed.md 扩展为完整验证计划 markdown（
 
 读 `verif_plan_seed.md` + MAS（接口/FSM/clock_domains），输出 `verification_plan.md`，含 6 个必备 section。
 
-- 调用者：`bb-guru-verification`
+- 调用者：`bba-guru-verification`
 - 下游：`bb-generate-tb`
 - 禁止使用：Task / Agent / Skill
 
@@ -74,7 +74,7 @@ seed = open(verif_plan_seed).read()
 
 ### Phase 4 — return
 
-返回 JSON。`bb-guru-verification` 用此初始化 coverage tracker，调 `bb-generate-tb`。
+返回 JSON。`bba-guru-verification` 用此初始化 coverage tracker，调 `bb-generate-tb`。
 
 ## 收敛 / 失败
 

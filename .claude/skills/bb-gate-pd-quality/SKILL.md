@@ -1,6 +1,6 @@
 ---
 name: bb-gate-pd-quality
-description: "PD signoff 质量门禁：DRC 0 violation + LVS match + post-PD timing 所有 corner WNS≥0 + GDSII 文件存在。通过即完成 signoff。触发场景：(1) bb-guru-pd 完成 GDS export；(2) 显式 /bb-gate-pd-quality。"
+description: "PD signoff 质量门禁：DRC 0 violation + LVS match + post-PD timing 所有 corner WNS≥0 + GDSII 文件存在。通过即完成 signoff。触发场景：(1) bba-guru-pd 完成 GDS export；(2) 显式 /bb-gate-pd-quality。"
 ---
 
 # bb-gate-pd-quality
@@ -9,7 +9,7 @@ description: "PD signoff 质量门禁：DRC 0 violation + LVS match + post-PD ti
 
 校验 DRC / LVS / post-PD multi-corner STA / GDS 四项，全 pass 才标记 signoff。
 
-- 调用者：`bb-guru-pd`
+- 调用者：`bba-guru-pd`
 - 上游：`bb-invoke-magic`(drc)、`bb-invoke-netgen`、`bb-invoke-opensta`(post_pd)、`bb-invoke-klayout`(export)
 - 禁止使用：Task / Agent / Skill
 
