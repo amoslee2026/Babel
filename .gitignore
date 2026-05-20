@@ -175,3 +175,37 @@ obj_dir/
 abc.history
 0
 
+# ---> Claude Code session artifacts
+.claude/scheduled_tasks.json
+.claude/scheduled_tasks.lock
+.claude/session_summaries/
+
+# ---> Simulation/coverage artifacts (process files, not results)
+sim_main_*.cpp
+coverage*.dat
+coverage*.json
+coverage*.info
+coverage_annotated/
+coverage_annotated_new/
+coverage_full_annotated/
+file_list_full.f
+run_coverage_sim.sh
+sim_results/
+
+# ---> Stale markers (state tracking, not content)
+.stale/
+
+# ---> Generated reports (intermediate, regenerable)
+*_report.json
+
+# ---> Design output artifacts (regenerable from RTL)
+.handoff/
+constraints/
+pd/
+synth_parallel/
+cdc/
+
+# ---> Synthesis/PD outputs (regenerable)
+synth/*.v
+synth/netlist*.v
+
