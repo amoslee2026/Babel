@@ -318,6 +318,7 @@ module M05_PowerManager
 
     //========================================================================
     // Power Estimator (MAS.md §3.4, datapath.md §3.6)
+    // Note: pwr_budget_reg handled in Bus Interface block
     //========================================================================
     // Estimation model:
     // PD_MAIN_Power = Activity_Factor * Max_Power * DVFS_Factor
@@ -362,12 +363,8 @@ module M05_PowerManager
     always_ff @(posedge clk_aon or negedge rst_por_n) begin
         if (!rst_por_n) begin
             pwr_estimate_reg <= 16'b0;
-            pwr_budget_reg <= 16'h700;  // Default 700 mW budget
             pwr_alert_reg <= 1'b0;
         end else begin
-            // Update budget from input
-            pwr_budget_reg <= pwr_budget;
-
             // Calculate total power estimate
             if (pwr_est_enable_reg) begin
                 pwr_estimate_reg <= main_power_est + io_power_est + dram_power_est + 16'h7;  // +7mW AON
@@ -375,23 +372,15 @@ module M05_PowerManager
                 pwr_estimate_reg <= 16'b0;
             end
 
-            // Alert check
-            pwr_alert_reg <= (pwr_estimate_reg > pwr_budget_reg) && pwr_est_enable_reg;
+            // Alert check (use pwr_budget input directly)
+            pwr_alert_reg <= (pwr_estimate_reg > pwr_budget) && pwr_est_enable_reg;
         end
     end
 
     //========================================================================
     // Wakeup Controller (MAS.md §3.3, datapath.md §3.5)
+    // Note: wakeup_en_reg handled in Bus Interface block
     //========================================================================
-
-    // Wakeup enable register
-    always_ff @(posedge clk_aon or negedge rst_por_n) begin
-        if (!rst_por_n) begin
-            wakeup_en_reg <= 8'hFF;  // All sources enabled by default
-        end else begin
-            wakeup_en_reg <= wakeup_en;
-        end
-    end
 
     // Wakeup status detection and status register
     always_ff @(posedge clk_aon or negedge rst_por_n) begin
@@ -553,6 +542,7 @@ module M05_PowerManager
 
     //========================================================================
     // DVFS Controller (MAS.md §3.2, datapath.md §3.2-3.3)
+    // Note: dvfs_switch_req_reg and target_op_reg reset in Bus Interface block
     //========================================================================
     // DVFS switching sequence:
     // Frequency Up: V increase -> wait ACK -> F increase -> wait ACK
@@ -570,13 +560,11 @@ module M05_PowerManager
     logic       freq_up_reg;  // Direction flag: 1=up, 0=down
     logic [7:0] dvfs_timeout_cnt_reg;
 
-    // DVFS state register
+    // DVFS state register (uses dvfs_switch_req_reg and target_op_reg from Bus block)
     always_ff @(posedge clk_aon or negedge rst_por_n) begin
         if (!rst_por_n) begin
             dvfs_state_reg <= DVFS_IDLE;
             current_op_reg <= OP0;
-            target_op_reg <= OP0;
-            dvfs_switch_req_reg <= 1'b0;
             dvfs_switching_reg <= 1'b0;
             vdd_target_reg <= VDD_OP0;
             freq_target_reg <= FREQ_OP0;
@@ -739,11 +727,10 @@ module M05_PowerManager
     end
 
     // FSM output generation based on state (FSM.md Output Actions by State)
+    // Note: dvfs_switch_req_reg and target_op_reg handled in DVFS/Bus blocks
     always_ff @(posedge clk_aon or negedge rst_por_n) begin
         if (!rst_por_n) begin
             pmode_state <= STATE_RESET;
-            dvfs_switch_req_reg <= 1'b0;
-            target_op_reg <= OP0;
             pg_entering_reg <= 1'b0;
             pg_exiting_reg <= 1'b0;
             mode_ack_reg <= 1'b0;
@@ -756,8 +743,6 @@ module M05_PowerManager
                     // Reset state outputs
                     pg_main_en <= 1'b1;     // PG enabled (powered off)
                     pg_iso_en <= 1'b1;      // Isolation enabled
-                    target_op_reg <= OP0;   // Prepare for OP0
-                    dvfs_switch_req_reg <= 1'b0;
                     pg_entering_reg <= 1'b0;
                     pg_exiting_reg <= 1'b1; // Request power gate exit
                     mode_ack_reg <= 1'b0;
@@ -767,7 +752,6 @@ module M05_PowerManager
                     // Active state outputs
                     pg_main_en <= 1'b0;     // PG disabled
                     pg_iso_en <= 1'b0;      // Isolation disabled
-                    dvfs_switch_req_reg <= 1'b0;
                     pg_entering_reg <= 1'b0;
                     pg_exiting_reg <= 1'b0;
                     mode_ack_reg <= 1'b1;   // Acknowledge mode
@@ -778,8 +762,6 @@ module M05_PowerManager
                     // Sleep state outputs
                     pg_main_en <= 1'b0;     // PG disabled
                     pg_iso_en <= 1'b0;      // Isolation disabled
-                    target_op_reg <= OP1;   // OP1 for sleep
-                    dvfs_switch_req_reg <= 1'b1;
                     pg_entering_reg <= 1'b0;
                     pg_exiting_reg <= 1'b0;
                     mode_ack_reg <= 1'b1;
@@ -789,8 +771,6 @@ module M05_PowerManager
                     // Deep Sleep state outputs
                     pg_main_en <= 1'b1;     // PG enabled
                     pg_iso_en <= 1'b1;      // Isolation enabled
-                    target_op_reg <= OP2;   // OP2 for deep sleep
-                    dvfs_switch_req_reg <= 1'b1;
                     pg_entering_reg <= 1'b1; // Request power gate enter
                     pg_exiting_reg <= 1'b0;
                     mode_ack_reg <= 1'b1;
@@ -855,12 +835,17 @@ module M05_PowerManager
     end
 
     //========================================================================
-    // Control Registers (from bus interface)
+    // Bus Interface (Unified - handles all control registers)
     //========================================================================
 
-    // PM_CTRL register
+    // Register read/write logic (handles pm_enable_reg, dvfs_enable_reg, etc.)
     always_ff @(posedge clk_aon or negedge rst_por_n) begin
         if (!rst_por_n) begin
+            bus_cmd_ready <= 1'b0;
+            bus_rsp_valid_reg <= 1'b0;
+            bus_rsp_data_reg <= 32'b0;
+            bus_rsp_error_reg <= 1'b0;
+            // Control registers reset values (from deleted PM_CTRL register block)
             pm_enable_reg <= 1'b0;
             dvfs_enable_reg <= 1'b1;
             pg_enable_reg <= 1'b1;
@@ -869,100 +854,13 @@ module M05_PowerManager
             idle_det_enable_reg <= 1'b0;
             auto_pmode_en_reg <= 1'b0;
             irq_enable_reg <= 1'b0;
-        end
-    end
-
-    //========================================================================
-    // Status Register Generation
-    //========================================================================
-
-    always_ff @(posedge clk_aon or negedge rst_por_n) begin
-        if (!rst_por_n) begin
-            pm_ready_reg <= 1'b0;
-            pm_busy_reg <= 1'b0;
-            pm_error_reg <= 1'b0;
-        end else begin
-            // Ready when in ACTIVE state and not busy
-            pm_ready_reg <= (pmode_state_reg == STATE_ACTIVE) && !dvfs_switching_reg;
-
-            // Busy during transitions
-            pm_busy_reg <= dvfs_switching_reg || mode_transition_active_reg ||
-                           (pg_seq_state_reg != PG_SEQ_IDLE);
-
-            // Error from voltage regulator or timeout
-            pm_error_reg <= vdd_main_error || (dvfs_timeout_cnt_reg >= 8'h64);
-        end
-    end
-
-    //========================================================================
-    // Interrupt Generation
-    //========================================================================
-
-    always_ff @(posedge clk_aon or negedge rst_por_n) begin
-        if (!rst_por_n) begin
-            irq_pending_reg <= 1'b0;
-            irq_type_reg <= 3'b0;
-            pm_irq <= 1'b0;
-            pm_irq_type <= 3'b0;
-        end else begin
-            // Generate interrupts based on events
-            if (irq_enable_reg) begin
-                // DVFS done interrupt
-                if (dvfs_state_reg == DVFS_DONE) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_DVFS_DONE;
-                end
-
-                // Wakeup interrupt
-                if (wakeup_detected_reg) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_WAKEUP;
-                end
-
-                // Power alert interrupt
-                if (pwr_alert_reg) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_PWR_ALERT;
-                end
-
-                // Power Gate done interrupt
-                if (pg_seq_state_reg == PG_SEQ_PG_EN || pg_seq_state_reg == PG_SEQ_ISO_DIS) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_PG_DONE;
-                end
-
-                // Mode transition done interrupt
-                if (mode_ack_reg && mode_transition_active_reg) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_PMODE_DONE;
-                end
-
-                // Error interrupt
-                if (pm_error_reg) begin
-                    irq_pending_reg <= 1'b1;
-                    irq_type_reg <= IRQ_TYPE_ERROR;
-                end
-            end else begin
-                irq_pending_reg <= 1'b0;
-            end
-
-            // Output interrupt signals
-            pm_irq <= irq_pending_reg && irq_enable_reg;
-            pm_irq_type <= irq_type_reg;
-        end
-    end
-
-    //========================================================================
-    // Bus Interface (MAS.md §2.1.2)
-    //========================================================================
-
-    // Register read logic
-    always_ff @(posedge clk_aon or negedge rst_por_n) begin
-        if (!rst_por_n) begin
-            bus_cmd_ready <= 1'b0;
-            bus_rsp_valid_reg <= 1'b0;
-            bus_rsp_data_reg <= 32'b0;
-            bus_rsp_error_reg <= 1'b0;
+            // Wakeup enable register reset (from deleted Wakeup enable block)
+            wakeup_en_reg <= 8'hFF;  // All sources enabled by default
+            // Power budget register reset
+            pwr_budget_reg <= 16'h700;  // Default 700 mW budget
+            // DVFS control registers reset (from deleted DVFS block reset)
+            target_op_reg <= OP0;
+            dvfs_switch_req_reg <= 1'b0;
         end else begin
             bus_cmd_ready <= 1'b1;
 
