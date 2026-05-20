@@ -1,0 +1,275 @@
+{
+  "design_name": "NPU_top",
+  "version": "1.0.0",
+  "generated": "2026-05-20T13:22:00+08:00",
+  "status": "first_run_pipeline_reachability",
+  "technology": {
+    "pdk": "ASAP7",
+    "node_nm": 7,
+    "metal_stack": "M1-M7",
+    "std_cell_library": "asap7sc7p5t_27",
+    "track": 7.5
+  },
+  "die_area": {
+    "width_um": 1500,
+    "height_um": 1500,
+    "margin_left_um": 10,
+    "margin_right_um": 10,
+    "margin_top_um": 10,
+    "margin_bottom_um": 10
+  },
+  "core_area": {
+    "width_um": 1480,
+    "height_um": 1480
+  },
+  "utilization": {
+    "target": 0.70,
+    "note": "Conservative for first run"
+  },
+  "io_ring": {
+    "placement": "perimeter",
+    "pitch_um": 50,
+    "pins": [
+      {
+        "name": "ext_clk_50MHz",
+        "direction": "input",
+        "side": "left",
+        "offset_um": 100,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1,
+        "clock": true,
+        "frequency_mhz": 50
+      },
+      {
+        "name": "ext_rst_por_n",
+        "direction": "input",
+        "side": "left",
+        "offset_um": 200,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1,
+        "reset": true,
+        "async": true
+      },
+      {
+        "name": "pll_lock_ext",
+        "direction": "input",
+        "side": "right",
+        "offset_um": 100,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1
+      },
+      {
+        "name": "pll_pwr_en",
+        "direction": "output",
+        "side": "right",
+        "offset_um": 200,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1
+      },
+      {
+        "name": "irq_compute_done",
+        "direction": "output",
+        "side": "top",
+        "offset_um": 100,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1,
+        "interrupt": true
+      },
+      {
+        "name": "status_sec_boot_done",
+        "direction": "output",
+        "side": "top",
+        "offset_um": 200,
+        "layer": "M4",
+        "width_um": 0.1,
+        "height_um": 0.1,
+        "status": true
+      }
+    ]
+  },
+  "clock_plan": {
+    "clocks": [
+      {
+        "name": "CLK_SYS",
+        "source": "ext_clk_50MHz",
+        "period_ns": 2.0,
+        "frequency_mhz": 500,
+        "generated": true,
+        "generator": "M06_ClockManager",
+        "tree_type": "balanced_h_tree",
+        "target_skew_ps": 50,
+        "target_latency_ns": 0.5
+      },
+      {
+        "name": "CLK_AON",
+        "source": "M06_ClockManager/clk_aon_o",
+        "period_ns": 1000,
+        "frequency_mhz": 1,
+        "generated": true,
+        "tree_type": "simple",
+        "note": "Always-on clock for low power domains"
+      },
+      {
+        "name": "CLK_IO",
+        "source": "M06_ClockManager/clk_io_o",
+        "period_ns": 20,
+        "frequency_mhz": 50,
+        "generated": true,
+        "divide_by": 10,
+        "tree_type": "simple"
+      }
+    ],
+    "clock_gating": {
+      "cells": "M06_ClockManager",
+      "enable_pins": "clk_gating_en_i[13:0]",
+      "outputs": "clk_gating_o[13:0]",
+      "strategy": "integrated_clock_gating"
+    },
+    "clock_domains": [
+      {
+        "name": "compute",
+        "clock": "CLK_SYS",
+        "modules": ["M00_SystolicArray", "M09_AttentionUnit", "M10_FFNMatMul", "M11_RMSNormRoPE"],
+        "power_domain": "VDD_CORE"
+      },
+      {
+        "name": "control",
+        "clock": "CLK_SYS",
+        "modules": ["M01_DataflowController", "M08_ThreadScheduler", "M13_ISADecoder"],
+        "power_domain": "VDD_CORE"
+      },
+      {
+        "name": "memory",
+        "clock": "CLK_SYS",
+        "modules": ["M02_SRAMScratchpad", "M03_DRAMController", "M04_SystemBus"],
+        "power_domain": "VDD_CORE"
+      },
+      {
+        "name": "always_on",
+        "clock": "CLK_AON",
+        "modules": ["M05_PowerManager", "M06_ClockManager", "M07_ResetManager"],
+        "power_domain": "VDD_AON"
+      }
+    ],
+    "cross_domain": {
+      "strategy": "asynchronous",
+      "synchronizers": "M07_ResetManager",
+      "note": "All cross-domain signals synchronized via M07_ResetManager"
+    }
+  },
+  "power_plan": {
+    "domains": [
+      {
+        "name": "VDD_CORE",
+        "voltage_v": 0.7,
+        "pins": ["VDD"],
+        "rails": ["M5", "M6"]
+      },
+      {
+        "name": "VDD_AON",
+        "voltage_v": 0.7,
+        "pins": ["VDD_AON"],
+        "rails": ["M5", "M6"],
+        "always_on": true
+      },
+      {
+        "name": "VSS",
+        "voltage_v": 0,
+        "pins": ["VSS"],
+        "rails": ["M5", "M6"]
+      }
+    ],
+    "mesh": {
+      "horizontal": {
+        "layer": "M5",
+        "pitch_um": 20,
+        "width_um": 2,
+        "spacing_um": 2
+      },
+      "vertical": {
+        "layer": "M6",
+        "pitch_um": 20,
+        "width_um": 2,
+        "spacing_um": 2
+      }
+    }
+  },
+  "placement_constraints": {
+    "hard_macros": [
+      {
+        "name": "M02_SRAMScratchpad",
+        "type": "memory_macro",
+        "width_um": 200,
+        "height_um": 150,
+        "x_um": 100,
+        "y_um": 100,
+        "orientation": "R0",
+        "fixed": true
+      }
+    ],
+    "regions": [
+      {
+        "name": "compute_region",
+        "modules": ["M00_SystolicArray", "M09_AttentionUnit", "M10_FFNMatMul"],
+        "x_um": 200,
+        "y_um": 200,
+        "width_um": 800,
+        "height_um": 800,
+        "utilization_max": 0.75
+      },
+      {
+        "name": "control_region",
+        "modules": ["M01_DataflowController", "M08_ThreadScheduler", "M13_ISADecoder"],
+        "x_um": 1000,
+        "y_um": 200,
+        "width_um": 400,
+        "height_um": 400,
+        "utilization_max": 0.70
+      }
+    ]
+  },
+  "routing_constraints": {
+    "signal_routing": {
+      "layers": ["M2", "M3", "M4"],
+      "preferred_direction": {
+        "M2": "horizontal",
+        "M3": "vertical",
+        "M4": "horizontal"
+      }
+    },
+    "clock_routing": {
+      "layers": ["M5", "M6"],
+      "shielding": true,
+      "width_um": 0.2
+    },
+    "power_routing": {
+      "layers": ["M5", "M6", "M7"]
+    }
+  },
+  "floorplan_strategy": {
+    "approach": "hierarchical",
+    "note": "First run uses flat placement with region constraints",
+    "blockage": {
+      "type": "soft",
+      "value": 0.1
+    }
+  },
+  "timing_constraints": {
+    "sdc_file": "rtl/designs/NPU_top/constraints/NPU_top.sdc",
+    "corner": "TT",
+    "temperature_C": 25,
+    "voltage_v": 0.7
+  },
+  "notes": [
+    "First run pipeline reachability test",
+    "Simplified IO ring with 6 pins",
+    "Generic netlist without ASAP7 mapping",
+    "Conservative utilization (70%) for first pass",
+    "Clock tree synthesis to be refined after timing analysis"
+  ]
+}

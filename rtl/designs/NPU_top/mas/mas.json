@@ -1,0 +1,101 @@
+{
+  "design_name": "NPU_top",
+  "target_pdk": "ASAP7",
+  "target_library": "sc7p5t_28",
+  "io_ring": {
+    "pins": [
+      {
+        "name": "ext_clk_50MHz",
+        "direction": "input",
+        "layer": "M3",
+        "side": "left",
+        "offset_um": 50,
+        "width_um": 0.1
+      },
+      {
+        "name": "ext_rst_por_n",
+        "direction": "input",
+        "layer": "M3",
+        "side": "left",
+        "offset_um": 100,
+        "width_um": 0.1
+      },
+      {
+        "name": "pll_lock_ext",
+        "direction": "input",
+        "layer": "M3",
+        "side": "left",
+        "offset_um": 150,
+        "width_um": 0.1
+      },
+      {
+        "name": "pll_pwr_en",
+        "direction": "output",
+        "layer": "M3",
+        "side": "right",
+        "offset_um": 50,
+        "width_um": 0.1
+      },
+      {
+        "name": "irq_compute_done",
+        "direction": "output",
+        "layer": "M3",
+        "side": "right",
+        "offset_um": 100,
+        "width_um": 0.1
+      },
+      {
+        "name": "status_sec_boot_done",
+        "direction": "output",
+        "layer": "M3",
+        "side": "right",
+        "offset_um": 150,
+        "width_um": 0.1
+      }
+    ],
+    "pin_spacing_um": 50,
+    "corner_pins": false
+  },
+  "clock_plan": {
+    "primary_clock": "ext_clk_50MHz",
+    "target_freq_mhz": 50,
+    "clock_tree_cells": [
+      "BUFx4_ASAP7_75t_L",
+      "INVx4_ASAP7_75t_L"
+    ],
+    "insertion_delay_target_ns": 0.5,
+    "skew_target_ns": 0.1,
+    "derived_clocks": []
+  },
+  "power_plan": {
+    "vdd_net": "VDD",
+    "vss_net": "VSS",
+    "power_rings": {
+      "layer": "M5-M6",
+      "width_um": 1.0,
+      "spacing_um": 0.5
+    },
+    "power stripes": {
+      "vdd": {
+        "layer": "M5",
+        "width_um": 0.5,
+        "spacing_um": 50
+      },
+      "vss": {
+        "layer": "M5",
+        "width_um": 0.5,
+        "spacing_um": 50
+      }
+    }
+  },
+  "floorplan": {
+    "target_utilization_pct": 70,
+    "aspect_ratio": 1.0,
+    "core_margin_um": 10,
+    "row_height_um": 0.27,
+    "site_name": "asap7sc7p5t"
+  },
+  "constraints": {
+    "sdc_file": "rtl/designs/NPU_top/constraints/NPU_top.sdc"
+  }
+}
