@@ -189,7 +189,7 @@ module M10_FFNMatMul #(
     end
 
     // ========================================================================
-    // State Machine - State Register
+    // State Machine - State Register (Unified error handling)
     // ========================================================================
     /* verilator lint_off WIDTHEXPAND */
     always_ff @(posedge clk or negedge rst_n) begin
@@ -203,10 +203,29 @@ module M10_FFNMatMul #(
         end else if (enable) begin
             state <= next_state;
 
+            // Unified error handling - check conditions before state updates
+            // Check for invalid mode at start
+            if (state == IDLE && start && mode > 2'h2) begin
+                error      <= 1'b1;
+                error_code <= ERR_INVALID_MODE;
+            end
+
+            // Check for SA error input (any time)
+            if (sa_error_in && !error) begin
+                error      <= 1'b1;
+                error_code <= ERR_SA_ERROR;
+            end
+
+            // Clear error on error_clear request
+            if (error_clear) begin
+                error      <= 1'b0;
+                error_code <= NO_ERROR;
+            end
+
             // State-specific updates
             case (state)
                 IDLE: begin
-                    if (start && !busy) begin
+                    if (start && !busy && !error) begin
                         mode_reg      <= mode;
                         dim_reg       <= s_dim;
                         w_base_reg    <= w_base;
@@ -216,8 +235,6 @@ module M10_FFNMatMul #(
                         x_in_reg      <= x_in;
                         busy          <= 1'b1;
                         done          <= 1'b0;
-                        error         <= 1'b0;
-                        error_code    <= NO_ERROR;
                     end
                 end
 
@@ -229,7 +246,7 @@ module M10_FFNMatMul #(
                     timeout_cnt <= timeout_cnt + 1'b1;
 
                     // Check timeout
-                    if (timeout_cnt >= TIMEOUT_LIMIT) begin
+                    if (timeout_cnt >= TIMEOUT_LIMIT && !error) begin
                         error      <= 1'b1;
                         error_code <= ERR_TIMEOUT;
                     end
@@ -250,9 +267,8 @@ module M10_FFNMatMul #(
                     act_cnt <= act_cnt + 1'b1;
 
                     // Activation pipeline (8 cycles total)
-                    // Simplified - real implementation would iterate over all elements
-                    if (act_cnt >= 4'h8) begin
-                        activation_done <= 1'b1;
+                    // activation_done is set by Activation Pipeline block
+                    if (activation_done) begin
                         act_cnt <= 4'h0;
                     end
                 end
@@ -264,7 +280,7 @@ module M10_FFNMatMul #(
                 WAIT_SA2: begin
                     timeout_cnt <= timeout_cnt + 1'b1;
 
-                    if (timeout_cnt >= TIMEOUT_LIMIT) begin
+                    if (timeout_cnt >= TIMEOUT_LIMIT && !error) begin
                         error      <= 1'b1;
                         error_code <= ERR_TIMEOUT;
                     end
@@ -286,10 +302,7 @@ module M10_FFNMatMul #(
                 end
 
                 ERROR: begin
-                    if (error_clear) begin
-                        error      <= 1'b0;
-                        error_code <= NO_ERROR;
-                    end
+                    // Error state - handled by unified error logic above
                 end
 
                 default: begin
@@ -469,51 +482,64 @@ module M10_FFNMatMul #(
             act_silu_elem   <= 32'h0;
             act_gate_elem   <= 32'h0;
             lut_addr        <= 8'h0;
+            act_start       <= 1'b0;
+            activation_done <= 1'b0;
 
             for (int i = 0; i < HIDDEN_DIM/DIM; i++) begin
                 sigmoid_out[i] <= '0;
                 silu_out[i]    <= '0;
                 gate_out[i]    <= '0;
             end
-        end else if (enable && state == ACTIVATION) begin
-            // Activation pipeline stages
-            case (act_cnt)
-                // Stage 1-4: Sigmoid LUT lookup (simplified)
-                4'h0: begin
-                    // Start sigmoid lookup for element 0
-                    act_elem_idx <= 6'h0;
-                    act_vec_idx  <= 2'h0;
-                    act_start    <= 1'b1;
-                    // Extract element from w1_out (simplified)
-                    act_input_elem <= w1_out[0][DATA_WIDTH-1:0];
-                    lut_addr <= 8'h80;  // Center point (sigmoid(0) = 0.5)
-                end
+        end else if (enable) begin
+            // Clear activation_done at start of new activation
+            if (state == ACTIVATION && act_cnt == 4'h0) begin
+                activation_done <= 1'b0;
+            end
 
-                4'h4: begin
-                    // Sigmoid result received
-                    act_sigmoid_elem <= lut_result;
-                    // SiLU = w1 * sigmoid
-                    // Placeholder multiplication result
-                    act_silu_elem <= act_input_elem;  // Simplified
-                end
+            if (state == ACTIVATION) begin
+                // Activation pipeline stages
+                case (act_cnt)
+                    // Stage 1-4: Sigmoid LUT lookup (simplified)
+                    4'h0: begin
+                        // Start sigmoid lookup for element 0
+                        act_elem_idx <= 6'h0;
+                        act_vec_idx  <= 2'h0;
+                        act_start    <= 1'b1;
+                        // Extract element from w1_out (simplified)
+                        act_input_elem <= w1_out[0][DATA_WIDTH-1:0];
+                        lut_addr <= 8'h80;  // Center point (sigmoid(0) = 0.5)
+                    end
 
-                4'h6: begin
-                    // Gate = silu * w3
-                    // Placeholder multiplication result
-                    act_gate_elem <= act_silu_elem;  // Simplified
-                    gate_out[0][DATA_WIDTH-1:0] <= act_gate_elem;
-                end
+                    4'h4: begin
+                        // Sigmoid result received
+                        act_sigmoid_elem <= lut_result;
+                        // SiLU = w1 * sigmoid
+                        // Placeholder multiplication result
+                        act_silu_elem <= act_input_elem;  // Simplified
+                    end
 
-                4'h8: begin
-                    // Pipeline complete
-                    activation_done <= 1'b1;
-                    act_start <= 1'b0;
-                end
+                    4'h6: begin
+                        // Gate = silu * w3
+                        // Placeholder multiplication result
+                        act_gate_elem <= act_silu_elem;  // Simplified
+                        gate_out[0][DATA_WIDTH-1:0] <= act_gate_elem;
+                    end
 
-                default: begin
-                    // Pipeline stages continue
-                end
-            endcase
+                    4'h8: begin
+                        // Pipeline complete
+                        activation_done <= 1'b1;
+                        act_start <= 1'b0;
+                    end
+
+                    default: begin
+                        // Pipeline stages continue
+                    end
+                endcase
+            end else begin
+                // Clear activation_done in non-ACTIVATION states
+                activation_done <= 1'b0;
+                act_start <= 1'b0;
+            end
         end
     end
 
@@ -527,34 +553,6 @@ module M10_FFNMatMul #(
     // ========================================================================
     always_comb begin
         x_ready = (state == IDLE && !busy);
-    end
-
-    // ========================================================================
-    // Error Detection
-    // ========================================================================
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            error <= 1'b0;
-            error_code <= NO_ERROR;
-        end else if (enable) begin
-            // Check for invalid mode
-            if (state == IDLE && start && mode > 2'h2) begin
-                error <= 1'b1;
-                error_code <= ERR_INVALID_MODE;
-            end
-
-            // Check for SA error input
-            if (sa_error_in) begin
-                error <= 1'b1;
-                error_code <= ERR_SA_ERROR;
-            end
-
-            // Clear error on error_clear
-            if (state == ERROR && error_clear) begin
-                error <= 1'b0;
-                error_code <= NO_ERROR;
-            end
-        end
     end
 
     // ========================================================================

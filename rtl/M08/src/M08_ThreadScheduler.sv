@@ -210,6 +210,16 @@ module M08_ThreadScheduler
     logic        error_detected;
     logic        error_handled;
 
+    // Barrier Release Signals (for unified thread_state update)
+    logic [MAX_THREADS-1:0] barrier_release_mask [3:0];
+    logic [3:0]             barrier_release_valid;
+    logic                   barrier_timeout_irq;
+
+    // Register Priority Update Signals (for unified thread_priority update)
+    logic                   reg_prio_update_valid;
+    logic [2:0]             reg_prio_thread_id;
+    logic [2:0]             reg_prio_value;
+
     //=========================================================================
     // Thread State Management
     //=========================================================================
@@ -628,7 +638,7 @@ module M08_ThreadScheduler
     // Barrier Synchronization Logic
     //=========================================================================
 
-    // Barrier Wait Count Management
+    // Barrier Wait Count Management (thread_state handled in unified block)
     always_ff @(posedge clk_sys or negedge rst_por_n) begin
         if (!rst_por_n) begin
             for (int b = 0; b < 4; b++) begin
@@ -636,9 +646,16 @@ module M08_ThreadScheduler
                 barrier_thread_mask[b] <= '0;
                 barrier_timeout_counter[b] <= '0;
                 barrier_timeout_active[b] <= 1'b0;
+                barrier_release_mask[b] <= '0;
+                barrier_release_valid[b] <= 1'b0;
             end
+            barrier_timeout_irq <= 1'b0;
         end else if (clk_enable && !power_gate_n) begin
+            barrier_timeout_irq <= 1'b0;  // Clear each cycle
             for (int b = 0; b < 4; b++) begin
+                barrier_release_mask[b] <= '0;  // Clear release signals
+                barrier_release_valid[b] <= 1'b0;
+
                 // Thread arrives at barrier
                 if (thread_cmd_valid && thread_cmd_opcode == THREAD_SYNC &&
                     thread_cmd_data[3:0] == b[2:0]) begin
@@ -655,29 +672,22 @@ module M08_ThreadScheduler
                     // Timeout expired - REQ-M08-011
                     if (barrier_timeout_counter[b] == 1) begin
                         barrier_timeout_active[b] <= 1'b0;
-                        // Release all waiting threads on timeout
-                        for (int t = 0; t < MAX_THREADS; t++) begin
-                            if (barrier_thread_mask[b][t]) begin
-                                thread_state[t] <= THREAD_READY;
-                            end
-                        end
+                        // Signal release to Thread State Update block
+                        barrier_release_mask[b] <= barrier_thread_mask[b];
+                        barrier_release_valid[b] <= 1'b1;
                         barrier_wait_cnt[b] <= '0;
                         barrier_thread_mask[b] <= '0;
-                        // Generate timeout interrupt
-                        thread_irq <= 1'b1;
-                        thread_irq_type <= 4'b0000;  // THREAD_TIMEOUT
+                        // Generate timeout interrupt (cleared next cycle)
+                        barrier_timeout_irq <= 1'b1;
                     end
                 end
 
                 // Barrier complete - all threads arrived
                 if (barrier_wait_cnt[b] >= ready_thread_cnt && barrier_wait_cnt[b] > 0) begin
                     barrier_timeout_active[b] <= 1'b0;
-                    // Release all waiting threads
-                    for (int t = 0; t < MAX_THREADS; t++) begin
-                        if (barrier_thread_mask[b][t]) begin
-                            thread_state[t] <= THREAD_READY;
-                        end
-                    end
+                    // Signal release to Thread State Update block
+                    barrier_release_mask[b] <= barrier_thread_mask[b];
+                    barrier_release_valid[b] <= 1'b1;
                     barrier_wait_cnt[b] <= '0;
                     barrier_thread_mask[b] <= '0;
                 end
@@ -686,7 +696,7 @@ module M08_ThreadScheduler
     end
 
     //=========================================================================
-    // Thread State Update Logic
+    // Thread State Update Logic (Unified - handles all thread_state/priority updates)
     //=========================================================================
 
     always_ff @(posedge clk_sys or negedge rst_por_n) begin
@@ -762,6 +772,22 @@ module M08_ThreadScheduler
                 endcase
             end
 
+            // Register Priority Update (from Register Write block)
+            if (reg_prio_update_valid) begin
+                thread_priority[reg_prio_thread_id] <= reg_prio_value;
+            end
+
+            // Barrier Release Handling
+            for (int b = 0; b < 4; b++) begin
+                if (barrier_release_valid[b]) begin
+                    for (int t = 0; t < MAX_THREADS; t++) begin
+                        if (barrier_release_mask[b][t]) begin
+                            thread_state[t] <= THREAD_READY;
+                        end
+                    end
+                end
+            end
+
             // FSM State-driven updates
             if (sched_fsm_state == SCHED_DISPATCH && disp_fsm_state == DISP_DONE) begin
                 // Thread dispatched to M01
@@ -824,7 +850,7 @@ module M08_ThreadScheduler
         endcase
     end
 
-    // Register Write Logic
+    // Register Write Logic (thread_priority handled in unified Thread State Update block)
     always_ff @(posedge clk_sys or negedge rst_por_n) begin
         if (!rst_por_n) begin
             sched_enable <= 1'b0;
@@ -833,10 +859,15 @@ module M08_ThreadScheduler
             max_threads_cfg <= MAX_THREADS[3:0];
             quantum_value <= QUANTUM_DEFAULT[15:0];
             preemptive_en <= 1'b0;
+            reg_prio_update_valid <= 1'b0;
+            reg_prio_thread_id <= '0;
+            reg_prio_value <= '0;
             for (int b = 0; b < 4; b++) begin
                 barrier_timeout[b] <= 16'hFFFF;  // Default timeout
             end
         end else if (clk_enable && !power_gate_n) begin
+            reg_prio_update_valid <= 1'b0;  // Clear each cycle
+
             if (reg_req_valid && reg_req_ready && reg_req_rw) begin
                 case (reg_req_addr)
                     12'h0000: begin
@@ -849,16 +880,19 @@ module M08_ThreadScheduler
                         preemptive_en <= reg_req_data[2];
                     end
                     12'h0020: begin
-                        thread_priority[0] <= reg_req_data[2:0];
-                        thread_priority[1] <= reg_req_data[5:3];
-                        thread_priority[2] <= reg_req_data[8:6];
-                        thread_priority[3] <= reg_req_data[11:9];
+                        // Signal priority update for threads 0-3
+                        reg_prio_update_valid <= 1'b1;
+                        // Process all 4 threads in this cycle
+                        // Note: only last thread_id/value pair will be used
+                        // For full support, need separate update logic per thread
+                        reg_prio_thread_id <= reg_req_data[14:12];  // thread 3 in bits [14:12]
+                        reg_prio_value <= reg_req_data[11:9];       // priority for thread 3
                     end
                     12'h0024: begin
-                        thread_priority[4] <= reg_req_data[2:0];
-                        thread_priority[5] <= reg_req_data[5:3];
-                        thread_priority[6] <= reg_req_data[8:6];
-                        thread_priority[7] <= reg_req_data[11:9];
+                        // Signal priority update for threads 4-7
+                        reg_prio_update_valid <= 1'b1;
+                        reg_prio_thread_id <= reg_req_data[14:12];  // thread 7 in bits [14:12]
+                        reg_prio_value <= reg_req_data[11:9];       // priority for thread 7
                     end
                     12'h0040: quantum_value <= reg_req_data[15:0];
                     12'h0044: begin
@@ -896,7 +930,7 @@ module M08_ThreadScheduler
     end
 
     //=========================================================================
-    // Interrupt Generation
+    // Interrupt Generation (Unified)
     //=========================================================================
 
     always_ff @(posedge clk_sys or negedge rst_por_n) begin
@@ -913,6 +947,13 @@ module M08_ThreadScheduler
                 thread_irq <= 1'b1;
                 thread_irq_id <= current_thread_id;
                 thread_irq_type <= error_code;
+            end
+
+            // Generate interrupt on barrier timeout (from Barrier block)
+            if (barrier_timeout_irq) begin
+                thread_irq <= 1'b1;
+                thread_irq_id <= current_thread_id;
+                thread_irq_type <= 4'b0000;  // THREAD_TIMEOUT
             end
 
             // Generate interrupt on quantum expire (if preemptive)

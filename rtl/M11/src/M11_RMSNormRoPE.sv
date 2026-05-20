@@ -246,14 +246,11 @@ always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
     pos_reg           <= 32'h0;
     dim_reg           <= 8'h40;  // 64
     head_size_reg     <= 8'h8;
-    data_loaded       <= 1'b0;
-    weight_loaded     <= 1'b0;
-    table_loaded      <= 1'b0;
+    // data_loaded, weight_loaded, write_done handled in SRAM Access block
+    // zero_input_detected handled in RMSNorm Sub-FSM block
     // norm_done and rope_done are combinational only (set in always_comb)
-    write_done        <= 1'b0;
     error_code        <= ERR_NONE;
     irq_pending       <= 1'b0;
-    zero_input_detected <= 1'b0;
   end else begin
     fsm_current_state <= fsm_next_state;
 
@@ -281,11 +278,8 @@ always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
       pos_reg       <= op_pos_i;
       dim_reg       <= op_dim_i;
       head_size_reg <= op_head_size_i;
-      data_loaded   <= 1'b0;
-      weight_loaded <= 1'b0;
       table_loaded  <= 1'b0;
       // norm_done and rope_done are combinational only
-      write_done    <= 1'b0;
       error_code    <= ERR_NONE;
       cycle_counter <= 32'h0;
     end
@@ -392,7 +386,7 @@ always_comb begin
 end
 
 //=============================================================================
-// RMSNorm Sub-FSM
+// RMSNorm Sub-FSM (Unified - handles zero_input_detected)
 //=============================================================================
 
 always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
@@ -402,6 +396,7 @@ always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
     mean_value     <= 32'h0;
     mean_plus_eps  <= 32'h0;
     rms_value      <= 16'h0;
+    zero_input_detected <= 1'b0;
     for (int i = 0; i < VECTOR_DIM; i++) begin
       square_arr[i]    <= 16'h0;
       scale_factor[i]  <= 16'h0;
@@ -409,6 +404,11 @@ always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
     end
   end else begin
     norm_sub_state <= norm_next_sub_state;
+
+    // Clear zero_input_detected at start of new computation
+    if (norm_sub_state == NORM_IDLE && fsm_current_state == S_COMPUTE_NORM) begin
+      zero_input_detected <= 1'b0;
+    end
 
     case (norm_sub_state)
       // Square computation (parallel)
@@ -596,7 +596,7 @@ always_comb begin
 end
 
 //=============================================================================
-// SRAM Access Logic
+// SRAM Access Logic (Unified - handles data_loaded, weight_loaded, write_done)
 //=============================================================================
 
 // SRAM read during FETCH state
@@ -605,11 +605,22 @@ always_ff @(posedge clk_sys_i or negedge rst_sys_n_i) begin
     sram_addr_cnt <= 20'h0;
     vec_idx_cnt   <= 8'h0;
     sram_access_done <= 1'b0;
+    data_loaded <= 1'b0;
+    weight_loaded <= 1'b0;
+    write_done <= 1'b0;
     for (int i = 0; i < VECTOR_DIM; i++) begin
       input_vec[i] <= 16'h0;
       weight_vec[i] <= 16'h0;
     end
   end else begin
+    // Clear flags on new operation start
+    if (fsm_current_state == S_IDLE && op_start_i) begin
+      data_loaded <= 1'b0;
+      weight_loaded <= 1'b0;
+      write_done <= 1'b0;
+      vec_idx_cnt <= 8'h0;
+    end
+
     // Load input data (16 words = 64 FP16 values)
     if (fsm_current_state == S_FETCH && sram_rsp_valid_i) begin
       // Parse 64-bit response into 4 FP16 values

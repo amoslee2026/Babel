@@ -442,8 +442,8 @@ module M01_DataflowController
       op_state[1] <= '0;
       precision_cfg[0] <= PREC_FP16;
       precision_cfg[1] <= PREC_FP16;
-      sram_alloc[0] <= '0;
-      sram_alloc[1] <= '0;
+      // sram_alloc reset handled in register write always_ff block (line 757)
+      // Removed to avoid multi-driver conflict
     end else begin
       // Thread switch request in COMPLETE state
       if (fsm_state == S_COMPLETE && fsm_state_next == S_FETCH_OP) begin
