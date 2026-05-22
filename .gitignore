@@ -206,8 +206,8 @@ synth_parallel/
 cdc/
 
 # ---> Synthesis/PD outputs (regenerable)
-synth/*.v
-synth/netlist*.v
+synth/**/*.v
+synth/**/netlist*.v
 
 *.vcd
 *.gch
