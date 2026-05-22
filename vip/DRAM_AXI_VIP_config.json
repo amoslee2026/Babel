@@ -1,0 +1,41 @@
+{
+  "vip_type": "dram",
+  "module_id": "DRAM_AXI_VIP",
+  "target_device": "DRAM",
+  "interface": "AXI4",
+  "parameters": {
+    "CLK_PERIOD_NS": 1,
+    "DATA_WIDTH": 1024,
+    "STRB_WIDTH": 128,
+    "ID_WIDTH": 8,
+    "MEM_SIZE_B": 268435456,
+    "ADDR_WIDTH": 28,
+    "READ_LATENCY": 50,
+    "WRITE_LATENCY": 20,
+    "BURST_MAX": 256,
+    "ERROR_INJECT": false,
+    "ERROR_RATE_PPM": 0
+  },
+  "capacity_range": {
+    "min_mb": 8,
+    "max_mb": 1024,
+    "default_mb": 256,
+    "user_specified_gb": 250
+  },
+  "timing": {
+    "clock_frequency_mhz": 1000,
+    "read_latency_cycles": 50,
+    "write_latency_cycles": 20,
+    "read_latency_ns": 50,
+    "write_latency_ns": 20
+  },
+  "tasks": [
+    "init_memory_pattern",
+    "load_memory_file",
+    "dump_memory_file",
+    "backdoor_write",
+    "backdoor_read",
+    "force_error",
+    "get_stats"
+  ]
+}
