@@ -40,7 +40,7 @@
 
 ```bash
 # 方案A: 使用conda（推荐）
-wget https://mirrors.example.com/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
+wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
 source ~/miniconda3/etc/profile.d/conda.sh
 
@@ -90,11 +90,11 @@ sudo apt install -y \
 ### 2.3 pip镜像配置
 
 ```bash
-# 配置国内镜像（国内镜像源）
-pip config set global.index-url https://pypi.doubanio.com/simple
+# 配置国内镜像（清华源）
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 或临时使用
-pip install -r requirements.txt -i https://pypi.doubanio.com/simple
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ---
