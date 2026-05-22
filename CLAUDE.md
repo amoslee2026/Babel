@@ -1,48 +1,45 @@
 ## Project Overview
-这是一个开源的AI原生Chiplet设计流程，基于开源EDA工具链和AI Coding Agent
+开源 AI 原生 Chiplet 设计流程，基于开源 EDA 工具链和 AI Coding Agent。
 
-清华大学集成电路学院芯粒设计实践课开发环境 (Tsinghua University School of Integrated Circuits, Chiplet Design Practice Course Development Environment).
+清华大学集成电路学院芯粒设计实践课开发环境。
 
-## System Environment
+## Git Remotes
 
-| Item | Version |
-|------|---------|
-| OS | Linux (RHEL/CentOS 8) |
-| Python | 3.6.8 |
-| GCC | 8.5.0 |
-| Make | 4.2.1 |
+| Remote | URL | 用途 |
+|--------|-----|------|
+| origin | gitlink.org.cn/amoslee2011/Babel.git | 主仓库 |
+| github | github.com/amoslee2026/Babel.git | 镜像 |
+
+`git push origin` 会同步推送到两边。
 
 ## Directory Structure
 
 ```
-sjk2026/
-  CLAUDE.md           # 项目指导文档
-  .claude/            # Claude Code 配置
+Babel/
+  rtl/                # RTL 设计源码
+    designs/          # 设计项目 (NPU_top, tinystories_npu)
+  designs/            # 设计输出 (GDSII, 报告)
   doc/                # 文档
-    operators/        # 算子文档 (attention, matmul, rmsnorm, rope, etc.)
-    isa/              # NPU指令集
-    eda/              # Open source EDA tools chain and documents
-  llama2.c/           # llama2.c 子项目 (LLM inference in C)
-    ARCHITECTURE.md
-    model.py / main.py / export.py
-    Makefile
-  scripts/            # 安装脚本
-    install-uv-system.sh
-    install-rust-system.sh
-    configure-rust-env.sh
-  temp/               # 临时文件
-    deleted/          # 已删除文件备份 (可恢复)
-  utils/              # 工具目录
+    operators/        # 箔子文档 (attention, matmul, rmsnorm, rope)
+    isa/              # NPU 指令集
+    eda/              # EDA 工具文档
+  wiki/               # 知识库
+    cbb/              # Common Building Blocks
+    codingstyle/      # 编码规范
+    protocols/        # 协议文档
+  spec/               # 规范文档 (PRD, MAS, ARCH)
+  harness_spec/       # Agent harness 规范
+  libs/               # 技术库 (ASAP7) - symlink
+  llama2.c/           # llama2.c 子项目
+  .claude/            # Claude Code 配置
+    skills/           # 自定义 Skills (bb-* 系列)
 ```
 
-## Chiplet Design Context
-
-### Open-Source EDA Toolchain
+## EDA Toolchain
 
 | Tool | Version | Function |
 |------|---------|----------|
 | Yosys | 0.35 | RTL synthesis |
-| ABC | latest | Logic optimization |
 | OpenSTA | 2.2.0 | Static timing analysis |
 | Magic | 8.3.641 | Layout/DRC/LVS |
 | Netgen | 1.5 | LVS netlist comparison |
@@ -50,42 +47,25 @@ sjk2026/
 | KLayout | 0.30.8 | GDSII viewer/DRC |
 | Verilator | latest | Verilog simulation |
 
-Environment setup:
-```bash
-source ~/wrk/eda_opensources/eda_env.sh
-```
+Environment: `source ~/wrk/eda_opensources/eda_env.sh`
 
-### Technology Library: ASAP7
+## Technology Library: ASAP7
 
-ASAP7 (Arizona State University 7nm PDK) - Open-source predictive 7nm process design kit.
+7nm PDK at `libs/asap7/`:
+- asap7sc6t_26 (6-track)
+- asap7sc7p5t_27/28 (7.5-track)
+- Liberty (.lib), LEF layouts
 
-Location: `libs/asap7/`
+## Skills
 
-| Library | Description |
-|---------|-------------|
-| asap7sc6t_26 | 6-track standard cell library |
-| asap7sc7p5t_27 | 7.5-track standard cell library (r27) |
-| asap7sc7p5t_28 | 7.5-track standard cell library (r28) |
-| asap7_sram | SRAM models |
-
-Key features:
-- Standard cells with multiple drive strengths
-- Metal stack: 7 layers (M1-M7)
-- Liberty timing files (.lib), LEF layouts
-- Synopsys enablement in `libs/ASAP7-Synopsys-Enablement/`
-
-### Commercial Tools (Reference)
-
-| Category | Tools |
-|----------|-------|
-| HDL | Verilog, SystemVerilog, VHDL |
-| Simulation | VCS, Questa, ModelSim |
-| Synthesis | Design Compiler, Vivado |
-| Place & Route | Innovus, ICC2 |
-| Verification | JasperGold, Formality |
-| Interconnect | UCIe, AXI, AMBA |
+Babel Skills (`.claude/skills/bb-*`):
+- `/bba-architect` - 架构设计流程 (PRD → ARCH → MAS)
+- `/bba-guru-rtl` - RTL 生成
+- `/bba-guru-verification` - 验证流程
+- `/bba-guru-synthesis` - 综合流程
+- `/bba-guru-pd` - Physical Design 流程
 
 ## Notes
 
 - 使用国内镜像源安装依赖
-- 输出格式: 标准 Markdown 表格，避免 Unicode 特殊字符
+- 输出格式: 标准 Markdown 表格
