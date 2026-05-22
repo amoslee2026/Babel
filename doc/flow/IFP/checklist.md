@@ -1231,5 +1231,5 @@ action/check/
 
 ---
 
-*清华大学集成电路学院 - 芯粒设计实践课*
+*Chiplet Design Practice*
 *文档生成: 2026-05-13*
