@@ -1,0 +1,160 @@
+{
+  "topic": "面向芯片设计工程师的 Harness Engineering 培训",
+  "version": "2.1",
+  "scope": "deep",
+  "focus": "all",
+  "language": "zh-CN",
+  "audience": "IC / Chiplet / SoC 设计工程师",
+  "generated_utc": "2026-05-20T08:50:00Z",
+  "generated_beijing": "2026-05-20 16:50:00+08:00",
+  "project_dir": "/home/lxx/wrk/Babel",
+  "output_dir": "harness_spec/training",
+  "duration_estimate_v2": "8 学时讲授 + 8 学时实验",
+
+  "v2_1_changes": {
+    "structure": [
+      "拆分主文件为 chapters/ + appendices/ 模块化目录",
+      "新增 build.sh 脚本自动拼接全文版",
+      "保留 harness-engineering-training.md 作单文件分发回退（自动生成）"
+    ],
+    "chapter_6_enhancements": [
+      "6.2.1 新增 Smart Zone vs Dumb Zone（40% 量化）",
+      "6.2.2 新增三层上下文架构（Vasilopoulos 学术验证）",
+      "6.2.3 节流手段扩充至 8 项",
+      "6.5.1 新增可观测性接给 agent（OpenAI Puppeteer/Chrome DevTools）",
+      "6.7 新增 AGENTS.md 活文档模式（Hashimoto + OpenAI）",
+      "6.8 新增架构约束机械化执行（含 Linter 错误内嵌修复指令）",
+      "6.9 新增单一事实源原则",
+      "6.10 新增 Backpressure 反压理论（Huntley）",
+      "6.11 新增熵管理与垃圾回收 Agent"
+    ],
+    "chapter_10_enhancements": [
+      "10.1 易踩坑表从 8 项扩至 13 项",
+      "10.2 最佳实践速查新增 3 项（活文档 / Linter 修复指令 / 单一事实源）",
+      "10.3 IC 项目检查清单新增 3 项",
+      "10.4 新增 Anthropic 4 大失败模式深度剖析",
+      "10.5 新增三大空白与改造空间",
+      "10.6 新增 Harness Engineering 七大业界争议"
+    ],
+    "scale": {
+      "lines_v2": 2648,
+      "lines_v2_1": 3133,
+      "mermaid_v2": 51,
+      "mermaid_v2_1": 58
+    },
+    "primary_reference_v2_1": "知乎《Harness Engineering 深度解析：AI Agent 时代的工程范式革命》https://zhuanlan.zhihu.com/p/2014014859164026634 (2026-03-08)"
+  },
+
+  "v2_changes": {
+    "new_chapters": [
+      "第 1 章 工程范式的三次演进（Prompt → Context → Harness）",
+      "第 2 章 Agent 总体分类与架构（Google 2026 视角，含 L0-L5 六级自主性）",
+      "第 3 章 底层支撑技术（LLM / CLI / MCP / RAG / LSP）",
+      "第 7 章 持久化长期记忆（Claude Code 自带 / claude-mem / Mem0 三大重点推荐）"
+    ],
+    "modified_chapters": [
+      "第 5 章 章名从『五大扩展点』改为『四大扩展点』",
+      "第 5 章 删除原 4.5 Slash Command 节（已并入 Skill）",
+      "第 5 章 大幅扩展 5.4 Sub-agent，加入任务编排 / 通信 / 同步三大子节"
+    ],
+    "scale": {
+      "lines_before": 920,
+      "lines_after": 2648,
+      "mermaid_blocks_before": 8,
+      "mermaid_blocks_after": 51
+    }
+  },
+
+  "data_sources": {
+    "websearch_cli": { "used": false, "reason": "Exa MCP 已提供更高质量的官方文档抓取" },
+    "exa_search": {
+      "used": true,
+      "queries_v2_added": [
+        "Google whitepaper agent companion 2025 Kaggle latest agentic AI",
+        "Google whitepaper agent 2026 latest agentic AI Gulli Wiesinger multi-agent orchestration",
+        "Google whitepaper agent levels L0 L1 L2 L3 L4 L5 autonomy classification",
+        "LLM agent persistent memory SOTA 2026 Letta Mem0 Zep Cognee MemGPT",
+        "Anthropic Claude memory tool 2026 long-term memory benchmark",
+        "claude-mem plugin Claude Code persistent memory cross-session"
+      ]
+    },
+    "exa_fetch": {
+      "used": true,
+      "v2_urls": [
+        "https://zhuanlan.zhihu.com/p/2014014859164026634"
+      ]
+    },
+    "context7": {
+      "used": true,
+      "library_id": "/anthropics/claude-code"
+    },
+    "local_samples": [
+      ".claude/agents/bba-architect.md",
+      ".claude/agents/bba-guru-rtl.md",
+      ".claude/settings.json",
+      ".claude/hooks/bb-hook-validate-bash-cmd.sh",
+      ".claude/hooks/bb-hook-pipeline-advance.sh"
+    ]
+  },
+
+  "v2_key_references": {
+    "google_whitepapers": [
+      { "title": "Agents", "authors": "Wiesinger, Marlow, Vuskovic", "date": "2024-09" },
+      { "title": "Agents Companion", "authors": "Gulli, Nigam, et al.", "date": "2025-04" },
+      { "title": "Introduction to Agents", "authors": "Blount, Gulli, Saboo, Zimmermann, Vuskovic", "date": "2025-11", "note": "L0-L4 五级 taxonomy 来源" },
+      { "title": "Developer's guide to multi-agent patterns in ADK", "date": "2025-12", "note": "8 大设计模式" },
+      { "title": "Build Long-running AI agents with ADK", "date": "2026-05", "note": "pause/resume + dormancy gate" }
+    ],
+    "harness_engineering_zhihu": "https://zhuanlan.zhihu.com/p/2014014859164026634",
+    "memory_frameworks": [
+      "Mem0 (47K+ stars, Apache 2.0)",
+      "Letta / MemGPT (21K stars, Apache 2.0, OS-paged tiered)",
+      "Zep / Graphiti (24K stars, temporal KG, LongMemEval 63.8%)",
+      "claude-mem (thedotmack, 5 hooks + SQLite + ChromaDB)",
+      "Cognee (12K stars, KG + 30+ connectors)"
+    ],
+    "anthropic_memory_tool": "platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool (2025-10 推出)",
+    "csa_autonomy_framework": "Cloud Security Alliance Agentic Trust Framework (2026-01) - L0-L5 六级",
+    "academic_benchmarks": [
+      "LoCoMo (Maharana et al., 2024)",
+      "LoCoMo-Plus (2026)",
+      "MemoryAgentBench (Hu et al., 2025)",
+      "MemoryArena (He et al., 2026)",
+      "Agentic Memory (Yu et al., 2026)"
+    ]
+  },
+
+  "validation": {
+    "mermaid_blocks_validated": "51/51 (mermaid 11 + jsdom)",
+    "method": "node validate2.mjs (mermaid.parse with jsdom polyfill)"
+  },
+
+  "deliverables": {
+    "main_report": "harness-engineering-training.md (~2648 行 / 113 KB)",
+    "readme": "README.md",
+    "labs": [
+      "labs/lab1-skill/README.md",
+      "labs/lab2-hook/README.md",
+      "labs/lab3-subagent/README.md",
+      "labs/lab4-pipeline/README.md",
+      "labs/lab5-mcp-server/README.md"
+    ],
+    "templates": [
+      "templates/skill-skeleton/SKILL.md",
+      "templates/agent-skeleton.md",
+      "templates/hook-skeleton.sh",
+      "templates/settings-hooks-snippet.json"
+    ],
+    "sources_index": "sources/INDEX.md"
+  },
+
+  "phases_v2": {
+    "phase_1_renumber": "completed",
+    "phase_2_chap5_modify": "completed",
+    "phase_3_chap1_paradigm": "completed",
+    "phase_4_chap2_google": "completed",
+    "phase_5_chap3_lowstack": "completed",
+    "phase_6_chap7_memory": "completed",
+    "phase_7_validation": "completed"
+  }
+}
