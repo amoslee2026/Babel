@@ -437,4 +437,4 @@ LSF监控工具位置: `tools/lsfMonitor/`
 | GitHub | https://github.com/bytedance/ic_flow_platform |
 
 ---
-*清华大学集成电路学院 - 芯粒设计实践课 - 2026-05-13*
+*Chiplet Design Practice - 2026-05-13*

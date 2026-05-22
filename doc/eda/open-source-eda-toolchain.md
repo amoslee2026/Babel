@@ -1,6 +1,6 @@
 # Open-Source EDA Toolchain
 
-清华大学集成电路学院芯粒设计实践课开源EDA工具链。
+Chiplet Design LabChiplet Design Practice开源EDA工具链。
 
 ## 概述
 
@@ -115,4 +115,4 @@ make timing
 
 ---
 *文档生成时间: 2026-05-13*
-*清华大学集成电路学院*
+*Chiplet Design Lab*

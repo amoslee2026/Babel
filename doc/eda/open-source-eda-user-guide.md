@@ -373,5 +373,5 @@ export LD_LIBRARY_PATH="$HOME/wrk/eda_opensources/install:$LD_LIBRARY_PATH"
 - [OpenLane Tutorial](https://github.com/The-OpenROAD-Project/OpenLane/tree/master/docs)
 
 ---
-*清华大学集成电路学院*
-*芯粒设计实践课*
+*Chiplet Design Lab*
+*Chiplet Design Practice*
