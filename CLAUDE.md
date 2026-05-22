@@ -1,7 +1,6 @@
 ## Project Overview
 开源 AI 原生 Chiplet 设计流程，基于开源 EDA 工具链和 AI Coding Agent。
 
-清华大学集成电路学院芯粒设计实践课开发环境。
 
 ## Git Remotes
 
@@ -65,7 +64,3 @@ Babel Skills (`.claude/skills/bb-*`):
 - `/bba-guru-synthesis` - 综合流程
 - `/bba-guru-pd` - Physical Design 流程
 
-## Notes
-
-- 使用国内镜像源安装依赖
-- 输出格式: 标准 Markdown 表格
