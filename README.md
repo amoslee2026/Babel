@@ -19,6 +19,44 @@ https://github.com/amoslee2026/Babel
 | III. AI 实现流程 | 08-11 | RTL 生成、验证闭环、逻辑综合、物理设计 |
 | IV-V. 工具与实战 | 12-16 | EDA 工具链、NPU 实战走读、调试、术语表、延伸阅读 |
 
+## 创新点与核心特性
+
+### 1. AI 原生 Chiplet 设计范式
+
+首个完整开源的"AI Coding Agent 驻动"芯片设计流程，从自然语言需求到 GDSII signoff 全流程由 Agent 自动化完成。打破传统 IC 设计依赖资深工程师手工迭代的方式，用专业化 Agent 代替人力完成设计、验证、综合、物理设计各阶段。
+
+### 2. 5-Agent 流水线 + Issue Handoff 协议
+
+5 个专业化 Agent 通过 labeled issue 触发 handoff 协作，每个 Agent 有独立迭代收敛限制和 `escalate-user` 机制，超限时自动暂停请求人类决策。下游发现问题可通过 `*-needs-fix` 回流到上游修正。
+
+```
+用户需求 → [architect] → guru-rtl → guru-verification → guru-synthesis → guru-pd → signoff
+              ↑_________________________*-needs-fix 回流__________________________|
+```
+
+### 3. Spec-Code 双向追溯体系
+
+三层追溯模型确保需求、代码、断言、约束始终一致：
+- **Layer 1**: RTL 文件头 `@requirement / @spec_hash / @spec_ref`
+- **Layer 2**: 内嵌 SVA 断言 `@verifies / @constraint` 标签
+- **Layer 3**: SDC 约束 `@requirement / @spec_ref / @constraint`
+
+REQ_ID 编码规范跨 PRD → ARCH → MAS → RTL → TB → SDC 全链路传播，`babel_traceability.py` 生成多阶段追溯矩阵。
+
+### 4. 变更传播 + Commit 质量门禁
+
+Hook 自动检测上游 artifact 变更 → 标记下游 stale → 提醒重跑下游 Agent。`git commit` 前自动执行质量门禁：RTL lint、REQ_ID 唯一性、`@spec_hash` 一致性校验，防止上下文断裂。
+
+### 5. 寄存器映射 Pipeline
+
+每个模块的 `regmap.md` 一键生成三种产物：Markdown/SVD 文档、SystemVerilog 断言（reset/RO/W1C/reserved/addr）、SHA256 spec hash 注入，确保寄存器定义与实现一致。
+
+### 6. LLM 驱动 EDA 工具链
+
+35+ Skill 封装开源 EDA 工具（Yosys/OpenSTA/Magic/Netgen/QRouter/KLayout/Verilator/ABC）为 Agent 可调用的标准化接口。综合采用 5-Phase 并行策略，验证要求 100% 功能 + 100% code 覆盖率。
+
+---
+
 ## 项目级 Agent / Skill 系统
 
 Babel 采用 5-agent 流水线架构，每个 agent 专注于特定设计阶段，通过 issue handoff 协作。
