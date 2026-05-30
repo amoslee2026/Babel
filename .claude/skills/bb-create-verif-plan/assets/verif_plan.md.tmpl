@@ -1,56 +1,39 @@
-# Verification Plan: {{ design_name }}
+# Verification Plan: ${TOP_MODULE}
 
-Generated: {{ timestamp }}
-MAS Source: {{ mas_path }}
+Generated: ${DATE} | MAS Version: ${MAS_VERSION}
 
-## Functional Coverage Groups
+## Overview
+**Top Module:** ${TOP_MODULE} | **Features:** ${FEATURE_COUNT} | **Interfaces:** ${INTERFACE_COUNT}
+**Target Coverage:** 90% functional, 85% code
 
-{{#fsm_states}}
-- covergroup cg_{{ module }}_state: FSM states in {{ module }}
-  - coverpoint state { bins: {{ states }} }
-{{/fsm_states}}
+## Test Scenarios
+${TEST_SCENARIOS}
 
-{{#interfaces}}
-- covergroup cg_{{ name }}: Interface {{ name }}
-  - coverpoint valid { bins: { active, inactive } }
-  - coverpoint ready { bins: { asserted, deasserted } }
-  - cross valid x ready
-{{/interfaces}}
+## Coverage Model
+### Functional Coverage Groups
+${COVERAGE_GROUPS}
 
-## Code Coverage Targets
+### Code Coverage Targets
+| Type   | Target  | Status |
+|--------|---------|--------|
+| Line   | >= 90%  | TBD    |
+| Branch | >= 85%  | TBD    |
+| Toggle | >= 80%  | TBD    |
+| FSM    | 100%    | TBD    |
 
-| Metric    | Target |
-|-----------|--------|
-| Line      | 100%   |
-| Branch    | 100%   |
-| Toggle    | 100%   |
-| Condition | 100%   |
+## Regression Matrix
+| Test Name | Priority | Runtime | Coverage | Seed |
+|-----------|----------|---------|----------|------|
+${REGRESSION_MATRIX}
 
-## Functional Test Points
+## Assertion List
+${ASSERTIONS}
 
-{{#ftps}}
-- {{ id }}: {{ description }}
-  - PRD Ref: {{ prd_ref }}
-  - Priority: {{ priority }}
-{{/ftps}}
+## Exclusions
+${EXCLUSIONS}
 
-## Corner Cases
-
-- Reset timing: assert/deassert at clock edge boundaries
-- Overflow: maximum data width values
-- Underflow: zero-length transfers
-- CDC crossing: data launched at clock domain boundary
-- Power domain: retention/restore across power state transitions
-
-## Random Constraints
-
-- Constrained random stimulus within valid data ranges
-- Random inter-transaction delays (1-100 cycles)
-- Random reset assertion timing (after 10-1000 cycles)
-- Weighted random: 70% normal, 20% corner, 10% error injection
-
-## Test Case List
-
-{{#ftps}}
-- seq_{{ id_lower }}: Implements {{ id }} -- {{ description }}
-{{/ftps}}
+## Sign-off Criteria
+- [ ] All HIGH priority tests pass
+- [ ] Functional coverage >= 90%
+- [ ] Code coverage >= 85%
+- [ ] No unresolved assertions

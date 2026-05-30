@@ -1,26 +1,36 @@
 # Coverage Naming Conventions
 
-## Covergroup Naming
-- Format: `cg_<module>_<feature>`
-- Example: `cg_m00_state`, `cg_axi_handshake`
+## Coverage Groups: `<module>_<feature>_cg`
+Examples: `alu_arithmetic_cg`, `fifo_overflow_cg`, `pcie_tlp_format_cg`
 
-## Coverpoint Naming
-- Format: `cp_<signal_name>`
-- Example: `cp_valid`, `cp_ready`, `cp_state`
+## Coverage Points: `<signal>_<aspect>_cp`
+Examples: `opcode_type_cp`, `addr_alignment_cp`, `burst_length_cp`
 
-## Bin Naming
-- Format: `bin_<description>`
-- Example: `bin_idle`, `bin_active`, `bin_overflow`
+## Coverage Bins: `<value_or_range>_bin`
+Examples: `read_bin`, `write_bin`, `addr_4k_boundary_bin`
 
-## Cross Coverage Naming
-- Format: `cx_<signal1>_x_<signal2>`
-- Example: `cx_valid_x_ready`, `cx_state_x_mode`
+## Cross Coverage: `<point1>_x_<point2>_cross`
+Examples: `opcode_x_operand_cross`, `state_x_input_cross`
 
-## Naming Rules
+## Rules
 1. Use lowercase with underscores
-2. Prefix covergroups with `cg_`
-3. Prefix coverpoints with `cp_`
-4. Prefix bins with `bin_`
-5. Prefix cross coverage with `cx_`
-6. Keep names under 40 characters
-7. Use module name as first qualifier after prefix
+2. Be descriptive - name should indicate what is covered
+3. Include module name for context
+4. Avoid abbreviations except common ones (clk, rst, addr)
+5. Group related items with common prefix
+
+## SystemVerilog Example
+```systemverilog
+covergroup alu_operations_cg @(posedge clk);
+    opcode_cp: coverpoint opcode {
+        bins add_bin = {ADD};
+        bins sub_bin = {SUB};
+        bins mul_bin = {MUL};
+    }
+    opcode_x_overflow: cross opcode_cp, overflow_flag;
+endgroup
+alu_operations_cg alu_cov = new();
+```
+
+## In Verification Plans
+Reference coverage as: `Coverage Goal: alu_arithmetic_cg >= 95%`

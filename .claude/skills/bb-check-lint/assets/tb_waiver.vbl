@@ -1,20 +1,12 @@
-// Verilator Lint Waiver File
-// Babel Project - ASAP7 Design Flow
-//
-// Usage: verilator --lint-only -Wno-fatal -f this_file.vbl
-//
-// Waiver syntax:
-//   lint_off -msg <MSG_ID> [-file <glob>] [-match <pattern>]
-
-// Testbench-only waivers (do not apply to RTL)
-lint_off -msg UNUSED         -file "*_tb.sv"
-lint_off -msg PINCONNECTEMPTY -file "*_tb.sv"
-lint_off -msg BLKSEQ         -file "*_tb.sv"
-
-// Generated code waivers
-lint_off -msg DECLFILENAME   -file "*_generated*"
-lint_off -msg VARHIDDEN      -file "*_generated*"
-
-// Known false positives from parameterized modules
-lint_off -msg WIDTH          -file "*/cbb/*"  -match "*param*"
-lint_off -msg UNOPTFLAT      -file "*/fifo_*"
+// Verilator waiver file for testbench patterns
+// Apply to *_tb.sv and *_tb.v files
+lint_off -rule INITIAL_BLOCK -file "*_tb.sv"  // Allow initial blocks
+lint_off -rule INITIAL_BLOCK -file "*_tb.v"
+lint_off -rule SYSTEM_TASK   -file "*_tb.sv"  // Allow $display, $monitor, $finish
+lint_off -rule SYSTEM_TASK   -file "*_tb.v"
+lint_off -rule DELAY         -file "*_tb.sv"  // Allow delays (#)
+lint_off -rule DELAY         -file "*_tb.v"
+lint_off -rule UNUSEDSIGNAL  -file "*_tb.sv"  // Allow unused stimulus signals
+lint_off -rule UNUSEDSIGNAL  -file "*_tb.v"
+lint_off -rule WIDTH         -file "*_tb.sv"  // Allow wide concatenations
+lint_off -rule WIDTH         -file "*_tb.v"

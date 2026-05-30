@@ -1,33 +1,28 @@
 #!/usr/bin/env python3
-"""Render floorplan TCL from MAS spec and template."""
-import json, sys
-from pathlib import Path
+"""Render Magic TCL floorplan from design parameters."""
+import sys
+import json
 
-def compute_die_area(mas: dict) -> tuple:
-    cells = mas.get("estimated_cells", 10000)
-    util = mas.get("target_utilization", 0.70)
-    core_area = (cells * 0.5) / util
-    ar = mas.get("aspect_ratio", 1.0)
-    w = (core_area * ar) ** 0.5
-    h = core_area / w
-    margin = max(5.0, w * 0.1)
-    return round(w + 2 * margin, 2), round(h + 2 * margin, 2)
+def render_floorplan_tcl(params: dict) -> str:
+    """Generate Magic TCL floorplan script."""
+    dw, dh = params['die_size']['width_um'], params['die_size']['height_um']
+    cw, ch = params['core_area']['width_um'], params['core_area']['height_um']
+    mx, my = (dw - cw) / 2, (dh - ch) / 2
 
-if __name__ == "__main__":
-    mas = json.loads(Path(sys.argv[1]).read_text())
-    netlist = sys.argv[2]
-    design = mas.get("design_name", "top")
-    w, h = compute_die_area(mas)
-    margin = max(5.0, w * 0.1)
-    tmpl_path = Path(__file__).parent.parent / "assets" / "floorplan.tcl.tmpl"
-    tmpl = tmpl_path.read_text()
-    for k, v in {
-        "{{DESIGN_NAME}}": design, "{{DIE_WIDTH_UM}}": str(w),
-        "{{DIE_HEIGHT_UM}}": str(h), "{{CORE_MARGIN_UM}}": str(round(margin, 2)),
-        "{{NETLIST_PATH}}": netlist, "{{TECH_FILE}}": mas.get("tech_file", "libs/asap7/asap7.tech"),
-        "{{IO_PAD_PLACEMENT}}": "# Auto-generated",
-    }.items():
-        tmpl = tmpl.replace(k, v)
-    out = Path(f"{design}_floorplan.tcl")
-    out.write_text(tmpl)
-    print(f"Rendered: {out}")
+    tcl = f"""# Magic floorplan for {params['top_module']}
+tech load {params.get('tech', 'asap7')}
+load {params['top_module']}
+box values 0 0 {dw} {dh}
+box values {mx} {my} {mx + cw} {my + ch}
+"""
+    for pad in params.get('io_pad_list', []):
+        tcl += f"place {pad['cell']} {pad['x_um']} {pad['y_um']} {pad.get('orientation', 'N')}\n"
+    tcl += "save\nquit\n"
+    return tcl
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: render_fp_py.py <fp_config.json>", file=sys.stderr)
+        sys.exit(1)
+    with open(sys.argv[1], 'r') as f:
+        print(render_floorplan_tcl(json.load(f)))

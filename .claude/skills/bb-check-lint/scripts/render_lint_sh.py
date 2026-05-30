@@ -1,59 +1,32 @@
 #!/usr/bin/env python3
-"""Generate linting shell script from file list."""
-import json, sys
-from pathlib import Path
+"""Render lint check shell script for Verilator."""
+import sys
+import json
 
-def render(file_list_path: str = None, target_dir: str = None,
-           rules_config: str = None, lint_mode: str = "src_only") -> str:
-    """Render a shell script for verible lint execution."""
-    lines = [
-        "#!/bin/bash",
-        "# Auto-generated lint script by bb-check-lint",
-        "set -eo pipefail",
-        "source ~/wrk/eda_opensources/eda_env.sh",
-        "",
-    ]
+def render_lint_script(top_module: str, files: list, includes: list = None) -> str:
+    """Generate Verilator lint script."""
+    includes = includes or []
+    inc_flags = ''.join(f'  -I{inc} \\\n' for inc in includes)
+    file_list = ''.join(f'  {f} \\\n' for f in files)
 
-    rules_flag = ""
-    if rules_config:
-        rules_flag = f"--rules_config {rules_config}"
+    return f"""#!/bin/bash
+# Verilator lint check for {top_module}
+set -euo pipefail
+TOP_MODULE="{top_module}"
+LOG_FILE="lint_${{TOP_MODULE}}.log"
+source ~/wrk/eda_opensources/eda_env.sh
+verilator --lint-only \\
+  --sv -Wall -Wno-fatal \\
+  --top-module ${{TOP_MODULE}} \\
+{inc_flags}{file_list}  2>&1 | tee ${{LOG_FILE}}
+python3 .claude/skills/bb-check-lint/scripts/parse_lint.py ${{LOG_FILE}} > lint_report.json
+echo "Lint check complete. Report: lint_report.json"
+"""
 
-    if file_list_path:
-        lines.append(f"# Lint from file list: {file_list_path}")
-        lines.append(f'files=$(cat "{file_list_path}" | grep -v "^#" | grep -v "^$")')
-        lines.append(f"verible-verilog-lint {rules_flag} $files 2>&1")
-    elif target_dir:
-        if lint_mode == "src_only":
-            lines.append(f'# Lint src files in {target_dir}')
-            lines.append(f'src_files=$(find "{target_dir}" -path "*/src/*" -type f \\( -name "*.sv" -o -name "*.v" \\) | sort)')
-            lines.append(f"verible-verilog-lint {rules_flag} $src_files 2>&1")
-        elif lint_mode == "tb_only":
-            lines.append(f'# Lint tb files in {target_dir}')
-            lines.append(f'tb_files=$(find "{target_dir}" -path "*/tb/*" -type f \\( -name "*.sv" -o -name "*.v" \\) | sort)')
-            lines.append(f"verible-verilog-lint {rules_flag} $tb_files 2>&1")
-        else:  # src_and_tb
-            lines.append(f'# Lint src files in {target_dir}')
-            lines.append(f'src_files=$(find "{target_dir}" -path "*/src/*" -type f \\( -name "*.sv" -o -name "*.v" \\) | sort)')
-            lines.append(f"verible-verilog-lint {rules_flag} $src_files 2>&1")
-            lines.append("")
-            lines.append(f'# Lint tb files in {target_dir}')
-            lines.append(f'tb_files=$(find "{target_dir}" -path "*/tb/*" -type f \\( -name "*.sv" -o -name "*.v" \\) | sort)')
-            lines.append(f"verible-verilog-lint {rules_flag} $tb_files 2>&1")
-    else:
-        lines.append('echo "ERROR: No file_list or target_dir specified" >&2')
-        lines.append("exit 1")
-
-    lines.append("")
-    lines.append('echo "Lint complete"')
-    return "\n".join(lines)
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Generate lint shell script")
-    parser.add_argument("--file-list", help="Path to file_list.f")
-    parser.add_argument("--target-dir", help="Target directory to scan")
-    parser.add_argument("--rules-config", help="Verible rules config path")
-    parser.add_argument("--lint-mode", default="src_only",
-                        choices=["src_only", "src_and_tb", "tb_only"])
-    args = parser.parse_args()
-    print(render(args.file_list, args.target_dir, args.rules_config, args.lint_mode))
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: render_lint_sh.py <config.json>", file=sys.stderr)
+        sys.exit(1)
+    with open(sys.argv[1], 'r') as f:
+        config = json.load(f)
+    print(render_lint_script(config['top_module'], config['files'], config.get('includes', [])))
