@@ -59,21 +59,44 @@ exit
     tcl_path.write_text(tcl_content)
     return str(tcl_path)
 
+def _safe_module_name(name: str) -> str:
+    """Validate a module name as a safe SystemVerilog identifier.
+
+    Raises ValueError on anything that could escape into shell/TCL interpolation
+    (single quotes, spaces, semicolons, path separators, shell metacharacters).
+    """
+    import re
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", name):
+        raise ValueError(f"Unsafe module name rejected: {name!r}")
+    return name
+
+
 def run_single_synthesis(module_name: str, rtl_file: str, output_dir: str, timeout: int = 600) -> dict:
-    """Run synthesis for a single module."""
+    """Run synthesis for a single module.
+
+    Security: module_name is regex-validated (D8-02 fix) and all path/arg
+    interpolation is done via a bash script FILE (not shell=True), so a
+    poisoned module name cannot escape into subprocess.
+    """
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Validate BEFORE using it in any path or string interpolation
+    _safe_module_name(module_name)
     module_dir = Path(output_dir) / module_name
     module_dir.mkdir(parents=True, exist_ok=True)
 
     log_path = module_dir / f"synth_{stamp}.log"
     netlist_path = module_dir / f"netlist_{stamp}.v"
 
-    # Run Yosys with direct commands (not TCL)
+    # Run Yosys via script-file (shell=False). This avoids shell-injection
+    # sinks even if a future caller forgets to validate module_name.
     try:
-        # Source EDA environment
-        eda_env_cmd = "source ~/wrk/eda_opensources/eda_env.sh"
+        eda_env_path = os.environ.get(
+            "BB_EDA_ENV",
+            os.path.expanduser("~/wrk/eda_opensources/eda_env.sh")
+        )
 
-        # Build yosys command script (not TCL)
+        # Build yosys command script (not TCL). module_name was regex-validated
+        # so embedding it here is safe.
         yosys_cmds = f"""
 read_verilog -sv {rtl_file}
 hierarchy -check -top {module_name}
@@ -86,9 +109,21 @@ stat
         cmd_file = module_dir / f"cmds_{stamp}.txt"
         cmd_file.write_text(yosys_cmds)
 
+        # Bash wrapper script that sources the env and runs yosys.
+        # Writing the wrapper to a FILE (not passing via shell=True) means
+        # module_name/rtl_file/cmd_file never get re-parsed by a shell.
+        wrapper = module_dir / f"run_{stamp}.sh"
+        wrapper.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f"source {eda_env_path!r}\n"
+            f"exec yosys -s {cmd_file!r}\n"
+        )
+        wrapper.chmod(0o755)
+
         result = subprocess.run(
-            f"bash -c '{eda_env_cmd} && yosys -s {cmd_file}'",
-            shell=True,
+            ["/usr/bin/env", "bash", str(wrapper)],
+            shell=False,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -161,13 +196,18 @@ def run_parallel_synthesis(rtl_files: list, output_dir: str, timeout: int = 600)
     results = []
     total_elapsed = 0
 
-    # Prepare module list
+    # Prepare module list (validate each derived module_name before queueing).
+    import re
+    _IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
     modules = []
     for rtl_file in rtl_files:
         if not Path(rtl_file).exists():
             continue
         basename = Path(rtl_file).name
         module_name = basename.replace('.sv', '').replace('.v', '')
+        if not _IDENT.fullmatch(module_name):
+            print(f"  [SKIP] unsafe module name derived from {rtl_file!r}: {module_name!r}", file=sys.stderr)
+            continue
         modules.append((module_name, rtl_file))
 
     print(f"Starting parallel synthesis for {len(modules)} modules")

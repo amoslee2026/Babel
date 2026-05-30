@@ -6,18 +6,46 @@ Phase 1 of bb-invoke-verilator: renders executable bash script from parameters.
 """
 
 import json
+import re
+import shlex
 import sys
 from datetime import datetime
 from pathlib import Path
 
+# Defense-in-depth identifier validation (D8-04 / D8-03).
+# Schema validation at the input-schema hook is the primary boundary; these
+# checks catch any case where a renderer is invoked outside that path (e.g.
+# unit tests, ad-hoc scripts).
+_SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
+_SV_ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
+_PATH = re.compile(r"^[A-Za-z0-9_/.,+\-]+$")
+
+
+def _require_slug(v: str, field: str) -> str:
+    if not _SLUG.fullmatch(str(v)):
+        raise ValueError(f"{field} must be a slug ([a-z0-9][a-z0-9_-]{{0,31}}); got {v!r}")
+    return str(v)
+
+
+def _require_sv_id(v: str, field: str) -> str:
+    if not _SV_ID.fullmatch(str(v)):
+        raise ValueError(f"{field} must be a SystemVerilog identifier; got {v!r}")
+    return str(v)
+
+
+def _require_path(v: str, field: str) -> str:
+    if not _PATH.fullmatch(str(v)):
+        raise ValueError(f"{field} contains unsafe characters; got {v!r}")
+    return str(v)
+
 
 def render(params: dict) -> str:
     """Render Verilator simulation shell script."""
-    design_name = params["design_name"]
-    file_list = params["file_list"]
-    tb_top = params["tb_top"]
+    design_name = _require_slug(params["design_name"], "design_name")
+    file_list = _require_path(params["file_list"], "file_list")
+    tb_top = _require_sv_id(params["tb_top"], "tb_top")
     stamp = params.get("stamp", datetime.now().strftime("%Y%m%d-%H%M%S"))
-    seed = params.get("seed", 1)
+    seed = int(params.get("seed", 1))
     enable_vcd = params.get("enable_vcd", True)
     sim_time = params.get("sim_time", "")
 

@@ -184,6 +184,8 @@ abc.history
 .claude/scheduled_tasks.lock
 .claude/session_summaries/
 .claude/settings.local.json
+# Allow .claude/hooks/lib/ (shared hook helpers) despite the repo-level `lib/` rule
+!.claude/hooks/lib/
 
 # ---> Review and adaptive directories (at any level)
 .review/

@@ -7,9 +7,34 @@ Phase 1 of bb-invoke-yosys: generates executable TCL script for ASAP7 synthesis.
 
 import argparse
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# Defense-in-depth identifier validation (D8-04 / D8-03).
+# Primary boundary is the input-schema hook; this catches direct invocation.
+_SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
+_SV_ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
+_PATH = re.compile(r"^[A-Za-z0-9_/.,+\-]+$")
+
+
+def _require_slug(v: str, field: str) -> str:
+    if not _SLUG.fullmatch(str(v)):
+        raise ValueError(f"{field} must be a slug; got {v!r}")
+    return str(v)
+
+
+def _require_sv_id(v: str, field: str) -> str:
+    if not _SV_ID.fullmatch(str(v)):
+        raise ValueError(f"{field} must be a SystemVerilog identifier; got {v!r}")
+    return str(v)
+
+
+def _require_path(v: str, field: str) -> str:
+    if not _PATH.fullmatch(str(v)):
+        raise ValueError(f"{field} contains unsafe characters; got {v!r}")
+    return str(v)
 
 
 def get_timestamp():
@@ -19,6 +44,11 @@ def get_timestamp():
 
 def render_tcl(params: dict) -> str:
     """Render full TCL script from template."""
+    # Validate BEFORE interpolation (defense-in-depth on top of schema hook)
+    _require_slug(params['design_name'], "design_name")
+    _require_sv_id(params['top_module'], "top_module")
+    _require_path(params['tech_lib'], "tech_lib")
+    _require_path(params['netlist_path'], "netlist_path")
     tcl_template = """
 # Yosys ASAP7 Synthesis Script
 # Generated: {timestamp}
@@ -56,13 +86,14 @@ stat -liberty {tech_lib}
 exit 0
 """
 
-    # Build read_verilog commands
+    # Build read_verilog commands (validate each file path before embedding)
     read_cmds = []
     if params['file_list'] and os.path.exists(params['file_list']):
         with open(params['file_list'], 'r') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
+                    _require_path(line, f"file_list entry")
                     read_cmds.append(f"read_verilog -sv {line}")
     read_verilog_block = "\n".join(read_cmds)
 

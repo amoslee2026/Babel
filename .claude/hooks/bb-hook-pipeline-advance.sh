@@ -13,16 +13,17 @@ set -euo pipefail
 
 label_to_next() {
   case "$1" in
-    ready-for-rtl)           echo "/bb-guru-rtl" ;;
-    ready-for-verification)  echo "/bb-guru-verification" ;;
-    ready-for-synth)         echo "/bb-guru-synthesis" ;;
-    ready-for-pd)            echo "/bb-guru-pd" ;;
+    ready-for-rtl)           echo "/bba-guru-rtl" ;;
+    ready-for-verification)  echo "/bba-guru-verification" ;;
+    ready-for-synth)         echo "/bba-guru-synthesis" ;;
+    ready-for-pd)            echo "/bba-guru-pd" ;;
     signoff)                 echo "(user signoff — no next agent)" ;;
-    arch-needs-fix)          echo "/bb-architect" ;;
-    rtl-needs-fix)           echo "/bb-guru-rtl" ;;
-    synth-needs-fix)         echo "/bb-guru-synthesis" ;;
+    arch-needs-fix)          echo "/bba-architect" ;;
+    rtl-needs-fix)           echo "/bba-guru-rtl" ;;
+    synth-needs-fix)         echo "/bba-guru-synthesis" ;;
     escalate-user)           echo "(escalate-user — manual decision)" ;;
-    pd-rework)               echo "/bb-guru-pd" ;;
+    pd-rework)               echo "/bba-guru-pd" ;;
+    pd-needs-fix)            echo "/bba-guru-pd" ;;
     *)                       echo "(unknown label: $1)" ;;
   esac
 }

@@ -6,7 +6,10 @@
   "additionalProperties": true,
   "required": ["design_name", "drc_violations", "lvs_match", "timing_corners", "gds_path", "inputs"],
   "properties": {
-    "design_name": {"type": "string"},
+    "design_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$"
+    },
     "drc_violations": {"type": "integer", "minimum": 0},
     "drc_clean":      {"type": "boolean"},
     "lvs_match":      {"type": "boolean"},
