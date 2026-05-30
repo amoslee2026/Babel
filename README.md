@@ -1,4 +1,4 @@
-# Babel
+# Babel v1.2
 
 这是一个开源的AI原生Chiplet设计流程，基于开源EDA工具链和AI Coding Agent
 
@@ -140,6 +140,64 @@ designs/<name>/
 └── ADR/
     └ *.md                    # 架构决策记录
 ```
+
+## Spec-Code Traceability
+
+Babel v1.2 引入完整的 spec ↔ code 双向追溯体系，确保需求、代码、断言、约束始终一致。
+
+### 三层追溯模型
+
+```
+Layer 1: Spec Header    — RTL 文件头部 @requirement / @spec_ref / @spec_hash
+Layer 2: Inline SVA     — 寄存器断言内嵌 @verifies / @constraint 标签
+Layer 3: Cross-Ref Tags — SDC 约束内嵌 @requirement / @spec_ref / @constraint
+```
+
+### 寄存器映射 Pipeline
+
+每个模块拥有独立的 `spec/MAS/<module>/regmap.md`，通过自动化脚本生成三种产物：
+
+```
+spec/MAS/<module>/regmap.md
+    ├── generate_regmap_doc.py    → doc/regmap/<module>.md + .svd
+    └── generate_regmap_assertions.py → rtl/<module>/src/*_regmap_assertions.sv
+                                           └── compute_spec_hash.py --inject (SHA256 注入)
+```
+
+| 模块 | 寄存器数 | SVA Properties | Spec Hash |
+|------|---------|---------------|-----------|
+| M00_SystolicArray | 4 | 22 | sha256:40d48df8c266 |
+| M01_DataflowController | 10 | 52 | sha256:91d2b1405f45 |
+| M02_SRAM | 3 | 18 | sha256:66d1bba70afc |
+| M03_DRAMController | 4 | 20 | sha256:081931ff9be5 |
+| M04_SystemBus | 7 | 36 | sha256:0e08e60cc0ad |
+| M05_PowerManager | 3 | 20 | sha256:b04a03e91656 |
+| M06_ClockManager | 3 | 20 | sha256:eefa1152b74a |
+| M07_ResetManager | 3 | 20 | sha256:1fd07a37ec6a |
+
+### SDC 约束追溯
+
+所有 SDC 约束命令内嵌 `@requirement` + `@spec_ref` 标签，由 `babel_traceability.py sdc` 自动扫描并生成 `traceability/requirements_matrix.sdc.csv`。
+
+### REQ_ID 编码规范
+
+| 前缀 | 含义 | 示例 |
+|------|------|------|
+| `REQ-M##-R###` | 模块寄存器需求 | REQ-M00-R001 |
+| `REQ-M##-F###` | 模块功能需求 | REQ-M12-F001 |
+| `REQ-NFR-F##` | 非功能需求（时序等） | REQ-NFR-F001 |
+| `REQ-SYS-##` | 系统级需求 | REQ-SYS-001 |
+
+### 自动化脚本
+
+| 脚本 | 用途 |
+|------|------|
+| `scripts/generate_regmap_doc.py` | regmap.md → Markdown + CMSIS-SVD 文档 |
+| `scripts/generate_regmap_assertions.py` | regmap.md → SystemVerilog 断言 (reset/RO/W1C/reserved/addr) |
+| `scripts/compute_spec_hash.py` | 计算 spec SHA256 并注入 RTL 文件头 |
+| `scripts/babel_traceability.py` | 多阶段追溯矩阵生成 (prd/arch/impl/src/test/sdc) |
+| `scripts/allocate_req_id.py` | REQ_ID 自动分配 |
+| `scripts/check_req_uniqueness.py` | REQ_ID 唯一性校验 |
 
 ### Issue Handoff 协议
 
