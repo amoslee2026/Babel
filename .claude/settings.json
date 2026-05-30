@@ -4,14 +4,14 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-commit-quality-gate.sh"},
-          {"type": "command", "command": ".claude/hooks/bb-hook-validate-bash-cmd.sh"}
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-commit-quality-gate.sh"},
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-validate-bash-cmd.sh"}
         ]
       },
       {
         "matcher": "Write|Edit",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-write-arch-freeze-check.sh"}
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-write-arch-freeze-check.sh"}
         ]
       }
     ],
@@ -19,8 +19,8 @@
       {
         "matcher": "Write|Edit",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-change-propagate.sh"},
-          {"type": "command", "command": ".claude/hooks/bb-hook-pipeline-advance.sh"}
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-change-propagate.sh"},
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-pipeline-advance.sh"}
         ]
       }
     ],
@@ -28,7 +28,7 @@
       {
         "matcher": "",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-validate-input-schema.sh"}
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-validate-input-schema.sh"}
         ]
       }
     ],
@@ -36,7 +36,7 @@
       {
         "matcher": "",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-session-summarize.sh"}
+          {"type": "command", "command": "bash .claude/hooks/bb-hook-session-summarize.sh"}
         ]
       }
     ]
