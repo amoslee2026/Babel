@@ -11,14 +11,7 @@
       {
         "matcher": "Write|Edit",
         "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-write-arch-freeze-check.sh"},
-          {"type": "command", "command": ".claude/hooks/bb-hook-instantiate-cbb-search.sh"}
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {"type": "command", "command": ".claude/hooks/bb-hook-validate-wiki.sh"}
+          {"type": "command", "command": ".claude/hooks/bb-hook-write-arch-freeze-check.sh"}
         ]
       }
     ],
@@ -27,8 +20,7 @@
         "matcher": "Write|Edit",
         "hooks": [
           {"type": "command", "command": ".claude/hooks/bb-hook-change-propagate.sh"},
-          {"type": "command", "command": ".claude/hooks/bb-hook-pipeline-advance.sh"},
-          {"type": "command", "command": ".claude/hooks/bb-hook-create-fix-issue.sh"}
+          {"type": "command", "command": ".claude/hooks/bb-hook-pipeline-advance.sh"}
         ]
       }
     ],

@@ -8,8 +8,15 @@
 set -euo pipefail
 . "$(dirname "$0")/lib/common.sh"
 
+# CWD anchor (D3-04)
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then
+  cd "$CLAUDE_PROJECT_DIR"
+elif command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
+  cd "$(git rev-parse --show-toplevel)"
+fi
+
 # Read tool_input JSON from stdin (claude-code hook protocol).
-INPUT="$(cat || true)"
+INPUT="$(cat 2>/dev/null || true)"
 TARGET="$(printf '%s' "$INPUT" | python3 -c \
   'import sys,json; d=json.load(sys.stdin); print(d.get("tool_input",{}).get("file_path",""))' 2>/dev/null || true)"
 
@@ -30,7 +37,7 @@ if [ -f "$HANDOFF" ]; then
 ⚠️  ARCH_FREEZE_WARNING: $TARGET
     MAS frozen (handoff: $HANDOFF).
     Direct edits may invalidate downstream artifacts.
-    Consider creating a handoff with label 'arch-needs-fix' instead.
+    Recovery: bb-create-issue --label arch-needs-fix --artifact $TARGET
 EOF
 fi
 
