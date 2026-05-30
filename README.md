@@ -6,6 +6,18 @@
 https://www.gitlink.org.cn/amoslee2011/Babel
 https://github.com/amoslee2026/Babel
 
+## 学习教程
+
+面向电子工程毕业生的完整学习教程（16 章），涵盖 AI 原生芯片设计全流程：
+
+👉 [tutorial/](tutorial/)
+
+| Part | 章节 | 主题 |
+|------|------|------|
+| I. 范式与准备 | 01-04 | AI 原生范式、前置知识、用 Claude Code 学习、人机协作模式 |
+| II. 规范驱动设计 | 05-07 | PRD、架构设计、微架构规范 (MAS) |
+| III. AI 实现流程 | 08-11 | RTL 生成、验证闭环、逻辑综合、物理设计 |
+| IV-V. 工具与实战 | 12-16 | EDA 工具链、NPU 实战走读、调试、术语表、延伸阅读 |
 
 ## 项目级 Agent / Skill 系统
 
