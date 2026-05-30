@@ -156,6 +156,29 @@ Before opening `ready-for-synth`:
 - Next: ready-for-synth 已开启
 ```
 
+## Benchmark Logging
+
+When running under BabelBench evaluation, record stage timing and key metrics:
+
+```bash
+# 阶段开始时（rtl_artifact sha256 验证后）
+bash testbench/scripts/bench_log.sh stage_start verification input_rtl_files=<count>
+
+# 阶段结束时（handoff 输出后）
+bash testbench/scripts/bench_log.sh stage_end verification \
+  status=pass \
+  functional_coverage=<pct> \
+  line_coverage=<pct> \
+  branch_coverage=<pct> \
+  toggle_coverage=<pct> \
+  test_count=<n> \
+  test_pass=<n> \
+  test_fail=<n> \
+  iterations=<n>
+```
+
+If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
+
 ## Project Rules
 
 Follow `.claude/rules/common/testing.md` (80%+ is the *floor*; verification target here is 100%), `.claude/rules/common/coding-style.md`, and the global Babel CLAUDE.md.

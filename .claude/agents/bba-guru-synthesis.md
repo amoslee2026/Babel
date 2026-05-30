@@ -185,6 +185,28 @@ Before opening `ready-for-pd`:
 - Next: ready-for-pd 已开启
 ```
 
+## Benchmark Logging
+
+When running under BabelBench evaluation, record stage timing and key metrics:
+
+```bash
+# 阶段开始时（coverage gate 验证后）
+bash testbench/scripts/bench_log.sh stage_start synthesis input_modules=<count>
+
+# 阶段结束时（handoff 输出后）
+bash testbench/scripts/bench_log.sh stage_end synthesis \
+  status=pass \
+  modules_total=<n> \
+  modules_passed=<n> \
+  modules_failed=<n> \
+  area_um2=<n> \
+  wns_ns=<n> \
+  target_freq_mhz=<n> \
+  iterations=<n>
+```
+
+If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
+
 ## Project Rules
 
 Follow `.claude/rules/common/coding-style.md`, `.claude/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.

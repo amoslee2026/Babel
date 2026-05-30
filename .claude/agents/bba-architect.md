@@ -257,6 +257,25 @@ FAIL (schema 校验失败时):
 - Next: 继续重试 / escalate-user
 ```
 
+## Benchmark Logging
+
+When running under BabelBench evaluation, record stage timing and key metrics:
+
+```bash
+# 阶段开始时（PRD 分析完成后）
+bash testbench/scripts/bench_log.sh stage_start arch input_modules=<count>
+
+# 阶段结束时（handoff 输出后）
+bash testbench/scripts/bench_log.sh stage_end arch \
+  status=pass \
+  modules=<count> \
+  clock_domains=<count> \
+  fix_iter=<n> \
+  global_fix_iter=<n>
+```
+
+If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
+
 ## Project Rules
 
 Follow `.claude/rules/common/coding-style.md`, `.claude/rules/common/development-workflow.md`, and the global Babel CLAUDE.md (use `uv`, no `/mnt/...` paths, `mv`-instead-of-`rm`, ISO 8601 dates, Beijing time). 中文输出 + 英文术语。
