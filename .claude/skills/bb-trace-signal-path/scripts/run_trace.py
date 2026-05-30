@@ -1,85 +1,60 @@
 #!/usr/bin/env python3
-"""Execute signal path tracing through module hierarchy.
-
-Runs the generated trace script with uv, captures output to log,
-and enforces a 300s timeout.
-"""
-import json
-import subprocess
+"""Execute signal tracing and return JSON status."""
 import sys
-from datetime import datetime, timezone
+import json
 from pathlib import Path
 
-
-TIMEOUT_SECONDS = 300
-
-
-def run_trace(script_path: str, log_path: str) -> dict:
-    """Execute the trace script and capture results.
-
-    Args:
-        script_path: Path to the generated trace Python script.
-        log_path: Path to write stdout/stderr log.
-
-    Returns:
-        Dict with status, exit_code, and timing info.
-    """
-    log = Path(log_path)
-    log.parent.mkdir(parents=True, exist_ok=True)
-
-    start = datetime.now(timezone.utc)
+def run_signal_trace(config_file: str) -> dict:
+    """Run signal tracing through design hierarchy."""
     try:
-        result = subprocess.run(
-            ["uv", "run", "python", script_path],
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT_SECONDS,
-        )
-        exit_code = result.returncode
-        stdout = result.stdout
-        stderr = result.stderr
-    except subprocess.TimeoutExpired:
-        exit_code = -1
-        stdout = ""
-        stderr = f"TIMEOUT: Trace exceeded {TIMEOUT_SECONDS}s limit (possible cycle)"
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+        with open(config['ast_file'], 'r') as f:
+            ast = json.load(f)
 
-    elapsed = (datetime.now(timezone.utc) - start).total_seconds()
+        results = trace_signal(ast, config['target_signal'],
+                               config.get('source_module'), config.get('max_depth', 10))
+        output_file = f"{config['target_signal']}_trace.json"
+        with open(output_file, 'w') as f:
+            json.dump(results, f, indent=2)
 
-    log_content = f"=== stdout ===\n{stdout}\n=== stderr ===\n{stderr}\nexit:{exit_code}\n"
-    log.write_text(log_content)
+        sys.path.insert(0, str(Path(__file__).parent))
+        from parse_trace import parse_trace_results
+        parsed = parse_trace_results(output_file)
 
-    status = "success" if exit_code == 0 else "failed"
-    error = None
-    if exit_code == -1:
-        error = "trace timeout exceeded"
+        return {'status': 'pass', 'signal': config['target_signal'],
+                'path_length': len(parsed['signal_path']),
+                'fan_out_count': len(parsed['fan_out']), 'trace_file': output_file}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
 
-    return {
-        "status": status,
-        "exit_code": exit_code,
-        "elapsed_seconds": round(elapsed, 2),
-        "log_path": str(log),
-        "timed_out": exit_code == -1,
-        "error": error,
-    }
+def trace_signal(ast, signal, source_module, max_depth):
+    """Trace signal through hierarchy."""
+    results = {'path': [], 'fan_out': {}, 'timing': {}}
+    if source_module:
+        results['path'].append({'module': source_module, 'signal': signal, 'type': 'port'})
+        _trace_forward(ast, source_module, signal, results, 0, max_depth)
+        _trace_backward(ast, source_module, signal, results, 0, max_depth)
+    return results
 
+def _trace_forward(ast, module, signal, results, depth, max_depth):
+    if depth >= max_depth: return
+    for inst in ast.get('instances', {}).get(module, []):
+        results['path'].append({'module': inst['module'], 'signal': signal,
+                                'type': 'instance', 'instance_name': inst['name']})
+        _trace_forward(ast, inst['module'], signal, results, depth + 1, max_depth)
 
-def main():
-    if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} <script_path> <log_path>", file=sys.stderr)
+def _trace_backward(ast, module, signal, results, depth, max_depth):
+    if depth >= max_depth: return
+    for parent, instances in ast.get('instances', {}).items():
+        for inst in instances:
+            if inst['module'] == module:
+                results['path'].append({'module': parent, 'signal': signal,
+                                        'type': 'parent', 'instance_name': inst['name']})
+                _trace_backward(ast, parent, signal, results, depth + 1, max_depth)
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: run_trace.py <config.json>", file=sys.stderr)
         sys.exit(1)
-
-    script_path = sys.argv[1]
-    log_path = sys.argv[2]
-
-    if not Path(script_path).exists():
-        print(f"ERROR: Script not found: {script_path}", file=sys.stderr)
-        sys.exit(1)
-
-    result = run_trace(script_path, log_path)
-    print(json.dumps(result, indent=2))
-
-    sys.exit(0 if result["status"] == "success" else 1)
-
-
-if __name__ == "__main__":
-    main()
+    print(json.dumps(run_signal_trace(sys.argv[1]), indent=2))

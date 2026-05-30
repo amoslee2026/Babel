@@ -1,9 +1,6 @@
 # PyVerilog Quick Reference
 
-## Installation
-```bash
-pip install pyverilog
-```
+Install: `pip install pyverilog`
 
 ## Basic Parsing
 ```python

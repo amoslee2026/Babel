@@ -1,156 +1,47 @@
 #!/usr/bin/env python3
-"""Generate fallback parsing shell script for verible or slang backend.
-
-Renders a bash script that invokes the chosen backend parser
-and normalizes the output to the common AST JSON schema.
-"""
-import json
+"""Render shell script that tries slang, verible, then regex fallback."""
 import sys
-from pathlib import Path
 
-
-def render_verible_script(
-    file_list: str,
-    raw_output: str,
-    artifact_path: str,
-    normalize_script: str,
-) -> str:
-    """Render shell script for verible backend.
-
-    Args:
-        file_list: Path to file_list.f.
-        raw_output: Path for raw verible output.
-        artifact_path: Path for normalized AST JSON.
-        normalize_script: Path to normalize_verible.py.
-
-    Returns:
-        Bash script content.
-    """
-    return f'''#!/usr/bin/env bash
-# Auto-generated fallback parsing script (verible backend)
+def render_fallback_script(top_module: str, files: list) -> str:
+    """Generate fallback parser script."""
+    file_list = ' '.join(files)
+    return f"""#!/bin/bash
+# Fallback parser for {top_module}: slang -> verible -> regex
 set -euo pipefail
+TOP_MODULE="{top_module}"
+FILES="{file_list}"
+OUTPUT="${{TOP_MODULE}}_ast.json"
 
-FILE_LIST="{file_list}"
-RAW_OUT="{raw_output}"
-ARTIFACT="{artifact_path}"
-NORMALIZE="{normalize_script}"
+echo "Attempting to parse ${{TOP_MODULE}}..."
 
-# Ensure output directory exists
-mkdir -p "$(dirname "$RAW_OUT")"
-mkdir -p "$(dirname "$ARTIFACT")"
+# Try slang
+if command -v slang &> /dev/null; then
+    echo "Using slang..."
+    slang --ast-json ${{FILES}} > slang_out.json 2>/dev/null || true
+    if [ -s slang_out.json ]; then
+        python3 .claude/skills/bb-parse-ast-fallback/scripts/normalize_slang.py slang_out.json > ${{OUTPUT}}
+        echo "slang OK"; exit 0
+    fi
+fi
 
-# Clear raw output
-> "$RAW_OUT"
+# Try verible
+if command -v verible-verilog-syntax &> /dev/null; then
+    echo "Using verible..."
+    verible-verilog-syntax --printtree --export_json ${{FILES}} > verible_out.json 2>/dev/null || true
+    if [ -s verible_out.json ]; then
+        python3 .claude/skills/bb-parse-ast-fallback/scripts/normalize_verible.py verible_out.json > ${{OUTPUT}}
+        echo "verible OK"; exit 0
+    fi
+fi
 
-# Run verible-verilog-syntax on each file
-echo "=== verible-verilog-syntax ==="
-while IFS= read -r f; do
-    # Skip empty lines and comments
-    [[ -z "$f" || "$f" == //* ]] && continue
-    echo "Parsing: $f"
-    verible-verilog-syntax --export_json "$f" >> "$RAW_OUT" 2>&1 || true
-done < "$FILE_LIST"
+# Regex fallback
+echo "Using regex fallback..."
+cat ${{FILES}} | python3 .claude/skills/bb-parse-ast-fallback/scripts/parse_fallback_output.py regex - > ${{OUTPUT}}
+echo "Regex fallback complete (partial)"
+"""
 
-# Normalize output
-echo "=== Normalizing ==="
-uv run python "$NORMALIZE" --input "$RAW_OUT" --output "$ARTIFACT"
-
-echo "=== Done ==="
-'''
-
-
-def render_slang_script(
-    file_list: str,
-    raw_output: str,
-    artifact_path: str,
-    normalize_script: str,
-) -> str:
-    """Render shell script for slang backend.
-
-    Args:
-        file_list: Path to file_list.f.
-        raw_output: Path for raw slang output.
-        artifact_path: Path for normalized AST JSON.
-        normalize_script: Path to normalize_slang.py.
-
-    Returns:
-        Bash script content.
-    """
-    return f'''#!/usr/bin/env bash
-# Auto-generated fallback parsing script (slang backend)
-set -euo pipefail
-
-FILE_LIST="{file_list}"
-RAW_OUT="{raw_output}"
-ARTIFACT="{artifact_path}"
-NORMALIZE="{normalize_script}"
-
-# Ensure output directory exists
-mkdir -p "$(dirname "$RAW_OUT")"
-mkdir -p "$(dirname "$ARTIFACT")"
-
-# Collect files
-FILES=$(grep -v '^\\s*//' "$FILE_LIST" | grep -v '^\\s*$' | tr '\\n' ' ')
-
-# Run slang
-echo "=== slang ==="
-echo "Parsing files: $FILES"
-slang --ast-json "$RAW_OUT" $FILES 2>&1 || true
-
-# Normalize output
-echo "=== Normalizing ==="
-uv run python "$NORMALIZE" --input "$RAW_OUT" --output "$ARTIFACT"
-
-echo "=== Done ==="
-'''
-
-
-def render_fallback_sh(
-    file_list: str,
-    backend: str,
-    raw_output: str,
-    artifact_path: str,
-    normalize_script: str,
-) -> str:
-    """Render fallback shell script for the specified backend.
-
-    Args:
-        file_list: Path to file_list.f.
-        backend: 'verible' or 'slang'.
-        raw_output: Path for raw backend output.
-        artifact_path: Path for normalized AST JSON.
-        normalize_script: Path to the normalization script.
-
-    Returns:
-        Bash script content.
-    """
-    if backend == "slang":
-        return render_slang_script(file_list, raw_output, artifact_path, normalize_script)
-    else:
-        return render_verible_script(file_list, raw_output, artifact_path, normalize_script)
-
-
-def main():
-    if len(sys.argv) < 6:
-        print(
-            f"Usage: {sys.argv[0]} <file_list> <backend> <raw_output> <artifact_path> <normalize_script>",
-            file=sys.stderr,
-        )
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: render_fallback_sh.py <top_module> [files...]", file=sys.stderr)
         sys.exit(1)
-
-    file_list = sys.argv[1]
-    backend = sys.argv[2]
-    raw_output = sys.argv[3]
-    artifact_path = sys.argv[4]
-    normalize_script = sys.argv[5]
-
-    if backend not in ("verible", "slang"):
-        print(f"ERROR: Unknown backend '{backend}'. Use 'verible' or 'slang'.", file=sys.stderr)
-        sys.exit(1)
-
-    script = render_fallback_sh(file_list, backend, raw_output, artifact_path, normalize_script)
-    print(script)
-
-
-if __name__ == "__main__":
-    main()
+    print(render_fallback_script(sys.argv[1], sys.argv[2:] or ['*.sv', '*.v']))

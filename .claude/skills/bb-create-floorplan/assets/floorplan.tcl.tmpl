@@ -1,19 +1,21 @@
-# Floorplan TCL Template for Magic VLSI
-# Technology: ASAP7 7nm
-# Variables replaced by render_fp_py.py:
-#   {{DESIGN_NAME}} {{DIE_WIDTH_UM}} {{DIE_HEIGHT_UM}}
-#   {{CORE_MARGIN_UM}} {{NETLIST_PATH}} {{TECH_FILE}}
-
-tech load {{TECH_FILE}}
-readspice {{NETLIST_PATH}}
-
-box values 0 0 {{DIE_WIDTH_UM}}um {{DIE_HEIGHT_UM}}um
-{{IO_PAD_PLACEMENT}}
-
-box values {{CORE_MARGIN_UM}}um {{CORE_MARGIN_UM}}um \
-  [expr {{DIE_WIDTH_UM}} - {{CORE_MARGIN_UM}}]um \
-  [expr {{DIE_HEIGHT_UM}} - {{CORE_MARGIN_UM}}]um
-
-save {{DESIGN_NAME}}_fp.mag
-def write {{DESIGN_NAME}}_fp.def
+# Magic TCL floorplan template
+# Variables: TOP_MODULE, DIE_WIDTH, DIE_HEIGHT, CORE_WIDTH, CORE_HEIGHT, TECH_LIB
+tech load ${TECH_LIB}
+load ${TOP_MODULE}
+box values 0 0 ${DIE_WIDTH} ${DIE_HEIGHT}
+set margin_x [expr {(${DIE_WIDTH} - ${CORE_WIDTH}) / 2}]
+set margin_y [expr {(${DIE_HEIGHT} - ${CORE_HEIGHT}) / 2}]
+box values $margin_x $margin_y [expr {$margin_x + ${CORE_WIDTH}}] [expr {$margin_y + ${CORE_HEIGHT}}]
+# Place IO pads
+${IO_PAD_PLACEMENTS}
+# Power grid - VDD rails
+box values 0 0 ${DIE_WIDTH} 2
+paint metal1
+label vdd metal1
+# VSS rails
+box values 0 [expr {${DIE_HEIGHT} - 2}] ${DIE_WIDTH} ${DIE_HEIGHT}
+paint metal1
+label vss metal1
+save ${TOP_MODULE}_fp.mag
+def write ${TOP_MODULE}_fp.def
 quit

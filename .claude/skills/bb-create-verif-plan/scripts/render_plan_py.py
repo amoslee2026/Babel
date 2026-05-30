@@ -1,43 +1,36 @@
 #!/usr/bin/env python3
-"""Render verification plan configuration from MAS."""
-import json, sys
-from pathlib import Path
+"""Render verification plan markdown from MAS spec."""
+import sys
+import json
 
-def render(mas_path: str, seed_path: str) -> dict:
-    """Generate verification plan configuration from MAS and seed."""
-    with open(mas_path) as f:
-        mas = json.load(f)
+def render_verif_plan(mas_spec: dict) -> str:
+    """Generate verification plan markdown from MAS spec."""
+    top = mas_spec.get('top_module', 'unknown')
+    features = mas_spec.get('features', [])
+    interfaces = mas_spec.get('interfaces', [])
 
-    seed_text = Path(seed_path).read_text(errors="replace") if Path(seed_path).exists() else ""
+    md = f"# Verification Plan for {top}\n\n"
+    md += f"- **Top Module:** {top}\n- **Features:** {len(features)}\n- **Interfaces:** {len(interfaces)}\n\n"
 
-    # Extract FSM states from MAS
-    fsm_states = []
-    for mod in mas.get("modules", []):
-        for state in mod.get("fsm_states", []):
-            fsm_states.append({"module": mod.get("name", ""), "state": state})
+    for feat in features:
+        md += f"## Test Scenario: {feat['name']}\n\n"
+        md += f"**Description:** Verify {feat['name']} functionality\n\n"
+        md += "**Stimulus:** Apply valid inputs, test boundary and error conditions\n\n"
+        md += "**Check:** Output matches expected, no assertion violations, coverage goals met\n\n"
 
-    # Extract interfaces for coverpoints
-    interfaces = mas.get("interfaces", [])
+    md += "## Interface Tests\n\n"
+    for iface in interfaces:
+        md += f"### {iface['name']}\n- Protocol compliance\n- Handshake timing\n- Backpressure\n\n"
 
-    # Number FTPs from seed
-    ftp_count = 0
-    ftps = []
-    for i, line in enumerate(seed_text.splitlines(), 1):
-        line = line.strip()
-        if line and not line.startswith("#"):
-            ftp_count += 1
-            ftps.append({"id": f"FTP-{ftp_count:03d}", "description": line})
+    md += "## Coverage Goals\n- Line: >= 90%\n- Branch: >= 85%\n- Toggle: >= 80%\n- FSM: 100%\n\n"
+    md += "## Regression Matrix\n\n| Test | Priority | Runtime |\n|------|----------|--------|\n"
+    for feat in features:
+        md += f"| {feat['name']}_test | HIGH | 1m |\n"
+    return md
 
-    return {
-        "fsm_states": fsm_states,
-        "interfaces": interfaces,
-        "ftps": ftps,
-        "ftp_count": ftp_count,
-        "coverage_groups": len(fsm_states) + len(interfaces),
-    }
-
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} <mas.json> <verif_plan_seed.md>", file=sys.stderr)
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: render_plan_py.py <mas_spec.json>", file=sys.stderr)
         sys.exit(1)
-    print(json.dumps(render(sys.argv[1], sys.argv[2]), indent=2))
+    with open(sys.argv[1], 'r') as f:
+        print(render_verif_plan(json.load(f)))
