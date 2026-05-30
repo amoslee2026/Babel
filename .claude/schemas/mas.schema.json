@@ -10,9 +10,17 @@
     "io_timing", "io_ring", "cdc_waivers", "inputs"
   ],
   "properties": {
-    "design_name": {"type": "string"},
-    "top_module": {"type": "string"},
-    "target_freq_mhz": {"type": "number"},
+    "design_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "description": "Directory slug under designs/; lowercase alphanumeric + _ -"
+    },
+    "top_module": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+      "description": "SystemVerilog top-level module name; shell/TCL-safe identifier"
+    },
+    "target_freq_mhz": {"type": "number", "exclusiveMinimum": 0},
     "target_pdk": {"type": "string", "enum": ["asap7"]},
     "modules": {
       "type": "array",
@@ -20,7 +28,11 @@
         "type": "object",
         "required": ["name", "interface"],
         "properties": {
-          "name": {"type": "string"},
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+            "description": "SystemVerilog module name; must be safe for shell/TCL interpolation"
+          },
           "reuse": {"type": "string", "description": "CBB name reused, or 'none'"},
           "interface": {
             "type": "object",
@@ -40,8 +52,8 @@
         "type": "object",
         "required": ["name", "freq_mhz"],
         "properties": {
-          "name": {"type": "string"},
-          "freq_mhz": {"type": "number"},
+          "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,31}$"},
+          "freq_mhz": {"type": "number", "exclusiveMinimum": 0},
           "source": {"type": "string"}
         }
       }

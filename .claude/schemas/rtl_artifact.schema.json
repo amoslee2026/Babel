@@ -6,16 +6,36 @@
   "additionalProperties": true,
   "required": ["design_name", "top_module", "modules", "file_list", "outputs", "inputs", "lint_clean"],
   "properties": {
-    "design_name": {"type": "string"},
-    "top_module":  {"type": "string"},
+    "design_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "description": "Directory slug under designs/; lowercase alphanumeric + _ -"
+    },
+    "top_module":  {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+      "description": "SystemVerilog top-level module name; shell/TCL-safe identifier"
+    },
     "modules": {
       "type": "array",
       "items": {"type": "object", "required": ["name", "file"], "properties": {
-        "name": {"type": "string"},
-        "file": {"type": "string"}
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+          "description": "SystemVerilog module name"
+        },
+        "file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_/.,+-]+$",
+          "description": "Relative path; restricted charset to prevent path traversal + shell escape"
+        }
       }}
     },
-    "file_list":   {"type": "string", "description": "path to file_list.f"},
+    "file_list":   {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_/.,+-]+$",
+      "description": "path to file_list.f; restricted charset"
+    },
     "outputs": {
       "type": "array",
       "minItems": 1,

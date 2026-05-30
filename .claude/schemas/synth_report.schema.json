@@ -6,9 +6,19 @@
   "additionalProperties": true,
   "required": ["design_name", "top_module", "wns_ns", "tns_ns", "area_um2", "corners", "inputs", "iteration_count"],
   "properties": {
-    "design_name": {"type": "string"},
-    "top_module":  {"type": "string"},
-    "netlist":     {"type": "string", "description": "path to synth/netlist.v"},
+    "design_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$"
+    },
+    "top_module":  {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+    },
+    "netlist":     {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_/.,+-]+$",
+      "description": "path to synth/netlist.v; restricted charset"
+    },
     "wns_ns":      {"type": "number", "description": "worst-corner WNS"},
     "tns_ns":      {"type": "number"},
     "timing_met":  {"type": "boolean"},

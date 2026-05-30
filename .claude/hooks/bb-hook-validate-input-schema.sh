@@ -10,8 +10,26 @@
 
 set -euo pipefail
 
-# Fail-soft: skip if jsonschema not installed
-uv run python -c "import jsonschema" 2>/dev/null || { echo "[validate-input-schema] jsonschema not installed, skipping" >&2; exit 0; }
+# Anchor to project root (D3-04: hooks must not depend on CWD)
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then
+  cd "$CLAUDE_PROJECT_DIR"
+elif command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
+  cd "$(git rev-parse --show-toplevel)"
+fi
+
+# Fail-CLOSED if jsonschema is missing (D8-06 / X-11). Previously fail-soft,
+# which silently disabled the ONLY layer between upstream JSON and renderers.
+# Install: uv add --dev jsonschema
+if ! uv run python -c "import jsonschema" >/dev/null 2>&1; then
+  cat >&2 <<'EOF'
+❌ validate-input-schema BLOCKED: python package 'jsonschema' not importable.
+   The upstream-artifact → renderer chain depends on schema validation.
+   Fix: `uv add --dev jsonschema` (or `uv pip install jsonschema`).
+   Until fixed, /bb-guru-* slash commands are BLOCKED to prevent
+   schema-laundered injection (D8-06).
+EOF
+  exit 2
+fi
 
 . "$(dirname "$0")/lib/common.sh"
 
@@ -54,25 +72,51 @@ A="${ART[$AGENT]}"
 S="${SCHEMA[$AGENT]}"
 U="${UPSTREAM[$AGENT]}"
 
-[ -f "$A" ] || exit 0   # missing artifact → let agent itself report
+if [ ! -f "$A" ]; then
+  # Missing artifact: fail-CLOSED with a clear handoff message (D3-05)
+  mkdir -p "designs/$DESIGN/.handoff"
+  cat > "designs/$DESIGN/.handoff/${U}-needs-fix.md" <<EOF
+# ${U}-needs-fix
+- timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+- artifact: $A (MISSING)
+- schema: $S
+- reason: upstream artifact not present; agent must produce it before /bb-guru-* proceeds.
+- triggered_by: bb-hook-validate-input-schema (agent=$AGENT)
+EOF
+  cat >&2 <<EOF
+❌ AGENT_START_BLOCKED: upstream artifact missing
+    artifact: $A
+    handoff:  designs/$DESIGN/.handoff/${U}-needs-fix.md
+EOF
+  exit 2
+fi
 
 if [ ! -f "$S" ]; then
-  echo "⚠️  validate-input-schema: schema $S not found, skipping" >&2
+  echo "⚠️  validate-input-schema: schema $S not found; skipping (no schema to enforce)" >&2
   exit 0
 fi
 
+# Size cap on artifact (D8-14: prevent 5 GB JSON DoSing the hook)
+ART_SIZE=$(stat -c%s "$A" 2>/dev/null || stat -f%z "$A" 2>/dev/null || echo 0)
+if [ "$ART_SIZE" -gt 10485760 ]; then
+  echo "❌ validate-input-schema BLOCKED: artifact $A is ${ART_SIZE} bytes (>10MB cap)" >&2
+  exit 2
+fi
+
 if ! ARTIFACT="$A" SCHEMA="$S" uv run python -c "
-import sys,json,os
+import sys, json, os
 from jsonschema import validate, ValidationError
 try:
-  validate(json.load(open(os.environ['ARTIFACT'])), json.load(open(os.environ['SCHEMA'])))
-  sys.exit(0)
+    artifact = json.load(open(os.environ['ARTIFACT']))
+    schema = json.load(open(os.environ['SCHEMA']))
+    validate(artifact, schema)
+    sys.exit(0)
 except ValidationError as e:
-  print(f'schema mismatch: {e.message}', file=sys.stderr)
-  sys.exit(2)
+    print(f'schema mismatch: {e.message}', file=sys.stderr)
+    sys.exit(2)
 except Exception as e:
-  print(f'schema check error: {e}', file=sys.stderr)
-  sys.exit(2)
+    print(f'schema check error: {e}', file=sys.stderr)
+    sys.exit(2)
 " 2>&1; then
   mkdir -p "designs/$DESIGN/.handoff"
   cat > "designs/$DESIGN/.handoff/${U}-needs-fix.md" <<EOF
