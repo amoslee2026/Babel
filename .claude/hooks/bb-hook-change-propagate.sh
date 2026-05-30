@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# change-propagate.sh — v1.3 MVP stub (fail-soft)
+# bb-hook-change-propagate.sh — v1.3 MVP stub (fail-soft)
 #
 # PostToolUse hook on Write/Edit targeting upstream artifacts. Mark
 # downstream artifacts as stale (notification only; no auto-rebuild).
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 TARGET="$(printf '%s' "$INPUT" | python3 -c \

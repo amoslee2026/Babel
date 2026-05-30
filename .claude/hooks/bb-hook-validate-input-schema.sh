@@ -8,7 +8,12 @@
 # Validates upstream artifact JSON against schema in .claude/schemas/.
 # Blocks (exit 2) on schema fail and writes <upstream>-needs-fix handoff.
 
-set -eu
+set -euo pipefail
+
+# Fail-soft: skip if jsonschema not installed
+uv run python -c "import jsonschema" 2>/dev/null || { echo "[validate-input-schema] jsonschema not installed, skipping" >&2; exit 0; }
+
+. "$(dirname "$0")/lib/common.sh"
 
 AGENT="${1:-}"
 DESIGN="${2:-}"
@@ -18,7 +23,7 @@ if [ -z "$AGENT" ] || [ -z "$DESIGN" ]; then
     PROMPT="$(printf '%s' "$INPUT" | python3 -c \
       'import sys,json; d=json.load(sys.stdin); print(d.get("prompt",""))' 2>/dev/null || echo "")"
     AGENT="$(printf '%s' "$PROMPT" | sed -nE 's|^/(bb-guru-[a-z]+)\b.*|\1|p')"
-    DESIGN="$(printf '%s' "$PROMPT" | sed -nE 's|.*designs/([a-z0-9_-]+).*|\1|p')"
+    DESIGN="$(printf '%s' "$PROMPT" | sed -nE 's|.*designs/([a-zA-Z0-9_-]+).*|\1|p')"
   fi
 fi
 [ -z "$AGENT" ] && exit 0
@@ -56,13 +61,18 @@ if [ ! -f "$S" ]; then
   exit 0
 fi
 
-if ! uv run python -c "
-import sys,json
+if ! ARTIFACT="$A" SCHEMA="$S" uv run python -c "
+import sys,json,os
 from jsonschema import validate, ValidationError
 try:
-  validate(json.load(open('$A')), json.load(open('$S')))
+  validate(json.load(open(os.environ['ARTIFACT'])), json.load(open(os.environ['SCHEMA'])))
+  sys.exit(0)
 except ValidationError as e:
-  print(f'SCHEMA_FAIL: {e.message} (path: {list(e.path)})', file=sys.stderr); sys.exit(1)
+  print(f'schema mismatch: {e.message}', file=sys.stderr)
+  sys.exit(2)
+except Exception as e:
+  print(f'schema check error: {e}', file=sys.stderr)
+  sys.exit(2)
 " 2>&1; then
   mkdir -p "designs/$DESIGN/.handoff"
   cat > "designs/$DESIGN/.handoff/${U}-needs-fix.md" <<EOF

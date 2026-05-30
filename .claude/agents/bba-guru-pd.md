@@ -1,6 +1,7 @@
 ---
 name: bba-guru-pd
 description: "Babel physical-design guru. Consumes synthesized netlist + MAS IO ring/clock plan, runs floorplan → place → route → DRC → LVS → post-PD STA → GDSII export, produces final signoff artifact gdsii/*.gds. Trigger: ready-for-pd (with synth_report.WNS≥0), pd-rework, or explicit /bba-guru-pd."
+model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: red
 ---

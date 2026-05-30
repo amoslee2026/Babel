@@ -146,6 +146,7 @@ TEMPLATE_DIR      = ~/.claude/skills/bb-mas/templates
 PROGRESS_DIR      = {{ OUTPUT_DIR }}/.progress
 CHECKPOINT_DIR    = {{ OUTPUT_DIR }}/.checkpoint
 SCRIPT_DIR        = ~/.claude/scripts
+PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
 SKILL_FILE        = ~/.claude/skills/bb-mas/SKILL.md
 ```
 
@@ -337,7 +338,7 @@ fi
 
 **分配规则**：
 1. 从 arch_spec 中的 REQ-SYS/ARCH 分解到模块级 REQ-M##-F##
-2. 使用 `scripts/allocate_req_id.py` 自动分配编号（禁止手动编号）
+2. 使用 `$PROJECT_SCRIPTS/allocate_req_id.py` 自动分配编号（禁止手动编号）
 3. 每个功能点对应一个 REQ_ID（P-4: 禁止复用；P-5: 禁止一对多）
 
 **标注规则**：
@@ -480,13 +481,13 @@ graph TB
 从所有模块 MAS.md §10 提取 REQ_ID，生成 `traceability/requirements_matrix.arch.csv`：
 
 ```bash
-uv run scripts/babel_traceability.py arch
+uv run $PROJECT_SCRIPTS/babel_traceability.py arch
 ```
 
 ### 5.3 唯一性验证
 
 ```bash
-uv run scripts/check_req_uniqueness.py --check-deleted
+uv run $PROJECT_SCRIPTS/check_req_uniqueness.py --check-deleted
 ```
 
 ### 5.4 完成标准追加

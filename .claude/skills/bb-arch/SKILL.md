@@ -269,7 +269,7 @@ echo "{\"reason\":\"MAJOR\",\"timestamp\":\"$TIMESTAMP\"}" > "$ARCHIVE/CHANGE_RE
 | 时钟/复位/电源域调整 | Phase 4 起 |
 | IO/存储架构调整 | Phase 6 起 |
 | DFT 策略调整 | Phase 8 起 |
-| 验证策略调整 | Phase 10 起 |
+| 验证策略调整 | Phase 11 起 |
 | 其他 MINOR 变更 | Phase 3（系统概述）起 |
 
 未受影响的 Phase 输出保持不变。完成后更新 `{{ OUTPUT_DIR }}/.archive/input_snapshot.json`。
@@ -470,7 +470,7 @@ Agent_3:
 
 **输出产物**：`ip_blocks/*.md`
 
-## Phase 9.5: REQ_ID 分解
+## Phase 10: REQ_ID 分解
 
 **目的**：将系统级需求分解到模块级 REQ_ID，建立 traceability 基础。
 
@@ -506,7 +506,7 @@ uv run scripts/babel_traceability.py arch
 
 ---
 
-## Phase 10: 验证策略
+## Phase 11: 验证策略
 
 **加载知识库**：`knowledge/verification_strategy.md`
 
@@ -519,7 +519,7 @@ uv run scripts/babel_traceability.py arch
 
 **输出产物**：`verification_plan.md`
 
-## Phase 11: 对抗性评审
+## Phase 12: 对抗性评审
 
 **调用评审**：
 ```markdown
@@ -538,7 +538,7 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 
 **自动修复循环**：最多 5 次迭代。
 
-## Phase 12: 总结与交付
+## Phase 13: 总结与交付
 
 1. 生成 `design_notes.md` 总结报告
 2. 验证 traceability CSV 完整性：
@@ -612,7 +612,7 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 
 ## 最终验证实证（完成标准）
 
-> 以下条件全部满足才可声明 bb-arch 完成，并移交 bb-mas。缺一不可。
+> 以下条件全部满足才可声明 bb-arch 完成，并移交 bb-spec-review（对抗性评审）。缺一不可。
 
 - [ ] `spec_arch/` 中所有 Phase 产物文件均存在且非空
 - [ ] `clock_reset_spec.md`：所有时钟域已定义频率 + CDC 同步策略
@@ -622,4 +622,4 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 - [ ] `design_notes.md`：包含全部开放问题和架构决策依据（ADR）
 - [ ] it.spec-review 未报告 CRITICAL 级别问题（或已修复）
 
-**禁止在上述条件未满足时触发 bb-mas handoff。**
+**禁止在上述条件未满足时触发 bb-spec-review handoff。**

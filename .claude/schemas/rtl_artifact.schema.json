@@ -41,6 +41,6 @@
       }
     },
     "lint_clean": {"type": "boolean"},
-    "iteration_count": {"type": "integer", "minimum": 0}
+    "iteration_count": {"type": "integer", "minimum": 0, "maximum": 8}
   }
 }

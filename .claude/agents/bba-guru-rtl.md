@@ -1,6 +1,7 @@
 ---
 name: bba-guru-rtl
 description: "Babel RTL guru. Consumes MAS handoff (sha256 freshness check), generates lint-clean SystemVerilog via bb-rtl-coder, opens ready-for-verification. Does NOT draft SDC or run CDC. Trigger: ready-for-rtl handoff, rtl-needs-fix issue, or explicit /bba-guru-rtl."
+model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: blue
 ---

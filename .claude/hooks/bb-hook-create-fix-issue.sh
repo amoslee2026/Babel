@@ -4,7 +4,8 @@
 # PostToolUse hook triggered when a Write/Edit creates a `<upstream>-needs-fix.md`
 # handoff file. Logs the escalation; the actual handoff was written by the agent.
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 TARGET="$(printf '%s' "$INPUT" | python3 -c \

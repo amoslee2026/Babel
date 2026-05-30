@@ -81,6 +81,5 @@ json.dump({"violations": violations}, open(out, "w"))
 ## 资源索引
 
 - `scripts/render_cdc_py.py`、`scripts/run_cdc.py`、`scripts/parse_cdc.py`
-- `lib/cdc_analyzer.py` — 跨域路径分析核心
 - `references/2ff_sync_pattern.md` — 同步器识别规则
 - `Gotcha/cdc_false_positives.md` — handshake / gray code 等不视为 violation

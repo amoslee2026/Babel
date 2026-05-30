@@ -1,7 +1,8 @@
 ---
 name: bba-architect
 description: "Babel architecture flow owner. Parses a free-form design idea, drives bb-prd → bb-arch → bb-mas, normalizes MAS via inline adapter, opens ready-for-rtl handoff. Trigger: new design idea, arch-needs-fix issue, or explicit /bba-architect."
-tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
+model: opus
+tools: ["Read", "Write", "Edit", "Grep", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: magenta
 ---
 

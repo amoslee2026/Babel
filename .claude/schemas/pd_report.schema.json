@@ -14,12 +14,12 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["corner", "wns_ns", "met"],
+        "required": ["corner", "wns_ns", "timing_met"],
         "properties": {
           "corner": {"type": "string"},
           "wns_ns": {"type": "number"},
           "tns_ns": {"type": "number"},
-          "met":    {"type": "boolean"}
+          "timing_met": {"type": "boolean"}
         }
       }
     },

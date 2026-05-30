@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# instantiate-cbb-search.sh — v1.3 MVP stub
+# bb-hook-instantiate-cbb-search.sh — v1.3 MVP stub
 #
 # PreToolUse hook on Write/Edit: if file content matches CBB instantiation
 # patterns, suggest invoking bb-search-cbb / bb-get-interface-template first.
 # fail-soft (warning only).
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 CONTENT="$(printf '%s' "$INPUT" | python3 -c \

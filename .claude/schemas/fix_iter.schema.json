@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://babel.local/schemas/fix_iter.schema.json",
   "title": "FixIter",
-  "description": "Per-agent and global fix iteration counters with correlation_id de-dup.",
+  "description": "Fix iteration record. Strict schema (additionalProperties: false) because this is an internal counter with fixed fields. Per-agent and global fix iteration counters with correlation_id de-dup.",
   "type": "object",
   "additionalProperties": false,
   "required": ["per_agent", "global", "correlation_ids"],
