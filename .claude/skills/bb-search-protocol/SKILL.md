@@ -74,7 +74,7 @@ rg -i "<pattern>" wiki/protocols/ --include="*.md" -n -A 2 --max-count=<max_resu
 wiki/protocols/
 ├── uart.md
 ├── axi4-lite.md
-└── ucie-overview.md
+└── ucie-overview.md  (planned, not yet available)
 ```
 
 ## 资源索引

@@ -128,6 +128,7 @@ OUTPUT_DIR        = {{ PROJECT_DIR }}/rtl
 TEMPLATE_DIR      = ~/.claude/skills/bb-rtl-coder/templates
 REFERENCE_DIR     = ~/.claude/skills/bb-rtl-coder/references
 SCRIPT_DIR        = ~/.claude/skills/bb-rtl-coder/scripts
+PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
 PROGRESS_DIR      = {{ OUTPUT_DIR }}/.progress
 CHECKPOINT_DIR    = {{ OUTPUT_DIR }}/.checkpoint
 SKILL_FILE        = ~/.claude/skills/bb-rtl-coder/SKILL.md
@@ -770,14 +771,14 @@ EOF
 从 RTL 文件中的 `@requirement` 注释扫描 REQ_ID，生成 `traceability/requirements_matrix.impl.csv`：
 
 ```bash
-uv run scripts/babel_traceability.py impl
-uv run scripts/babel_traceability.py src
+uv run $PROJECT_SCRIPTS/babel_traceability.py impl
+uv run $PROJECT_SCRIPTS/babel_traceability.py src
 ```
 
 ### 8.2 唯一性检查
 
 ```bash
-uv run scripts/check_req_uniqueness.py --check-deleted
+uv run $PROJECT_SCRIPTS/check_req_uniqueness.py --check-deleted
 ```
 
 ### 8.3 Push
