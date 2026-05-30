@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<runset>
+  <run-drc/>
+  <threads>4</threads>
+  <deep-mode/>
+  <add-cell-name/>
+  <report-database>
+    <filename>drc_report.lyrdb</filename>
+  </report-database>
+  <source>
+    <type>layout</type>
+    <layout-file>{{GDS_PATH}}</layout-file>
+  </source>
+</runset>

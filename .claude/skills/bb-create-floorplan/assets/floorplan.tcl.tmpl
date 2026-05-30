@@ -1,0 +1,19 @@
+# Floorplan TCL Template for Magic VLSI
+# Technology: ASAP7 7nm
+# Variables replaced by render_fp_py.py:
+#   {{DESIGN_NAME}} {{DIE_WIDTH_UM}} {{DIE_HEIGHT_UM}}
+#   {{CORE_MARGIN_UM}} {{NETLIST_PATH}} {{TECH_FILE}}
+
+tech load {{TECH_FILE}}
+readspice {{NETLIST_PATH}}
+
+box values 0 0 {{DIE_WIDTH_UM}}um {{DIE_HEIGHT_UM}}um
+{{IO_PAD_PLACEMENT}}
+
+box values {{CORE_MARGIN_UM}}um {{CORE_MARGIN_UM}}um \
+  [expr {{DIE_WIDTH_UM}} - {{CORE_MARGIN_UM}}]um \
+  [expr {{DIE_HEIGHT_UM}} - {{CORE_MARGIN_UM}}]um
+
+save {{DESIGN_NAME}}_fp.mag
+def write {{DESIGN_NAME}}_fp.def
+quit

@@ -1,0 +1,56 @@
+# Verification Plan: {{ design_name }}
+
+Generated: {{ timestamp }}
+MAS Source: {{ mas_path }}
+
+## Functional Coverage Groups
+
+{{#fsm_states}}
+- covergroup cg_{{ module }}_state: FSM states in {{ module }}
+  - coverpoint state { bins: {{ states }} }
+{{/fsm_states}}
+
+{{#interfaces}}
+- covergroup cg_{{ name }}: Interface {{ name }}
+  - coverpoint valid { bins: { active, inactive } }
+  - coverpoint ready { bins: { asserted, deasserted } }
+  - cross valid x ready
+{{/interfaces}}
+
+## Code Coverage Targets
+
+| Metric    | Target |
+|-----------|--------|
+| Line      | 100%   |
+| Branch    | 100%   |
+| Toggle    | 100%   |
+| Condition | 100%   |
+
+## Functional Test Points
+
+{{#ftps}}
+- {{ id }}: {{ description }}
+  - PRD Ref: {{ prd_ref }}
+  - Priority: {{ priority }}
+{{/ftps}}
+
+## Corner Cases
+
+- Reset timing: assert/deassert at clock edge boundaries
+- Overflow: maximum data width values
+- Underflow: zero-length transfers
+- CDC crossing: data launched at clock domain boundary
+- Power domain: retention/restore across power state transitions
+
+## Random Constraints
+
+- Constrained random stimulus within valid data ranges
+- Random inter-transaction delays (1-100 cycles)
+- Random reset assertion timing (after 10-1000 cycles)
+- Weighted random: 70% normal, 20% corner, 10% error injection
+
+## Test Case List
+
+{{#ftps}}
+- seq_{{ id_lower }}: Implements {{ id }} -- {{ description }}
+{{/ftps}}

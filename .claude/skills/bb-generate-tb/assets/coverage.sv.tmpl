@@ -1,0 +1,9 @@
+// Coverage collection template
+// Variables: {{ top_module }}, {{ cover_groups }}
+covergroup cg_{{ top_module }} @(posedge clk);
+  // {{ cover_points }}
+  option.per_instance = 1;
+  option.name = "{{ top_module }}_coverage";
+endgroup
+
+cg_{{ top_module }} cg_inst = new();

@@ -1,0 +1,10 @@
+# KLayout GDSII Export Macro
+# Export current layout to GDSII with ASAP7 layer map
+
+layout = RBA::CellView::active
+opt = RBA::SaveLayoutOptions::new
+opt.format = "GDS2"
+opt.keep_instances = true
+# ASAP7 layer map applied via technology file
+layout.write("{{OUTPUT_GDS}}", opt)
+puts "Exported: {{OUTPUT_GDS}}"
