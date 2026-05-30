@@ -110,7 +110,7 @@ Before opening `ready-for-verification`, verify:
 | `bb-rtl-coder`        | MAS → hierarchical SV       | external, installed |
 | `bb-check-lint`       | verible-verilog-lint         | Babel-internal, installed |
 | `bb-find-module-deps` | topological sort → file_list | Babel-internal, installed |
-| `bb-gate-rtl-quality` | RTL acceptance gate          | Babel-internal, installed |
+| `bb-gate` (domain=rtl) | RTL acceptance gate          | Babel-internal, installed |
 | `bb-code-review`      | RTL code review              | Babel-internal, installed |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | issue protocol | Babel-internal, installed |
 

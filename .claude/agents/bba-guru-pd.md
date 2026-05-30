@@ -126,7 +126,7 @@ Before opening `signoff`:
 | `bb-invoke-netgen`    | LVS                            | wraps `netgen 1.5`, installed |
 | `bb-invoke-opensta`   | post-route STA                 | wraps `opensta 2.5.0`, installed |
 | `bb-invoke-klayout`   | GDSII export + verify          | wraps `klayout 0.30.8`, installed |
-| `bb-gate-pd-quality`  | acceptance gate                | Babel-internal, installed |
+| `bb-gate` (domain=pd)  | acceptance gate                | Babel-internal, installed |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | issue protocol | Babel-internal, installed |
 
 ## Resources

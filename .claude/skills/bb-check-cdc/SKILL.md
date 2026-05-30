@@ -10,7 +10,7 @@ description: "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains 找跨
 读 `bb-parse-ast` 的 AST + MAS.clock_domains，识别跨时钟域 register-to-register 路径，检查是否通过 2ff 同步器，输出 violation 报告。
 
 - 调用者：`bba-guru-synthesis`
-- 上游：`bb-parse-ast` / `bb-parse-ast-fallback`
+- 上游：`bb-parse-ast`（backend=auto 自动降级到 verible/slang）
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args
@@ -75,7 +75,7 @@ json.dump({"violations": violations}, open(out, "w"))
 |------|------|
 | clean=true | 进 yosys |
 | clean=false（unwaived） | 开 `rtl-needs-fix` 退出 |
-| pyverilog 解析失败 | 调 `bb-parse-ast-fallback` |
+| pyverilog 解析失败 | 重试 `bb-parse-ast --backend verible`（或 `slang`） |
 | Phase 2 timeout（600s） | `error="CDC_TIMEOUT"` |
 
 ## 资源索引
