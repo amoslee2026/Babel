@@ -160,6 +160,30 @@ Before opening `signoff`:
 - Next: signoff 已开启 (user 审核)
 ```
 
+## Benchmark Logging
+
+When running under BabelBench evaluation, record stage timing and key metrics:
+
+```bash
+# 阶段开始时（synth_report gate 验证后）
+bash testbench/scripts/bench_log.sh stage_start pd input_modules=<count>
+
+# 阶段结束时（signoff 输出后）
+bash testbench/scripts/bench_log.sh stage_end pd \
+  status=pass \
+  drc_violations=<n> \
+  lvs_match=<true|false> \
+  wns_ss_ns=<n> \
+  wns_tt_ns=<n> \
+  wns_ff_ns=<n> \
+  gds_success=<true|false> \
+  gds_size_bytes=<n> \
+  die_area_um2=<n> \
+  iterations=<n>
+```
+
+If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
+
 ## Project Rules
 
 Follow `.claude/rules/common/coding-style.md`, `.claude/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env. Commit before destructive edits. Use `mv` instead of `rm`.

@@ -141,6 +141,25 @@ Before opening `ready-for-verification`, verify:
 - Next: ready-for-verification 已开启
 ```
 
+## Benchmark Logging
+
+When running under BabelBench evaluation, record stage timing and key metrics:
+
+```bash
+# 阶段开始时（MAS handoff 验证后）
+bash testbench/scripts/bench_log.sh stage_start rtl input_modules=<count>
+
+# 阶段结束时（handoff 输出后）
+bash testbench/scripts/bench_log.sh stage_end rtl \
+  status=pass \
+  rtl_files=<count> \
+  lint_errors=<count> \
+  lint_warnings=<count> \
+  iterations=<n>
+```
+
+If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
+
 ## Project Rules
 
 Follow `.claude/rules/common/coding-style.md` and the global Babel CLAUDE.md. Use `mv` to a temp/deleted dir instead of `rm`. Commit before destructive edits.
