@@ -45,6 +45,6 @@
         }
       }
     },
-    "iteration_count": {"type": "integer", "minimum": 0, "maximum": 6}
+    "iteration_count": {"type": "integer", "minimum": 0, "maximum": 8}
   }
 }

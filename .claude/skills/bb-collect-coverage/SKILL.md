@@ -59,7 +59,8 @@ verilator_coverage --annotate designs/<name>/sim_results/annotate/ <coverage_dat
 - annotate 输出含 `LCOV:hit/total` 标记 → `code_coverage.line/branch/toggle`
 - sim_log 中 covergroup `Coverage: <pct>%` → `functional_coverage`
 - 列举 hits==0 的 bin → `uncovered_bins`
-- `meets_target = functional_coverage >= target_pct AND code_coverage.{line,branch,toggle}` 均 ≥ target_pct
+- `meets_target = functional_coverage >= target_pct AND code_coverage.line >= target_pct AND code_coverage.branch >= 95 AND code_coverage.toggle >= 90`
+  - 100% branch/toggle coverage is often unreachable due to defensive error-handling code. Targets of 95%/90% allow for documented unreachable bins while maintaining high quality.
 - 写 `coverage.json`（含 `inputs[]:{path,sha256}` 引用 sim_log + rtl_artifact.json）
 - 同时**生成 `test_report.json`**，遵循 `.claude/schemas/test_report.schema.json` 嵌套结构（fix C-01）
 

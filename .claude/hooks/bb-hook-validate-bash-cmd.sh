@@ -4,7 +4,8 @@
 # PreToolUse hook on Bash. Warn (non-blocking) on dangerous patterns.
 # Per ADR-A10 soft-boundary: trust user judgment, surface risk.
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 CMD="$(printf '%s' "$INPUT" | python3 -c \
@@ -37,8 +38,10 @@ for p in "${PATTERNS[@]}"; do
 done
 
 if [ -n "${hit:-}" ]; then
+  # Truncate command for logging to avoid leaking secrets
+  CMD_SHORT="$(printf '%s' "$CMD" | head -c 200)"
   printf "⚠️  BASH_CMD_WARNING: Dangerous patterns detected\n    Command: %s\n%b    fail-soft (ADR-A10): command will proceed.\n    Review carefully.\n" \
-    "$CMD" "$hit" >&2
+    "$CMD_SHORT" "$hit" >&2
 fi
 
 exit 0

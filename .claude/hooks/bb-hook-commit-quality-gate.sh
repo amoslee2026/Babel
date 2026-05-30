@@ -6,7 +6,8 @@
 # to exist with pass=true (scoped per affected design — fix M-13).
 # Block commit on failure. User can bypass via `git commit --no-verify`.
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 CMD="$(printf '%s' "$INPUT" | python3 -c \
@@ -28,12 +29,14 @@ CHANGED="$(git diff --cached --name-only 2>/dev/null || true)"
 
 block_msg=""
 needs_rtl=0; needs_synth=0
-while IFS= read -r f; do
-  case "$f" in
-    designs/*/rtl/*) needs_rtl=1 ;;
-    designs/*/synth/*) needs_synth=1 ;;
-  esac
-done <<< "$CHANGED"
+if [ -n "${CHANGED:-}" ]; then
+  while IFS= read -r f; do
+    case "$f" in
+      designs/*/rtl/*) needs_rtl=1 ;;
+      designs/*/synth/*) needs_synth=1 ;;
+    esac
+  done <<< "$CHANGED"
+fi
 
 # M-13 fix: scope gate check to the SPECIFIC designs touched by this commit,
 # not "any design's latest quality_gate_*.json".
@@ -45,7 +48,7 @@ check_pass() {
     local found_pass=0
     for d in designs/"$n"/"$stage"/quality_gate_*.json; do
       [ -f "$d" ] || continue
-      if python3 -c "import json,sys; sys.exit(0 if json.load(open('$d')).get('pass') else 1)"; then
+      if D="$d" python3 -c "import json,sys,os; sys.exit(0 if json.load(open(os.environ['D'])).get('pass') else 1)"; then
         found_pass=1
         break
       fi

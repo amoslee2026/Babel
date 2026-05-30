@@ -19,7 +19,7 @@ description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完
 |-----|------|----------|------|------|
 | prd_path | path | true | — | PRD.md |
 | arch_spec_dir | path | true | — | arch_spec 目录 |
-| mas_path | path | true | — | `mas/mas.json` |
+| mas_dir | path | true | — | `spec_mas/`（directory containing MAS markdown files） |
 | role | enum | false | `ruthless` | `ruthless`\|`linus`\|`balanced` |
 | focus | string | false | `feasibility,consistency,coverage` | — |
 | design_name | string | true | — | — |
@@ -45,7 +45,7 @@ description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完
 ```python
 prd = open(prd_path).read()
 arch = {p.name: p.read_text() for p in Path(arch_spec_dir).glob("*.md")}
-mas = json.load(open(mas_path))
+mas = {p.name: p.read_text() for p in Path(mas_dir).glob("*.md")}
 prompt = render_spec_review_prompt(role, focus, prd, arch, mas)
 ```
 

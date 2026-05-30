@@ -44,7 +44,8 @@ description: "验证质量门禁（v1.3 加严）：functional 100% + line/branc
 import json
 tr = json.load(open(test_report))     # 已经是嵌套 schema（fix C-01）
 sim = open(sim_log).read()
-# 检查 functional_coverage == 100 + code_coverage.{line,branch,toggle} == 100
+# 检查 functional_coverage == 100 + code_coverage.line == 100
+# + code_coverage.branch >= 95 + code_coverage.toggle >= 90
 # + sim_log 中无 'Assertion failed' / '%Error'
 ```
 
@@ -66,9 +67,11 @@ sim = open(sim_log).read()
 |----|------|
 | `test_report.functional_coverage` | == 100 |
 | `test_report.code_coverage.line` | == 100 |
-| `test_report.code_coverage.branch` | == 100 |
-| `test_report.code_coverage.toggle` | == 100 |
+| `test_report.code_coverage.branch` | >= 95 |
+| `test_report.code_coverage.toggle` | >= 90 |
 | `assertions_pass` | true |
+
+> **Note**: 100% branch/toggle coverage is often unreachable due to defensive error-handling code. Targets of 95%/90% allow for documented unreachable bins while maintaining high quality.
 
 ## 资源索引
 

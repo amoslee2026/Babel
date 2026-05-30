@@ -1,6 +1,7 @@
 ---
 name: bba-guru-synthesis
 description: "Babel synthesis guru. Drafts SDC from MAS, runs CDC+RDC, orchestrates parallel yosys synthesis (parallel count = idle CPUs), LLM analyzes results and iterates to timing closure before opening ready-for-pd. Coverage gate: requires test_report.functional_coverage==100 AND code_coverage.{line,branch,toggle}==100. Trigger: ready-for-synth, synth-needs-fix, or explicit /bba-guru-synthesis."
+model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: cyan
 ---
@@ -165,6 +166,16 @@ Before opening `ready-for-pd`:
 - ASAP7 libs: `libs/asap7/`
 - EDA env: `source ~/wrk/eda_opensources/eda_env.sh`
 - Synthesis scripts: `.claude/skills/bb-invoke-yosys/scripts/`
+
+## Edge Cases
+
+| Scenario | Detection | Recovery |
+|----------|-----------|----------|
+| yosys OOM kill | Exit code 137 or stderr "Killed" | Reduce parallel count by half, retry |
+| EDA env not sourced | `command not found: yosys` | Run `source ~/wrk/eda_opensources/eda_env.sh`, retry |
+| Single module timeout in parallel synth | Per-module wall-clock > 600s | Kill hung process, synthesize that module alone with relaxed constraints |
+| OpenSTA / liberty version mismatch | OpenSTA stderr "Error" during read_liberty | Report to user with exact error, escalate |
+| SDC references non-existent clock | OpenSTA "clock not found" | Re-run bb-create-sdc with correct clock names from MAS |
 
 ## What You Must NOT Do
 

@@ -1,6 +1,4 @@
 {
-  "mcpServers": {},
-  "enabledPlugins": {},
   "hooks": {
     "PreToolUse": [
       {

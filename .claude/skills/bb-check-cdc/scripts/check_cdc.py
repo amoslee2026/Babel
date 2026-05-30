@@ -12,34 +12,32 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 
-# Clock domain definitions from MAS specs
-CLOCK_DOMAINS = {
-    "CLK_SYS": {
-        "modules": ["M00", "M01", "M02", "M03", "M04", "M08", "M09", "M10", "M11", "M12", "M13", "M14"],
-        "frequency_mhz": 500,
-        "domain": "PD_MAIN"
-    },
-    "CLK_AON": {
-        "modules": ["M05", "M06", "M07"],
-        "frequency_mhz": 1,
-        "domain": "PD_AON"
-    },
-    "CLK_IO": {
-        "modules": ["M15", "M16"],
-        "frequency_mhz": 50,
-        "domain": "PD_IO"
-    },
-    "ISA_CLK": {
-        "modules": ["M16"],
-        "frequency_mhz": 50,
-        "domain": "PD_IO"
-    },
-    "TCK": {
-        "modules": ["M15"],
-        "frequency_mhz": 50,
-        "domain": "PD_IO"
+def load_clock_domains(mas_path: str) -> dict:
+    """Load clock domain mapping from MAS JSON."""
+    try:
+        with open(mas_path) as f:
+            mas = json.load(f)
+        domains = mas.get("clock_domains", {})
+        if not domains:
+            print(f"WARNING: No clock_domains found in {mas_path}, using defaults", file=sys.stderr)
+            return get_default_clock_domains()
+        return domains
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"WARNING: Cannot load MAS from {mas_path}: {e}, using defaults", file=sys.stderr)
+        return get_default_clock_domains()
+
+
+def get_default_clock_domains() -> dict:
+    """Fallback default clock domains when MAS is unavailable."""
+    return {
+        "CLK_SYS": {"modules": [], "frequency_mhz": 500},
+        "CLK_AON": {"modules": [], "frequency_mhz": 1},
     }
-}
+
+
+# Load clock domains dynamically from MAS, or use defaults
+mas_path = os.environ.get("MAS_PATH", "")
+CLOCK_DOMAINS = load_clock_domains(mas_path) if mas_path else get_default_clock_domains()
 
 # Reset domain definitions from MAS specs
 RESET_DOMAINS = {

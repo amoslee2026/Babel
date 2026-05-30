@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# validate-wiki.sh — v1.3 MVP stub (fail-soft)
+# bb-hook-validate-wiki.sh — v1.3 MVP stub (fail-soft)
 #
 # PreToolUse hook on Read for wiki/** paths. Warn (non-blocking) if the
 # file's frontmatter `content_hash` differs from the value recorded in
 # wiki/.hashes.txt (format: <relpath> <sha256>).
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 INPUT="$(cat || true)"
 TARGET="$(printf '%s' "$INPUT" | python3 -c \
@@ -25,7 +26,9 @@ FM_HASH="$(awk '/^---$/{c++; next} c==1{print}' "$TARGET" \
 
 [ -z "${FM_HASH:-}" ] && exit 0   # No hash declared → skip
 
+# Normalize path: strip project root prefix and ./
 REL="${TARGET#./}"
+REL="${REL#/home/lxx/wrk/Babel/}"
 HASHES_FILE="wiki/.hashes.txt"
 [ -f "$HASHES_FILE" ] || exit 0
 EXPECTED="$(awk -v p="$REL" '$1==p {print $2}' "$HASHES_FILE")"

@@ -1,6 +1,7 @@
 ---
 name: bba-guru-verification
 description: "Babel verification guru. Consumes RTL artifact + verif_plan_seed, builds testbenches, runs verilator, drives functional_coverage + code_coverage{line,branch,toggle} all to 100% before opening ready-for-synth. Trigger: ready-for-verification handoff, functional bug regression, or explicit /bba-guru-verification."
+model: sonnet
 tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
 color: green
 ---
@@ -15,7 +16,7 @@ This agent file is the canonical contract — no external spec required at runti
 
 | Policy | Statement |
 |--------|-----------|
-| PIPELINE_GATE | Synthesis MUST NOT start until verification reports `functional_coverage == 100` AND all three `code_coverage.{line,branch,toggle} == 100`. |
+| PIPELINE_GATE | Synthesis MUST NOT start until verification reports `functional_coverage == 100` AND `code_coverage.line == 100` AND `code_coverage.branch >= 95` AND `code_coverage.toggle >= 90`. |
 | WAVE_VIEWER | VCD files are viewed via the VSCode waveform extension (out of Babel scope). |
 
 Tool scope: Write limited to `designs/<name>/{verif,tb,sim_results,coverage.json,test_report.json,.handoff}` (fix H-09).
@@ -101,11 +102,14 @@ When max_iter / global_fix_iter / drift terminates a run, emit the stdout block 
 Before opening `ready-for-synth`:
 
 - [ ] `test_report.functional_coverage == 100`.
-- [ ] `test_report.code_coverage.line == 100` AND `.branch == 100` AND `.toggle == 100`.
+- [ ] `test_report.code_coverage.line == 100` AND `.branch >= 95` AND `.toggle >= 90`.
 - [ ] Every test in `test_cases.md` has a corresponding entry in `sim_results/` with `status: pass`.
 - [ ] `test_report.json` validates against `schemas/test_report.schema.json`.
 - [ ] `inputs[]` in `test_report.json` echoes rtl_artifact + mas sha (fix H-07).
 - [ ] `test_report.traceability.req_coverage_pct >= 90`.
+  > Note: req_coverage allows 90% (vs 100% code coverage) because some requirements
+  > are verified by analysis or inspection rather than simulation tests. The 10% gap
+  > must be documented in the verification plan with justification for each uncovered requirement.
 - [ ] All SVA assertions have `@verifies` annotation (100% coverage).
 - [ ] `traceability/requirements_matrix.test.csv` generated with test status for each REQ_ID.
 

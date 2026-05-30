@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# write-arch-freeze-check.sh — v1.3 MVP stub
+# bb-hook-write-arch-freeze-check.sh — v1.3 MVP stub
 #
 # PreToolUse hook on Write/Edit targeting designs/*/{rtl,mas}/**.
 # Warn (non-blocking) when MAS is frozen (a `ready-for-rtl` handoff exists)
 # and the user is editing RTL/MAS directly.
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 # Read tool_input JSON from stdin (claude-code hook protocol).
 INPUT="$(cat || true)"

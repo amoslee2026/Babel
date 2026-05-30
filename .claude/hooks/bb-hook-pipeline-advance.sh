@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bb-hook-pipeline-advance.sh — v1.3 MVP
+# bb-hook-pipeline-advance.sh — v1.3 MVP (fail-soft)
 #
 # PostToolUse hook on Write/Edit: when the just-written file is a handoff
 # (designs/*/.handoff/<label>.md), emit the suggested next slash command.
@@ -8,7 +8,8 @@
 # v1.3 MVP scope: notification only — NO auto-dispatch (Claude Code hooks
 # cannot invoke Skill/Agent). A future v1.4 hook may auto-spawn next agent.
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 label_to_next() {
   case "$1" in

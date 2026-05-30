@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# session-summarize.sh — v1.3 MVP stub (fail-soft)
+# bb-hook-session-summarize.sh — v1.3 MVP stub (fail-soft)
 #
 # SessionEnd hook: emit a brief summary of designs/handoffs touched
 # this session. Reads handoff log from git working tree (best-effort,
 # since the session transcript is not directly available to hooks).
 
-set -eu
+set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
-STAMP="$(date -u +'%Y%m%d-%H%M%SZ')"
+STAMP="$(stamp_now)"
 OUT_DIR="${BB_SESSION_SUMMARY_DIR:-.claude/session_summaries}"
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/session_${STAMP}.md"
@@ -62,5 +63,15 @@ OUT="$OUT_DIR/session_${STAMP}.md"
   echo "- Run \`bash .claude/hooks/pipeline-advance.sh\` to see suggested next agents."
 } > "$OUT"
 
-echo "[session-summarize] wrote $OUT"
+echo "[session-summarize] wrote $OUT" >&2
+
+# Cleanup: keep only last 30 session summaries
+SUMMARY_DIR="$(dirname "$0")/../session_summaries"
+if [ -d "$SUMMARY_DIR" ]; then
+  ls -1t "$SUMMARY_DIR"/session_*.md 2>/dev/null | tail -n +31 | while read -r old; do
+    mkdir -p "${SUMMARY_DIR}/../.review/archived"
+    mv "$old" "${SUMMARY_DIR}/../.review/archived/" 2>/dev/null || true
+  done
+fi
+
 exit 0
