@@ -1,79 +1,63 @@
-# pyverilog Quick Reference
+# PyVerilog Quick Reference
 
 ## Installation
-
 ```bash
-uv add pyverilog
+pip install pyverilog
 ```
 
-## Core API
-
-### Parsing
-
+## Basic Parsing
 ```python
 from pyverilog.vparser.parser import parse
-
-# Parse file list
-ast, directives = parse(["top.sv", "sub.sv"])
-
-# Parse with include dirs
-ast, directives = parse(files, preprocess_include=["./inc"])
-
-# Parse with defines
-ast, directives = parse(files, preprocess_define={"WIDTH": "32"})
+ast = parse(['module.sv', 'tb.sv'])
+ast = parse(['top.sv'], include=['./inc'], preprocess_define=['SYNTHESIS'])
 ```
 
-### AST Node Types
-
-| Node Type | Description | Key Attributes |
-|-----------|-------------|----------------|
-| `ModuleDef` | Module definition | `name`, `items` |
-| `Port` | Port declaration | `name`, `direction`, `width` |
-| `Decl` | Signal declaration | `list` (of Var/Reg/Wire) |
-| `Always` | always block | `sens_list`, `statement` |
-| `Assign` | Continuous assignment | `left`, `right` |
-| `Subst` | Procedural assignment | `left`, `right` |
-| `Instance` | Module instantiation | `name`, `module`, `portlist` |
-| `IfStatement` | Conditional | `cond`, `true_statement`, `false_statement` |
-| `CaseStatement` | Case block | `comp`, `caselist` |
-
-### Walking the AST
-
+## AST Traversal
 ```python
-from pyverilog.vparser.ast import Node
-
 def walk(node, depth=0):
-    print("  " * depth + type(node).__name__)
+    print('  ' * depth + type(node).__name__)
     for child in node.children():
         walk(child, depth + 1)
 ```
 
-### Extracting Module Info
+## Key Node Types
+| Node | Description |
+|------|-------------|
+| `ModuleDef` | Module definition |
+| `Port` | Port declaration |
+| `Instance` | Module instantiation |
+| `Assign` | Continuous assignment |
+| `Always` | Always block |
+| `NonblockingSubstitution` | <= assignment |
+| `BlockingSubstitution` | = assignment |
 
+## Extract Modules
 ```python
-from pyverilog.dataflow.visit import NodeVisitor
-
-class ModuleCollector(NodeVisitor):
-    def __init__(self):
-        self.modules = []
-
-    def visit_ModuleDef(self, node):
-        self.modules.append(node.name)
-        self.visit_children(node)
+from pyverilog.vparser.ast import ModuleDef
+for item in ast.description.defs:
+    if isinstance(item, ModuleDef):
+        print(f"Module: {item.name}")
 ```
 
-## Limitations
+## Extract Instances
+```python
+def find_instances(module):
+    return [{'name': inst.name, 'module': item.module}
+            for item in module.items if isinstance(item, InstanceList)
+            for inst in item.instances]
+```
 
-- No SystemVerilog `interface` support
-- No `class` / `package` parsing
-- Limited `typedef` support
-- `struct` / `union` partially supported
-- See `Gotcha/sv_syntax_unsupported.md` for full list
+## Generate JSON AST
+```python
+def ast_to_dict(node):
+    result = {'type': type(node).__name__}
+    if hasattr(node, 'name'): result['name'] = node.name
+    if hasattr(node, 'children'):
+        result['children'] = [ast_to_dict(c) for c in node.children()]
+    return result
+```
 
-## Common Errors
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `SyntaxError` | Unsupported SV construct | Use bb-parse-ast-fallback |
-| `ImportError` | pyverilog not installed | `uv add pyverilog` |
-| `FileNotFoundError` | Missing include file | Check include paths |
+## Tips
+- Use `str(node)` to get Verilog representation
+- Check `isinstance()` before accessing attributes
+- Use `node.children()` for generic traversal

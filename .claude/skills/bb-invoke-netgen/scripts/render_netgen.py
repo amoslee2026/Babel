@@ -1,68 +1,94 @@
 #!/usr/bin/env python3
 """
-render_netgen.py -- Generate Netgen LVS comparison command/script.
+render_netgen.py -- Render Netgen setup script for LVS comparison.
 
-Phase 1 of bb-invoke-netgen: renders the batch LVS command
-from schematic and layout netlist paths.
+Phase 1 of bb-invoke-netgen: generates batch command for LVS.
 """
 
-import json
+import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
 
 
-def render(params: dict) -> str:
-    """Render Netgen LVS batch command."""
-    schematic = params["schematic_netlist"]
-    layout = params["layout_netlist"]
-    tech_file = params["tech_file"]
-    top_module = params["top_module"]
-    design_name = params.get("design_name", "unknown")
-
-    report_path = f"designs/{design_name}/pd/lvs_report.txt"
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-
-    # Generate the batch command script
-    script = f"""#!/bin/bash
-# Netgen LVS Comparison Script
-# Generated: {timestamp}
-# Design: {design_name}
-# Top Module: {top_module}
-
-set -euo pipefail
-source ~/wrk/eda_opensources/eda_env.sh
-
-# Version check
-netgen -batch lvs --version 2>&1 | grep "1.5" \\
-  || {{ echo "VERSION_MISMATCH"; exit 1; }}
-
-# Run LVS comparison
-netgen -batch lvs \\
-  "{layout} {top_module}" \\
-  "{schematic} {top_module}" \\
-  {tech_file} \\
-  {report_path}
-
-echo "LVS_COMPLETE"
-"""
-    return script
+def render_lvs_command(params: dict) -> str:
+    """Render Netgen batch LVS command."""
+    lines = [
+        '#!/bin/bash',
+        f'# Netgen LVS script - {params["design_name"]}',
+        f'# Generated: {datetime.now().strftime("%Y%m%d_%H%M%S")}',
+        '#',
+        f'# Layout:  {params["layout_netlist"]} ({params["top_module"]})',
+        f'# Schematic: {params["schematic_netlist"]} ({params["top_module"]})',
+        '#',
+        '',
+        'source ~/wrk/eda_opensources/eda_env.sh',
+        '',
+        'netgen -batch lvs \\',
+        f'  "{params["layout_netlist"]} {params["top_module"]}" \\',
+        f'  "{params["schematic_netlist"]} {params["top_module"]}" \\',
+        f'  {params["setup_file"]} \\',
+        f'  {params["report_path"]}',
+        '',
+    ]
+    return '\n'.join(lines)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <params.json>", file=sys.stderr)
-        sys.exit(1)
-    with open(sys.argv[1]) as f:
-        params = json.load(f)
+def render_setup_script(params: dict) -> str:
+    """Render Netgen setup TCL for ASAP7 cell comparison."""
+    lines = [
+        f'# Netgen setup for {params["design_name"]}',
+        f'# Generated: {datetime.now().strftime("%Y%m%d_%H%M%S")}',
+        '',
+        '# Ignore power/ground net name differences',
+        'property {-circuit1} vdd',
+        'property {-circuit1} gnd',
+        'property {-circuit2} vdd',
+        'property {-circuit2} gnd',
+        '',
+        '# Permit black-box cells',
+        'permute default',
+        '',
+        '# Compare device properties',
+        'property device all',
+        '',
+    ]
+    return '\n'.join(lines)
 
-    script_content = render(params)
 
-    if len(sys.argv) >= 3:
-        out_path = Path(sys.argv[2])
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(script_content)
-        out_path.chmod(0o755)
-        print(f"Script rendered: {out_path}", file=sys.stderr)
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Render Netgen LVS script")
+    parser.add_argument('--design-name', required=True, help='Design name')
+    parser.add_argument('--top', required=True, help='Top module name')
+    parser.add_argument('--schematic', required=True, help='Schematic netlist path')
+    parser.add_argument('--layout', required=True, help='Layout netlist path')
+    parser.add_argument('--setup-file', default=None,
+                        help='Netgen setup TCL path (auto-generated if omitted)')
+    parser.add_argument('--report', required=True, help='LVS report output path')
+    parser.add_argument('--out', required=True, help='Output script path')
+    parser.add_argument('--mode', choices=['command', 'setup'], default='command',
+                        help='Render mode: batch command or setup TCL')
+
+    args = parser.parse_args()
+
+    params = {
+        'design_name': args.design_name,
+        'top_module': args.top,
+        'schematic_netlist': args.schematic,
+        'layout_netlist': args.layout,
+        'setup_file': args.setup_file or 'setup.tcl',
+        'report_path': args.report,
+    }
+
+    if args.mode == 'setup':
+        content = render_setup_script(params)
     else:
-        print(script_content)
+        content = render_lvs_command(params)
+
+    Path(args.out).write_text(content)
+    print(f"Script rendered: {args.out}")
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -1,38 +1,25 @@
 #!/usr/bin/env python3
-"""Generate CDC analysis configuration."""
-import json, sys
-from pathlib import Path
+"""Render CDC check configuration from MAS clock domain spec."""
+import sys
+import json
 
-def render(ast_path: str, mas_path: str, file_list_path: str) -> dict:
-    """Render CDC analysis configuration from AST and MAS."""
-    config = {
-        "ast_path": ast_path,
-        "mas_path": mas_path,
-        "file_list_path": file_list_path,
-        "sync_patterns": [
-            {
-                "name": "2ff_synchronizer",
-                "regex": r"always\s*@\s*\(posedge\s+(\w+)\).*?(\w+)\s*<=\s*(\w+);.*?(\w+)\s*<=\s*(\w+);",
-                "description": "Two flip-flop synchronizer pattern",
-            },
-            {
-                "name": "dmux_synchronizer",
-                "regex": r"always\s*@\s*\(posedge\s+(\w+)\).*?(\w+)\s*<=\s*dmux",
-                "description": "DMUX-based synchronizer",
-            },
-        ],
-        "cdc_methods": [
-            "2-stage_synchronizer",
-            "handshake_protocol",
-            "async_fifo",
-            "pulse_synchronizer",
-            "gray_code",
-        ],
-    }
-    return config
+def render_cdc_config(mas_spec: dict) -> dict:
+    """Generate CDC configuration from MAS spec."""
+    cdc_config = {'clocks': [], 'domain_crossings': [], 'synchronizers': []}
+    for clk in mas_spec.get('clocks', []):
+        cdc_config['clocks'].append({
+            'name': clk['name'], 'frequency_mhz': clk.get('frequency_mhz', 100),
+            'duty_cycle': clk.get('duty_cycle', 50)})
+    for domain in mas_spec.get('clock_domains', []):
+        for crossing in domain.get('crossings', []):
+            cdc_config['domain_crossings'].append({
+                'signal': crossing['signal'], 'source_domain': crossing['from'],
+                'dest_domain': crossing['to'], 'sync_type': crossing.get('sync_type', '2ff')})
+    return cdc_config
 
-if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print(f"Usage: {sys.argv[0]} <ast.json> <mas.json> <file_list.f>", file=sys.stderr)
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Usage: render_cdc_py.py <mas_spec.json>", file=sys.stderr)
         sys.exit(1)
-    print(json.dumps(render(sys.argv[1], sys.argv[2], sys.argv[3]), indent=2))
+    with open(sys.argv[1], 'r') as f:
+        print(json.dumps(render_cdc_config(json.load(f)), indent=2))

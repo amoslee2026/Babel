@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
-"""Execute linting and collect results."""
-import json, subprocess, sys
+"""Execute Verilator lint check and return JSON status."""
+import sys
+import subprocess
+import json
 from pathlib import Path
-from datetime import datetime, timezone
 
-def run(script_path: str, output_dir: str) -> dict:
-    """Run lint script and collect results."""
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    log = output / "lint_run.log"
+def run_lint_check(top_module: str, rtl_dir: str) -> dict:
+    """Run Verilator lint check."""
+    rtl_path = Path(rtl_dir)
+    sv_files = list(rtl_path.glob('*.sv')) + list(rtl_path.glob('*.v'))
+    if not sv_files:
+        return {'status': 'error', 'message': 'No RTL files found'}
 
+    cmd = ['verilator', '--lint-only', '--sv', '-Wall', '-Wno-fatal',
+           '--top-module', top_module] + [str(f) for f in sv_files]
     try:
-        result = subprocess.run(
-            ["bash", script_path],
-            capture_output=True, text=True, timeout=300,
-            cwd=str(output),
-        )
-        log.write_text(result.stdout + "\n" + result.stderr)
-        success = result.returncode == 0
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        log_file = f'lint_{top_module}.log'
+        with open(log_file, 'w') as f:
+            f.write(result.stdout + result.stderr)
+        sys.path.insert(0, str(Path(__file__).parent))
+        from parse_lint import parse_verilator_output
+        report = parse_verilator_output(log_file)
+        return {'status': 'pass' if report['clean'] else 'fail', 'top_module': top_module,
+                'warnings': report['warning_count'], 'errors': report['error_count'],
+                'report_file': 'lint_report.json'}
     except subprocess.TimeoutExpired:
-        return {"status": "timeout", "error": "Lint timed out after 300s", "valid": False}
+        return {'status': 'error', 'message': 'Lint check timeout'}
     except Exception as e:
-        return {"status": "error", "error": str(e), "valid": False}
+        return {'status': 'error', 'message': str(e)}
 
-    return {
-        "status": "complete" if success else "failed",
-        "log": str(log),
-        "exit_code": result.returncode,
-        "valid": True,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} <script.sh> <output_dir>", file=sys.stderr)
+        print("Usage: run_lint.py <top_module> <rtl_dir>", file=sys.stderr)
         sys.exit(1)
-    print(json.dumps(run(sys.argv[1], sys.argv[2]), indent=2))
+    print(json.dumps(run_lint_check(sys.argv[1], sys.argv[2]), indent=2))

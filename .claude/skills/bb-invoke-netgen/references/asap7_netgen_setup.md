@@ -1,96 +1,65 @@
-# Netgen Setup for ASAP7
+# ASAP7 Netgen Setup
 
 ## Setup File Location
 
-```
-libs/asap7/Magic/netgen_setup.tcl
+| Item | Path |
+|------|------|
+| Default setup | `libs/asap7/netgen/setup.tcl` |
+| Device map | `libs/asap7/netgen/asap7_devices.tcl` |
+
+## Setup File Contents
+
+The setup file configures how Netgen compares circuits:
+
+```tcl
+# Ignore power/ground name differences
+property {-circuit1} vdd
+property {-circuit1} gnd
+property {-circuit2} vdd
+property {-circuit2} gnd
+
+# Cell permutation (port order)
+permute default
+
+# Compare all device properties
+property device all
 ```
 
 ## Device Recognition
 
-Netgen uses the setup file to map layout-extracted devices to schematic device types.
+Netgen must recognize ASAP7 standard cells. Key mappings:
 
-### ASAP7 Device Types
+| Netlist Cell | Netgen Device | Properties Compared |
+|-------------|---------------|-------------------|
+| `INVx1` | Inverter | W, L, m (multiplier) |
+| `NAND2x1` | NAND2 | W, L for each input |
+| `NOR2x1` | NOR2 | W, L for each input |
+| `DFF*` | Flip-flop | Data, clock, Q ports |
+| `BUFX*` | Buffer | W, L, drive strength |
 
-| Device | Layout Name | Schematic Name | Parameters |
-|--------|-------------|----------------|------------|
-| NMOS | nfet | NMOS | W, L, M |
-| PMOS | pfet | PMOS | W, L, M |
+## Netlist Format Requirements
 
-### Setup File Contents
+| Format | Schematic | Layout |
+|--------|-----------|--------|
+| Verilog | Synthesized `netlist.v` | N/A |
+| SPICE | N/A | Magic `extracted.spice` |
 
-```tcl
-# ASAP7 Netgen Setup
-# Device matching
-property default all
-property {nfet} remove as ad ps pd
-property {pfet} remove as ad ps pd
+Netgen handles cross-format comparison (Verilog vs SPICE).
 
-# Tolerance for device parameters
-permute transistors
-property {nfet} tolerance {l 0.01} {w 0.01}
-property {pfet} tolerance {l 0.01} {w 0.01}
-
-# Ignore parasitic devices
-ignore class c
-
-# Power/ground net equivalence
-equate VDD VDD VDD!
-equate VSS VSS VSS! GND GND!
-```
-
-## Property Comparison
-
-Netgen compares device properties (W, L, M) between schematic and layout.
-
-### Tolerances
-
-| Property | Default Tolerance | Notes |
-|----------|-------------------|-------|
-| W (width) | 0.01 um | Process variation |
-| L (length) | 0.01 um | Process variation |
-| M (multiplier) | exact | Must match exactly |
-
-### Properties to Remove
-
-Layout extraction adds parasitic properties not in schematic:
-- `as` / `ad` -- source/drain area
-- `ps` / `pd` -- source/drain perimeter
-- `sa` / `sb` / `sd` -- LOD stress parameters
-
-## Black-Box Cells
-
-Some cells should be treated as black boxes (no internal comparison):
+## Common Configuration Options
 
 ```tcl
-# Black-box standard cells
-blackbox ASAP7_*_xp*
-blackbox FILL*
-blackbox TAP*
+# Black-box cells (ignore internal structure)
+blackbox <cell_name>
+
+# Ignore specific properties
+property {-circuit1} -remove <prop_name>
+
+# Flatten hierarchy for comparison
+flatten {-circuit1}
+flatten {-circuit2}
+
+# Compare with port order tolerance
+permute {-circuit1}
+permute {-circuit2}
 ```
-
-## Power Net Naming
-
-Schematic and layout may use different power net names:
-
-| Schematic | Layout | Match Rule |
-|-----------|--------|------------|
-| VDD | VDD, VDD! | `equate VDD VDD!` |
-| VSS | VSS, VSS!, GND | `equate VSS VSS! GND` |
-
-## Running Netgen
-
-```bash
-netgen -batch lvs \
-  "extracted.spice top_module" \
-  "netlist.v top_module" \
-  asap7_setup.tcl \
-  lvs_report.txt
-```
-
-## Interpreting Results
-
-- `Circuits match uniquely.` -- LVS clean
-- `Circuits differ` -- Check discrepancies in report
-- `Property errors` -- Device parameter mismatches (may be within tolerance)
-- `Topology mismatch` -- Netlist connectivity differs (serious error)
