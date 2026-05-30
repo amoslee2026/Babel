@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-verilator
 description: "调用 Verilator 5.012 编译 RTL + TB 并跑 coverage-driven simulation，产出 sim log / coverage.dat / VCD。触发场景：(1) bba-guru-verification 完成 TB 后跑回归；(2) RTL 修复后回归验证；(3) 显式 /bb-invoke-verilator。"
+user-invocable: true
+
 ---
 
 # bb-invoke-verilator

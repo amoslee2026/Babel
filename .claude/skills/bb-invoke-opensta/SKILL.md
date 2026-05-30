@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-opensta
 description: "调用 OpenSTA 2.5.0 做静态时序分析（STA）。综合阶段验证 WNS/TNS；PD 阶段做 post-route signoff（多 PVT corner + SPEF）。触发场景：(1) bba-guru-synthesis 综合后查 timing；(2) bba-guru-pd 布线后跑 multi-corner signoff；(3) 显式 /bb-invoke-opensta。"
+user-invocable: true
+
 ---
 
 # bb-invoke-opensta

@@ -1,6 +1,8 @@
 ---
 name: bb-create-verif-plan
 description: "把 mas/verif_plan_seed.md 扩展为完整验证计划 markdown（功能检查点、覆盖率目标、边界、随机约束、test case 清单）。触发场景：(1) bba-guru-verification 启动时；(2) 显式 /bb-create-verif-plan。"
+user-invocable: true
+
 ---
 
 # bb-create-verif-plan

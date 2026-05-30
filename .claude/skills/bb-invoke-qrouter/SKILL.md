@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-qrouter
 description: "调用 QRouter 1.4 对 placed DEF 执行 detail routing，产出 routed.def。触发场景：(1) bba-guru-pd 在 placement 完成后做布线；(2) 显式 /bb-invoke-qrouter。"
+user-invocable: true
+
 ---
 
 # bb-invoke-qrouter

@@ -1,6 +1,8 @@
 ---
 name: bb-create-sdc
 description: "从 MAS（clock_domains / io_timing / path_exceptions）派生 Synopsys SDC 时序约束文件，OpenSTA 语法校验。触发场景：(1) bba-guru-synthesis 综合前；(2) post-PD timing fail 修订约束；(3) 显式 /bb-create-sdc。"
+user-invocable: true
+
 ---
 
 # bb-create-sdc

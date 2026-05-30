@@ -1,6 +1,8 @@
 ---
 name: bb-code-review
 description: "对抗性代码评审：代码质量 / 可维护性 / 时序风险 / 综合友好度 / MAS 对齐度。默认 ruthless 模式，找 EVERY flaw。触发场景：(1) RTL lint 后；(2) 显式 /bb-code-review。"
+user-invocable: true
+
 ---
 
 # bb-code-review

@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-klayout
 description: "调用 KLayout 0.30.8 执行 GDSII 导出（stream out）、GDS-level DRC、或导出后 verify。PD 流程末尾产出最终 .gds（signoff 产物）。触发场景：(1) bba-guru-pd routed 后 GDS export；(2) GDS 层 DRC 检查；(3) 导出后 verify；(4) 显式 /bb-invoke-klayout。"
+user-invocable: true
+
 ---
 
 # bb-invoke-klayout

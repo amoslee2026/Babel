@@ -1,6 +1,8 @@
 ---
 name: bb-search-protocol
 description: "在 wiki/protocols/ 搜索协议知识（UART/AXI4-Lite/UCIe 等），返回匹配的文档路径与摘要。触发场景：(1) bba-architect 写 PRD/MAS 时需查协议规格；(2) 显式 /bb-search-protocol。"
+user-invocable: true
+
 ---
 
 # bb-search-protocol

@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-netgen
 description: "调用 Netgen 1.5.275 做 LVS 对比：综合网表 vs Magic 提取的 SPICE，必须 match 才能 signoff。触发场景：(1) bba-guru-pd extract 后做 LVS；(2) 显式 /bb-invoke-netgen。"
+user-invocable: true
+
 ---
 
 # bb-invoke-netgen

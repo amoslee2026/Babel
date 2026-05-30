@@ -1,6 +1,8 @@
 ---
 name: bb-find-module-deps
 description: "扫描 RTL 目录提取模块层次依赖，拓扑排序后写 file_list.f（叶模块在前，top 在最后），供 Yosys/Verilator 使用。触发场景：(1) bba-guru-rtl 生成 RTL 后生成 file_list；(2) 显式 /bb-find-module-deps。"
+user-invocable: true
+
 ---
 
 # bb-find-module-deps
