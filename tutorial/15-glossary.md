@@ -14,9 +14,9 @@
 | ARCH | Architecture Specification | 架构规范文档，定义芯片的模块划分、互联关系、时钟域和功耗域 |
 | MAS | Micro-Architecture Specification | 微架构规范文档，定义各模块的详细端口、参数、行为、时序，是 ARCH 到 RTL 的桥梁 |
 | RTL | Register Transfer Level | 寄存器传输级，数字电路的硬件描述语言层次，用 Verilog/SystemVerilog 编写 |
-| PD | Physical Design | 物理设计，将门级网表转化为物理版图的全过程（Floorplan → Placement → Routing） |
+| PD | Physical Design | 物理设计，将门级网表转化为物理版图的全过程（Floorplan → Placement → CTS → Routing） |
 | GDSII | Graphic Database System II | 版图数据格式标准，芯片制造的最终交付文件 |
-| Netlist | Netlist | 网表，电路的连接关系描述。综合输出门级网表，LVS 输出版图提取网表 |
+| Netlist | Netlist | 网表，电路的连接关系描述。综合输出门级网表，版图提取得到提取网表，LVS 比对两者一致性 |
 | SDC | Synopsys Design Constraints | 时序约束文件格式，定义时钟、输入/输出延迟、false path 等约束 |
 | LEF | Library Exchange Format | 库交换格式，描述标准单元的物理信息（尺寸、Pin 位置、Metal 层） |
 | Liberty (.lib) | Liberty Library Format | 标准单元库的时序、功能、功耗描述文件，综合和 STA 的核心输入 |
@@ -27,7 +27,7 @@
 | 术语 | 全称 | 含义 |
 |------|------|------|
 | DRC | Design Rule Check | 设计规则检查，验证版图是否满足制造工艺的几何规则（间距、宽度、包围等） |
-| LVS | Layout vs Schematic | 版图与原理图对比，验证版图提取的电路是否与设计的网表功能一致 |
+| LVS | Layout Versus Schematic | 版图与原理图对比，验证版图提取的网表是否与设计的源网表在连接拓扑上一致 |
 | STA | Static Timing Analysis | 静态时序分析，不依赖仿真激励的时序验证方法，分析所有路径的建立/保持时间 |
 | CDC | Clock Domain Crossing | 跨时钟域信号传输，需要特殊处理（同步器、握手协议）以避免亚稳态 |
 | Lint | Lint Check | 代码静态检查，发现可综合性问题、编码规范违规、潜在功能错误 |
@@ -106,7 +106,7 @@
 | Prompt Engineering | Prompt Engineering | 提示工程，设计有效 Prompt 以提高 Agent 输出质量的方法论 |
 | LLM | Large Language Model | 大语言模型，如 Claude、GPT 等，是 Agent 的推理引擎 |
 | Quality Gate | Quality Gate | 质量门控，每个阶段的自动化检查标准，不通过则不能进入下一阶段 |
-| Coverage | Coverage | 覆盖率，测试对设计功能的覆盖程度。Babel 要求 100% |
+| Coverage | Coverage | 覆盖率，测试对设计功能的覆盖程度。Babel 要求功能覆盖率达到 100% |
 | Handoff | Handoff | 交付物/交接，一个阶段的输出传递给下一阶段的过程 |
 | Signoff | Signoff | 签核，正式确认某个阶段的所有质量检查已通过 |
 | Artifact | Signoff Artifact | 签核产物，每个阶段通过 Quality Gate 后输出的正式文件 |
@@ -128,17 +128,17 @@
 | `/bba-guru-rtl` | Babel Guru RTL Agent | RTL 生成 Agent，从 MAS 生成 Lint-clean 的 SystemVerilog 代码 |
 | `/bba-guru-verification` | Babel Guru Verification Agent | 验证 Agent，生成 TB、运行仿真、驱动覆盖率收敛到 100% |
 | `/bba-guru-synthesis` | Babel Guru Synthesis Agent | 综合 Agent，生成 SDC、运行 Yosys+OpenSTA、迭代到时序收敛 |
-| `/bba-guru-pd` | Babel Guru PD Agent | 物理设计 Agent，执行 Floorplan → Routing → DRC/LVS → GDSII |
+| `/bba-guru-pd` | Babel Guru PD Agent | 物理设计 Agent，执行 Floorplan → Placement → Routing → DRC/LVS → GDSII |
 
 ### 工具调用 Skill（bb-invoke-* 系列）
 
 | 术语 | 调用工具 | 功能 |
 |------|---------|------|
 | `/bb-invoke-yosys` | Yosys 0.35 | 调用 Yosys 执行 RTL 综合 |
-| `/bb-invoke-verilator` | Verilator | 调用 Verilator 执行仿真，支持 VCD 波形和覆盖率 |
-| `/bb-invoke-opensta` | OpenSTA 2.2.0 | 调用 OpenSTA 执行静态时序分析 |
+| `/bb-invoke-verilator` | Verilator 5.012 | 调用 Verilator 执行仿真，支持 VCD 波形和覆盖率 |
+| `/bb-invoke-opensta` | OpenSTA 2.5.0 | 调用 OpenSTA 执行静态时序分析 |
 | `/bb-invoke-magic` | Magic 8.3.641 | 调用 Magic 执行版图编辑/DRC |
-| `/bb-invoke-netgen` | Netgen 1.5 | 调用 Netgen 执行 LVS 网表比对 |
+| `/bb-invoke-netgen` | Netgen 1.5.275 | 调用 Netgen 执行 LVS 网表比对 |
 | `/bb-invoke-qrouter` | QRouter 1.4 | 调用 QRouter 执行详细布线 |
 | `/bb-invoke-klayout` | KLayout 0.30.8 | 调用 KLayout 查看 GDSII / 执行 DRC |
 | `/bb-invoke-abc` | ABC | 调用 ABC 执行逻辑优化（Yosys 内部使用） |
@@ -172,7 +172,7 @@
 | 术语 | 含义 |
 |------|------|
 | Spec-Driven Development | 规范驱动开发，Babel 的核心方法论：规范文档是唯一真相源，Agent 从 spec 生成一切 |
-| Agent Pipeline | Agent 流水线：PRD → ARCH → MAS → RTL → VER → SYN → PD |
+| Agent Pipeline | Agent 流水线：PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD → GDSII |
 | Module ID (M00-M16) | NPU 模块编号，每个模块有唯一的 ID 和名称（如 M00_SystolicArray） |
 | REQ ID | PRD 中的需求编号（如 REQ-COMPUTE-001），用于追踪需求在设计中的实现状态 |
 | Signoff Artifact | 签核产物，每个阶段通过 Quality Gate 后输出的正式文件（如 synth_report、test_report） |

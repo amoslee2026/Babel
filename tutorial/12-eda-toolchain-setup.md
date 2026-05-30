@@ -15,12 +15,12 @@ Babel 项目采用全开源 EDA 工具链覆盖芯片设计的完整流程。下
 | 工具 | 版本 | 功能 | 官网 | 安装难度 |
 |------|------|------|------|----------|
 | Yosys | 0.35 | 逻辑综合（RTL → 门级网表） | https://yosyshq.net/yosys/ | 低 |
-| OpenSTA | 2.2.0 | 静态时序分析（STA） | https://github.com/The-OpenROAD-Project/OpenSTA | 中 |
+| OpenSTA | 2.5.0 | 静态时序分析（STA） | https://github.com/The-OpenROAD-Project/OpenSTA | 中 |
 | Magic | 8.3.641 | 版图编辑 + DRC/LVS 检查 | http://opencircuitdesign.com/magic/ | 中 |
-| Netgen | 1.5 | LVS 网表对比 | http://opencircuitdesign.com/netgen/ | 低 |
+| Netgen | 1.5.275 | LVS 网表对比 | http://opencircuitdesign.com/netgen/ | 低 |
 | QRouter | 1.4 | 详细布线（Detailed Routing） | http://opencircuitdesign.com/qrouter/ | 低 |
 | KLayout | 0.30.8 | GDSII 查看与编辑 | https://www.klayout.de/ | 低 |
-| Verilator | latest | RTL 仿真器（Simulation） | https://www.veripool.org/verilator/ | 中 |
+| Verilator | 5.012 | RTL 仿真器（Simulation） | https://www.veripool.org/verilator/ | 中 |
 
 所有工具统一安装到 `~/wrk/eda_opensources/install/` 目录下，通过一个环境脚本 `eda_env.sh` 集中管理 PATH。
 
@@ -264,7 +264,7 @@ yosys --version
 
 # 2. OpenSTA 版本检查
 sta -version
-# 预期输出：OpenSTA 2.2.0
+# 预期输出：OpenSTA 2.5.0
 
 # 3. Magic 版本检查（无 GUI 模式）
 magic -dnull -noconsole <<EOF
@@ -320,12 +320,12 @@ Claude Code 汇总结果，生成如下表格：
 | 工具 | 状态 | 版本 | 安装路径 |
 |------|------|------|----------|
 | Yosys | 通过 | 0.35 | `~/wrk/.../install/yosys` |
-| OpenSTA | 通过 | 2.2.0 | `~/wrk/.../install/OpenSTA` |
+| OpenSTA | 通过 | 2.5.0 | `~/wrk/.../install/OpenSTA` |
 | Magic | 通过 | 8.3.641 | `~/wrk/.../install/magic` |
-| Netgen | 通过 | 1.5 | `~/wrk/.../install/netgen` |
+| Netgen | 通过 | 1.5.275 | `~/wrk/.../install/netgen` |
 | QRouter | 通过 | 1.4 | `~/wrk/.../install/qrouter` |
 | KLayout | 通过 | 0.30.8 | `~/wrk/.../install/klayout` |
-| Verilator | 通过 | 5.x | `~/wrk/.../install/verilator` |
+| Verilator | 通过 | 5.012 | `~/wrk/.../install/verilator` |
 
 如果某个工具验证失败，Claude Code 会定位原因（PATH 未生效、依赖库缺失、编译不完整等）并给出修复建议。
 
@@ -362,7 +362,7 @@ read_verilog counter.v
 synth -top counter
 
 # 使用 ASAP7 工艺库映射（Babel 项目中已提供）
-# abc -liberty $::env(ASAP7_ROOT)/asap7sc6t_26.lib
+abc -liberty $::env(ASAP7_ROOT)/asap7sc6t_26.lib
 
 # 输出综合后网表
 write_verilog counter_netlist.v
@@ -378,7 +378,7 @@ source ~/wrk/eda_opensources/eda_env.sh
 yosys synth.tcl
 ```
 
-Yosys 会输出资源使用统计（触发器数量、LUT 数量等），并生成门级网表 `counter_netlist.v`。
+Yosys 会输出资源使用统计（触发器数量、逻辑门数量等），并生成门级网表 `counter_netlist.v`。
 
 ### Verilator：仿真计数器
 
@@ -567,6 +567,6 @@ klayout -b -r drc_check.lydrc counter.gds
 
 3. **Smoke Test 验证**：安装后通过版本检查和功能测试确认每个工具可用，Claude Code 自动生成结构化的验证报告，快速定位失败项。
 
-4. **工具链串联**：Yosys（综合）→ OpenSTA（时序分析）→ Verilator（仿真）→ Magic/Netgen/QRouter（Physical Design）→ KLayout（版图查看），覆盖从 RTL 到 GDSII 的完整设计流程。
+4. **工具链串联**：Yosys（综合）→ OpenSTA（时序分析）；Verilator（RTL 仿真，独立分支）；Magic/Netgen/QRouter（Physical Design）→ KLayout（版图查看），覆盖从 RTL 到 GDSII 的完整设计流程。
 
 5. **问题快速定位**：遇到安装问题时，直接描述错误现象交给 Claude Code 诊断，Agent 会检查环境变量、依赖库、编译日志，给出针对性修复方案。

@@ -93,7 +93,7 @@ PRD (Product Requirements Document)  ← 产品需求，人来定义
 Babel 将芯片设计分解为一条由专业 Agent 组成的流水线：
 
 ```
-PRD → ARCH → MAS → RTL → VER → SYN → PD
+PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD
 ```
 
 每个阶段由专门的 Agent 负责执行：
@@ -125,10 +125,10 @@ Babel 全部基于开源 EDA 工具构建，降低芯片设计的准入门槛：
 | 工具 | 版本 | 功能 |
 |------|------|------|
 | Yosys | 0.35 | RTL 综合 |
-| OpenSTA | 2.2.0 | 静态时序分析 |
-| Verilator | latest | Verilog 仿真 |
+| OpenSTA | 2.5.0 | 静态时序分析 |
+| Verilator | 5.012 | Verilog 仿真 |
 | Magic | 8.3.641 | 版图查看与 DRC |
-| Netgen | 1.5 | LVS 网表比对 |
+| Netgen | 1.5.275 | LVS 网表比对 |
 | QRouter | 1.4 | 详细布线 |
 | KLayout | 0.30.8 | GDSII 查看与 DRC |
 
@@ -287,7 +287,7 @@ AI 原生模式并不是万能的。它在以下场景中最能发挥价值：
 
 2. **规范文档是唯一真相源**：Babel 流程中的一切——架构、代码、验证、综合、版图——都从规范文档推导而来。写好规范是整个流程成败的关键。
 
-3. **Agent Pipeline 驱动全流程**：PRD → ARCH → MAS → RTL → VER → SYN → PD，每个阶段由专业 Agent 执行，通过 Quality Gate 保证质量。
+3. **Agent Pipeline 驱动全流程**：PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD，每个阶段由专业 Agent 执行，通过 Quality Gate 保证质量。
 
 4. **人的角色是架构师 + 审查者**：你负责定义"要什么"和判断"对不对"，Agent 负责"怎么做"。这种分工让工程师能够将精力集中在最有价值的决策上。
 

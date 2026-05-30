@@ -11,7 +11,7 @@ PRD（Product Requirements Document，产品需求文档）是芯片设计流程
 在 Babel 的 AI 原生设计流程中，PRD 处于 Spec-Driven Pipeline 的第一个节点：
 
 ```
-PRD → ARCH → MAS → RTL → VER → SYN → PD
+PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD
 ```
 
 PRD 的特殊地位在于：
@@ -187,7 +187,7 @@ Transformer decode 阶段的核心操作是矩阵向量乘法（batch=1），每
 所需算力 = 30M MAC × 100 token/s = 3G MAC/s = 6 GFLOPS
 ```
 
-而 PRD 中 REQ-COMPUTE-001 定义的 FP8 峰值吞吐量为 2 TOPS（= 2000 GFLOPS），远高于 6 GFLOPS 的最低需求。这个"过量设计"（over-design）是有意为之的——它为以下场景留出了空间：
+而 PRD 中 REQ-COMPUTE-001 定义的 FP8 峰值吞吐量为 2 TOPS（= 2000 GFLOPS），远高于 6 GFLOPS 的最低需求。这个设计裕量（design margin）是有意为之的——它为以下场景留出了空间：
 
 - Pipeline 气泡和利用率损耗（REQ-COMPUTE-005 要求利用率 >= 80%，而非 100%）
 - 更大模型的扩展性
@@ -208,9 +208,9 @@ TinyStories 15M 的 FP32 模型参数约 60 MB。但 PRD 定义了 2 GB 的 DRAM
 
 REQ-PWR-001 定义 TDP <= 2 W，设计目标 <= 1.8 W。这个约束来自边缘端场景的物理限制：
 
-- **自然对流散热**（REQ-THERM-002）：无风扇、无散热片
-- **封装面积约束**：<= 150 mm²（REQ-PKG-002）限制了散热面积
-- **热设计分析**：在 85°C 环境温度下，1.79 W 的功耗使结温刚好在 85°C 限制内
+- **自然对流散热**：无风扇、无散热片
+- **封装面积约束**：<= 150 mm²，限制了散热面积
+- **热设计分析**：在典型环境温度（45°C）下，1.79 W 的功耗使结温控制在 85°C 限制内（需根据实际热阻 θja 验证）
 
 PRD 还定义了 DVFS（Dynamic Voltage and Frequency Scaling）需求（REQ-PWR-003），要求至少 2 个工作点。这使得 NPU 可以根据负载动态调整频率和电压，在空闲时降低功耗至 0.1 W（REQ-PWR-002）。
 
@@ -276,7 +276,7 @@ Babel PRD 中的 REQ-COST-001（BOM 成本目标 TBD）是唯一不符合 SMART 
 
 每条 PRD 需求都应该在后续 ARCH/MAS 文档中被引用。例如：
 
-- REQ-COMPUTE-001 -> ARCH chip_overview.md 的 FP8 >= 1 TOPS -> M00_SystolicArray MAS 的算力推导
+- REQ-COMPUTE-001 -> ARCH chip_overview.md 的 FP8 >= 2 TOPS -> M00_SystolicArray MAS 的算力推导
 - REQ-MEM-004 -> ARCH memory_map.md 的 SRAM 512 KB -> M02_SRAM MAS 的 Bank 划分
 
 这种可追溯性确保了每个设计决策都能回溯到产品需求，避免了"为设计而设计"的浪费。
