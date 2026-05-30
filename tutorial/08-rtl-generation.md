@@ -92,8 +92,8 @@ Agent 生成的 RTL 代码严格遵循项目的 SystemVerilog 编码规范。以
 
 | 类别 | 规范 | 示例 |
 |------|------|------|
-| 文件名 | `lowercase_with_underscore` | `m06_clock_manager.sv` |
-| 模块名 | `lowercase_with_underscore` | `module m06_clock_manager` |
+| 文件名 | `PascalCase` | `M06_ClockManager.sv` |
+| 模块名 | `PascalCase` | `module M06_ClockManager` |
 | 端口名 | 输入 `_i`，输出 `_o` | `clk_sys_i`, `clk_aon_o` |
 | 参数 | `UPPERCASE_WITH_UNDERSCORES` | `DATA_WIDTH`, `FIFO_DEPTH` |
 | 变量 | `lowercase_with_underscore` | `state_current`, `data_out_reg` |
@@ -312,7 +312,7 @@ endmodule: sync_fifo
 Babel 项目中模块间数据传输广泛使用 valid/ready 握手。以 M01_DataflowController 为例，其算子调度接口采用此协议：
 
 ```systemverilog
-// M01_DataflowController 的算子调度接口（从综合网表可见）
+// M01_DataflowController 的算子调度接口（从 RTL 源码可见）
 output logic        op_valid,      // 操作有效信号
 input  logic [3:0]  op_ready,      // 4 个执行单元各自的 ready 信号
 output logic [7:0]  op_code,       // 操作码
@@ -483,10 +483,10 @@ module sync_2stage #(
 endmodule: sync_2stage
 ```
 
-在 M06_ClockManager 的实际综合网表中可以看到，Agent 正确使用了同步寄存器来处理 `clk_gating_en` 信号从 CLK_SYS 到 CLK_AON 的跨域传递：
+在 M06_ClockManager 的 RTL 源码中可以看到，Agent 正确使用了同步寄存器来处理 `clk_gating_en` 信号从 CLK_SYS 到 CLK_AON 的跨域传递：
 
 ```verilog
-// 从综合网表 M06_ClockManager 中提取
+// 从 RTL 源码 M06_ClockManager 中提取
 always @(posedge clk_aon_o)
     if (!pd_aon_vdd_i) clk_gating_sync[0] <= 1'h0;
     else clk_gating_sync[0] <= clk_gating_en_i[0];

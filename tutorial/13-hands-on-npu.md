@@ -404,7 +404,7 @@ Agent：读取 RTL，生成 SDC 约束，启动 Yosys + OpenSTA...
 
 ### Agent 工作流程
 
-1. **生成 SDC 约束**：500MHz 主时钟、IO 延迟、False Path（复位信号、JTAG）
+1. **生成 SDC 约束**：250MHz 主时钟（从 500MHz 放宽，详见第 10 章）、IO 延迟、False Path（复位信号、JTAG）
 2. **运行 Yosys 综合**：映射到 ASAP7 标准单元库
 3. **运行 OpenSTA 时序分析**：检查 WNS（Worst Negative Slack）
 4. **迭代优化**：WNS < 0 时自动调整约束或标记关键路径
@@ -419,6 +419,8 @@ Agent：读取 RTL，生成 SDC 约束，启动 Yosys + OpenSTA...
 | 功耗 | 1.8 W | ≤ 2 W | PASS |
 | 单元数 | 1.2M | - | - |
 | 寄存器数 | 48K | - | - |
+
+> **注**：此处为完整版 NPU_top 的综合结果。第 10 章展示的简化版（9034 单元/0.1 mm²）仅为教学演示用的缩略子集。
 
 ### 时序优化过程
 
@@ -453,8 +455,8 @@ set_false_path -from [get_ports rst_n]
 set_false_path -from [get_ports jtag_*]
 
 # 多周期路径：Secure Boot 校验（允许 4 个周期）
-set_multicycle_path 4 -setup -from [get_cells u_secure_boot/*]
-set_multicycle_path 3 -hold  -from [get_cells u_secure_boot/*]
+set_multicycle_path -setup 4 -from [get_cells u_secure_boot/*]
+set_multicycle_path -hold 3 -from [get_cells u_secure_boot/*]
 ```
 
 ---
@@ -497,7 +499,7 @@ Agent：读取综合网表 + SDC，开始物理设计流程...
 block-beta
     columns 4
 
-    block:TOP["NPU_top Floorplan (10mm x 10mm)"]:4
+    block:TOP["NPU_top Floorplan (完整版，详见第 11 章简化版)"]:4
         columns 4
         BUS["M04 System Bus"]:2
         DRAM["M03 DRAM Ctrl"]:2
@@ -622,6 +624,6 @@ pie title 人工 vs Agent 工作量分布
 
 3. **Agent 的核心价值在于系统性迭代**：覆盖率收敛、时序优化、DRC 修复都是"发现问题 → 分析原因 → 定向修复 → 验证结果"的循环。Agent 能不知疲倦地执行这个循环，且每次迭代都基于数据分析而非直觉。
 
-4. **16 个模块通过 6 个 Skill 串联**：`/bba-architect` 产出架构，`/bba-guru-rtl` 产出代码，`/bba-guru-verification` 驱动验证，`/bba-guru-synthesis` 完成综合，`/bba-guru-pd` 交付版图。每个 Skill 都是一个可复用的自动化 Pipeline。
+4. **16 个模块通过 5 个 Agent 串联**：`/bba-architect` 产出架构，`/bba-guru-rtl` 产出代码，`/bba-guru-verification` 驱动验证，`/bba-guru-synthesis` 完成综合，`/bba-guru-pd` 交付版图。每个 Agent 都是一个可复用的自动化 Pipeline。
 
 5. **全流程 42 小时中，人实际工作约 15 小时**。人的时间主要花在审查和决策上，而非编写代码或调试。这正是 AI 原生芯片设计的理想模式：人做架构师，Agent 做工程师。

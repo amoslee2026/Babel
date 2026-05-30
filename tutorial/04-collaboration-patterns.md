@@ -49,9 +49,9 @@ graph TD
 |-------|----------|------|
 | `/bb-invoke-yosys` | Yosys 0.35 | RTL 综合 |
 | `/bb-invoke-verilator` | Verilator | 仿真验证 |
-| `/bb-invoke-opensta` | OpenSTA 2.2.0 | 静态时序分析 |
+| `/bb-invoke-opensta` | OpenSTA 2.5.0 | 静态时序分析 |
 | `/bb-invoke-magic` | Magic 8.3.641 | 版图查看与 DRC |
-| `/bb-invoke-netgen` | Netgen 1.5 | LVS 网表比对 |
+| `/bb-invoke-netgen` | Netgen 1.5.275 | LVS 网表比对 |
 | `/bb-invoke-qrouter` | QRouter 1.4 | 详细布线 |
 | `/bb-invoke-klayout` | KLayout 0.30.8 | GDSII 查看 |
 
@@ -370,7 +370,7 @@ M01_DataflowController 需要支持两种调度模式：
 
 | 阶段 | 模块 | 类型 | 可并行 |
 |------|------|------|--------|
-| Phase 1 | M06_ClockManager | io | 是 |
+| Phase 1 | M06_ClockManager | io（系统基础设施） | 是 |
 | Phase 1 | M07_ResetManager | io | 是 |
 | Phase 2 | M05_PowerManager | io | 是 |
 | Phase 2 | M04_SystemBus | interconnect | 是 |

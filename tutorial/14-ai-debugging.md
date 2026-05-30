@@ -197,12 +197,12 @@ Agent 分析：
   → 定位关键路径：
     起点：SystolicArray/PE[3][3]/acc_reg
     终点：SystolicArray/PE[3][3]/out_reg
-    路径延迟：1.3 ns（约束 1.0 ns）
+    路径延迟：2.3 ns（约束 2.0 ns）
     违例量：-0.3 ns
   → 分析路径组成：
-    4 级全加器级联 + 1 个 MUX = 总延迟 1.3 ns
+    4 级加法器级联 + 1 个 MUX = 总延迟 2.3 ns
   → 修复方案：在累加器中间插入 1 级流水线寄存器
-    将 4 级全加器拆成 2+2，中间加 pipeline register
+    将 4 级加法器拆成 2+2，中间加 pipeline register
   → 修改 RTL，重新综合
   → WNS = +0.15 ns → 时序收敛
   → 问题解决

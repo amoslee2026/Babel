@@ -13,10 +13,10 @@ Babel 项目依赖以下 7 个开源 EDA 工具完成从 RTL 到 GDSII 的完整
 | 工具 | 版本 | 官方文档 | 源码仓库 |
 |------|------|---------|---------|
 | **Yosys** | 0.35 | [yosyshq.net/yosys/](https://yosyshq.net/yosys/) | [github.com/YosysHQ/yosys](https://github.com/YosysHQ/yosys) |
-| **OpenSTA** | 2.2.0 | [OpenSTA User Guide (PDF)](https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/doc/OpenSTA.pdf) | [github.com/The-OpenROAD-Project/OpenSTA](https://github.com/The-OpenROAD-Project/OpenSTA) |
-| **Verilator** | latest | [verilator.org/guide/latest/](https://verilator.org/guide/latest/) | [github.com/verilator/verilator](https://github.com/verilator/verilator) |
+| **OpenSTA** | 2.5.0 | [OpenSTA User Guide (PDF)](https://github.com/The-OpenROAD-Project/OpenSTA/blob/master/doc/OpenSTA.pdf) | [github.com/The-OpenROAD-Project/OpenSTA](https://github.com/The-OpenROAD-Project/OpenSTA) |
+| **Verilator** | 5.012 | [verilator.org/guide/latest/](https://verilator.org/guide/latest/) | [github.com/verilator/verilator](https://github.com/verilator/verilator) |
 | **Magic** | 8.3.641 | [opencircuitdesign.com/magic/](http://opencircuitdesign.com/magic/) | [github.com/RTimothyEdwards/magic](https://github.com/RTimothyEdwards/magic) |
-| **Netgen** | 1.5 | [opencircuitdesign.com/netgen/](http://opencircuitdesign.com/netgen/) | [github.com/RTimothyEdwards/netgen](https://github.com/RTimothyEdwards/netgen) |
+| **Netgen** | 1.5.275 | [opencircuitdesign.com/netgen/](http://opencircuitdesign.com/netgen/) | [github.com/RTimothyEdwards/netgen](https://github.com/RTimothyEdwards/netgen) |
 | **QRouter** | 1.4 | [opencircuitdesign.com/qrouter/](http://opencircuitdesign.com/qrouter/) | [github.com/RTimothyEdwards/qrouter](https://github.com/RTimothyEdwards/qrouter) |
 | **KLayout** | 0.30.8 | [klayout.de/doc.html](https://www.klayout.de/doc.html) | [github.com/KLayout/klayout](https://github.com/KLayout/klayout) |
 
@@ -27,7 +27,7 @@ Babel 项目依赖以下 7 个开源 EDA 工具完成从 RTL 到 GDSII 的完整
 | **ABC** | 逻辑优化引擎，被 Yosys 内部调用 | [github.com/berkeley-abc/abc](https://github.com/berkeley-abc/abc) |
 | **Icarus Verilog** | 轻量级 Verilog 仿真器，适合快速验证小模块 | [iverilog.icarus.com](http://iverilog.icarus.com/) |
 | **GTKWave** | 波形查看工具，配合 Verilator 的 VCD 输出使用 | [gtkwave.sourceforge.net](http://gtkwave.sourceforge.net/) |
-| **Graywolf** | 布局工具（Magic 的替代/补充选项） | [github.com/rubberduck203/graywolf](https://github.com/rubberduck203/graywolf) |
+| **Graywolf** | 单元放置工具（Magic 的替代/补充选项） | [github.com/rubberduck203/graywolf](https://github.com/rubberduck203/graywolf) |
 
 ### 完整流程平台
 

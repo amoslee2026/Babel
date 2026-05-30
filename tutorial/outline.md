@@ -66,7 +66,7 @@ flowchart TB
         T4 --> T5[工程师做 PD]
     end
 
-    subgraph AIAssisted["AI 辅助模式：人是执行者 + AI 帮忙"]
+    subgraph AIAssisted["AI 辅助模式：人执行 + AI 帮忙"]
         direction LR
         A1[工程师写文档] --> A2[工程师写 RTL<br/>AI 补全]
         A2 --> A3[工程师写 TB<br/>AI 补全]
@@ -86,7 +86,7 @@ flowchart TB
 
 - 1.2 Babel 项目核心理念
   - Spec-Driven Development：规范文档是唯一真相源
-  - Agent Pipeline：PRD → ARCH → MAS → RTL → VER → SYN → PD
+  - Agent Pipeline：PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD
   - Quality Gates：每个阶段的自动化质量检查
   - 开源 EDA 工具链：降低芯片设计的准入门槛
 - 1.3 Babel 项目结构速览
@@ -638,10 +638,10 @@ flowchart TD
 | 工具 | 版本 | 流程阶段 | Agent 调用方式 |
 |------|------|---------|---------------|
 | Yosys | 0.35 | 综合 | `/bb-invoke-yosys` |
-| OpenSTA | 2.2.0 | STA | `/bb-invoke-opensta` |
-| Verilator | latest | 仿真 | `/bb-invoke-verilator` |
+| OpenSTA | 2.5.0 | STA | `/bb-invoke-opensta` |
+| Verilator | 5.012 | 仿真 | `/bb-invoke-verilator` |
 | Magic | 8.3.641 | DRC/布局 | `/bb-invoke-magic` |
-| Netgen | 1.5 | LVS | `/bb-invoke-netgen` |
+| Netgen | 1.5.275 | LVS | `/bb-invoke-netgen` |
 | QRouter | 1.4 | 布线 | `/bb-invoke-qrouter` |
 | KLayout | 0.30.8 | GDSII 查看 | `/bb-invoke-klayout` |
 
