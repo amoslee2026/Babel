@@ -1,6 +1,8 @@
 ---
 name: bb-generate-tb
 description: "根据 MAS + verification_plan + RTL 接口描述生成 SystemVerilog UVM 或 cocotb 测试平台与 test cases 清单。触发场景：(1) bba-guru-verification 在 plan 完成后；(2) 补充 corner case TB；(3) 显式 /bb-generate-tb。"
+user-invocable: true
+
 ---
 
 # bb-generate-tb

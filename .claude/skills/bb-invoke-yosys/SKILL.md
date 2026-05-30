@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-yosys
 description: "调用 Yosys 0.35 对 RTL 进行逻辑综合并技术映射到 ASAP7 标准单元，产出门级网表 + QoR 报告。支持并行综合（基于空闲CPU数量）。Workflow: (1)生成综合脚本;(2)并行执行综合;(3)LLM检查结果并迭代优化。触发场景：(1) bba-guru-synthesis 已完成 SDC 与 CDC 检查、需要生成 netlist；(2) PD 反馈 area/path 超标需要重综合；(3) 显式 /bb-invoke-yosys。"
+user-invocable: true
+
 ---
 
 # bb-invoke-yosys

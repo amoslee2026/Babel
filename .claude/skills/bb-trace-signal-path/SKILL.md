@@ -1,6 +1,8 @@
 ---
 name: bb-trace-signal-path
 description: "在 AST JSON 上做信号路径追踪：source → sink 提取跨模块层次的传播路径，判定是否跨时钟域。供 CDC violation 根因分析与 critical path 辅助。触发场景：(1) bb-check-cdc 报 violation 需取证；(2) 综合 critical path 分析；(3) 显式 /bb-trace-signal-path。"
+user-invocable: true
+
 ---
 
 # bb-trace-signal-path

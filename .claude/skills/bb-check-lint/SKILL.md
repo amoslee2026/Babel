@@ -1,6 +1,8 @@
 ---
 name: bb-check-lint
 description: "调用 verible-verilog-lint 检查 SV 源码。src 必须可综合（零 syntax error），tb 允许 verification constructs。发现 src error 时自动修复重检（max 3 iter）。触发：(1) bba-guru-rtl 生成后；(2) RTL 修复重检；(3) 显式 /bb-check-lint。"
+user-invocable: true
+
 ---
 
 # bb-check-lint

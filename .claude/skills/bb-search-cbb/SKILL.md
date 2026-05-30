@@ -1,6 +1,8 @@
 ---
 name: bb-search-cbb
 description: "在 wiki/cbb/ 搜索可复用 Common Building Block（sync-fifo / 2ff-sync / clock-gate 等），返回匹配模板路径。bba-architect 在 MAS 中识别复用组件时调用。触发场景：(1) bba-architect 拆分子模块识别 CBB；(2) 显式 /bb-search-cbb。"
+user-invocable: true
+
 ---
 
 # bb-search-cbb

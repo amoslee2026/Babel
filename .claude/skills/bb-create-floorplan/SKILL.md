@@ -1,6 +1,8 @@
 ---
 name: bb-create-floorplan
 description: "从 MAS（io_ring/pad_list/clock_plan）+ 综合网表生成 Magic floorplan TCL，交给 bb-invoke-magic 执行。触发场景：(1) bba-guru-pd 综合后做 floorplan；(2) DRC 失败后调整 utilization 重生成；(3) 显式 /bb-create-floorplan。"
+user-invocable: true
+
 ---
 
 # bb-create-floorplan

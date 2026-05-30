@@ -1,6 +1,8 @@
 ---
 name: bb-get-interface-template
 description: "读取指定 CBB / protocol wiki 文件，解析其 ## Interface / ## Ports section，返回结构化端口表 + 参数表。bba-architect 用于填入 MAS 模块接口。触发场景：(1) bb-search-cbb 命中后取详细接口；(2) 显式 /bb-get-interface-template。"
+user-invocable: true
+
 ---
 
 # bb-get-interface-template

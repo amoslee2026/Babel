@@ -1,6 +1,8 @@
 ---
 name: bb-collect-coverage
 description: "解析 Verilator coverage.dat + sim log，输出 functional + code coverage 数值，判断是否 100% 达标。触发场景：(1) bb-invoke-verilator 后；(2) 每次回归后；(3) 显式 /bb-collect-coverage。"
+user-invocable: true
+
 ---
 
 # bb-collect-coverage

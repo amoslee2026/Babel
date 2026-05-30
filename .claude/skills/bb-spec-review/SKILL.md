@@ -1,6 +1,8 @@
 ---
 name: bb-spec-review
 description: "对规格文档（PRD + arch_spec + MAS）做对抗性评审：完整性 / 一致性 / 可实现性 / 验证覆盖。默认 role=ruthless（规格阶段错误成本最高）。在 MAS frozen 前调用。触发场景：(1) bba-architect 写完 MAS；(2) 显式 /bb-spec-review。"
+user-invocable: true
+
 ---
 
 # bb-spec-review

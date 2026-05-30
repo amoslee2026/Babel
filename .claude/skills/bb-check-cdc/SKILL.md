@@ -1,6 +1,8 @@
 ---
 name: bb-check-cdc
 description: "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains 找跨域信号，检查是否被 2ff-sync CBB 保护。触发场景：(1) bba-guru-synthesis 综合前；(2) 显式 /bb-check-cdc。"
+user-invocable: true
+
 ---
 
 # bb-check-cdc

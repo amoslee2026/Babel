@@ -1,6 +1,8 @@
 ---
 name: bb-invoke-magic
 description: "调用 Magic 8.3.641 执行 PD 操作：floorplan / place / DRC / layout extraction。触发场景：(1) bba-guru-pd 做 floorplan 与 placement；(2) routing 后做 DRC；(3) LVS 前 extract SPICE；(4) 显式 /bb-invoke-magic。"
+user-invocable: true
+
 ---
 
 # bb-invoke-magic

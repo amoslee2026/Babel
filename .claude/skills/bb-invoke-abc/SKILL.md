@@ -2,6 +2,8 @@
 name: bb-invoke-abc
 deprecated: true
 description: "**[DEPRECATED in v1.3 — common path uses bb-invoke-yosys' embedded ABC]** 独立调用 ABC（Berkeley Logic Synthesis）做逻辑优化，仅 `mapping_effort=high` 等高级调优场景使用。触发场景：(1) bb-invoke-yosys `chain_to_abc=true` 时；(2) 显式 /bb-invoke-abc 调试。"
+user-invocable: true
+
 ---
 
 # bb-invoke-abc (DEPRECATED in v1.3)
