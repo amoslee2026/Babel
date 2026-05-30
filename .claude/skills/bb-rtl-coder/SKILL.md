@@ -300,6 +300,150 @@ mkdir -p {{ OUTPUT_DIR }}/M01a_IntegerALU/tb
 1. MAS.md — 接口定义、时序规格
 2. FSM.md — 状态机定义
 3. datapath.md — 数据通路结构
+4. regmap.md — 寄存器映射定义（可选，有寄存器接口的模块必须提供）
+
+**Traceability 注入规则**：
+
+**A. Spec Header（模块级摘要）**：
+
+每个 RTL 文件头部必须包含 Spec Header，为 AI agent 和人工 reviewer 提供快速上下文：
+
+```systemverilog
+//==============================================================================
+// Module: {{ MODULE_NAME }}
+// 
+// SPEC HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+// Source:       spec/MAS/{{ MODULE_ID }}_{{ MODULE_NAME }}/MAS.md
+// Version:      {{ SPEC_VERSION }}
+// Status:       {{ DRAFT|REVIEW|FROZEN }}
+// Spec Hash:    {{ sha256:xxxxxxxxxxxx }}  ← 由 scripts/compute_spec_hash.py 计算
+// REQ Coverage: REQ-{{ MODULE_ID }}-F01 ~ REQ-{{ MODULE_ID }}-F{{ MAX_F }}
+// 
+// Purpose:
+//   {{ 一行描述模块功能 }}
+// 
+// Key Constraints:
+//   [C1] {{ 关键约束 1，如：最大同时调度线程数: 2 }}
+//   [C2] {{ 关键约束 2，如：op_valid → op_ready 响应时间: 1-5 cycles }}
+//   [C3] {{ 关键约束 3，如：复位后 syst_mode = 0 }}
+// 
+// Dependencies:
+//   - {{ 依赖模块 1，如：M02_SRAM (存储接口) }}
+//   - {{ 依赖模块 2，如：M06_ClockManager (时钟源) }}
+// 
+// Traceability:
+//   PRD:  spec/PRD/PRD.md §{{ SECTION }}
+//   ARCH: spec/ARCH/{{ FILE }}.md §{{ SECTION }}
+//   MAS:  spec/MAS/{{ MODULE_ID }}_{{ MODULE_NAME }}/MAS.md
+//   REGMAP: spec/MAS/{{ MODULE_ID }}_{{ MODULE_NAME }}/regmap.md  ← 若有寄存器定义
+// 
+// Change Log:
+//   {{ VERSION }} - {{ DATE }}: {{ CHANGE_DESCRIPTION }}
+//==============================================================================
+```
+
+**B. REQ_ID 标注**：
+
+1. 从 MAS.md §10 提取 REQ_ID 列表（REQ-M##-F## 格式）
+2. 模块声明前添加：`// @requirement REQ-M##-F01, REQ-M##-F02 @auto:rtl-gen`
+3. 选择性内联（避免过度标注）：
+
+| 代码块类型 | 必须标注 | 示例 |
+|-----------|---------|------|
+| Module 声明 | ✅ | `module M01_DataflowController` |
+| FSM (always_ff with case) | ✅ | 状态机实现 |
+| 协议握手逻辑 | ✅ | handshake, AXI, APB |
+| 关键计算路径 | ✅ | datapath, pipeline stages |
+| 寄存器阵列 | ✅ | reg_file, context storage |
+| 简单赋值 (assign) | ❌ | `assign valid = en && ready;` |
+| 端口声明 | ❌ | `input logic clk;` |
+| 参数定义 | ❌ | `parameter WIDTH = 32;` |
+
+4. SVA 断言必须包含 `@verifies` + `@spec_ref` + `@constraint` 注释：
+
+```systemverilog
+// @verifies REQ-M##-F04
+// @spec_ref MAS/{{ MODULE_ID }}/datapath.md §{{ SECTION }}
+// @constraint {{ 自然语言约束说明 }}
+property p_xxx;
+    ...
+endproperty
+assert property (p_xxx)
+    else $error("[SPEC §x.x] {{ 失败描述 }}");
+```
+
+**SVA 生成规则**：
+1. 从 `verification.md` §3 断言列表读取断言规格（ID、条件、严重性）
+2. 将每条断言转换为 SystemVerilog concurrent assertion
+3. 每个 SVA 前添加 `@verifies REQ-M##-F##` 和 `@requirement REQ-M##-F##`
+4. 断言失败时使用 `$error` 输出断言 ID 和描述
+
+示例：
+```systemverilog
+//==============================================================================
+// Module: M01_DataflowController
+// 
+// SPEC HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+// Source:       spec/MAS/M01_DataflowController/MAS.md
+// Version:      1.2
+// Status:       FROZEN
+// Spec Hash:    sha256:abc123def456
+// REQ Coverage: REQ-M01-F01 ~ REQ-M01-F12
+// 
+// Purpose:
+//   NPU 数据流控制器，协调 systolic array 的运算调度。
+// 
+// Key Constraints:
+//   [C1] 最大同时调度线程数: 2
+//   [C2] op_valid → op_ready 响应时间: 1-5 cycles
+//   [C3] 复位后 syst_mode = 0 (inference mode)
+// 
+// Dependencies:
+//   - M02_SRAM (存储接口)
+//   - M06_ClockManager (时钟源)
+// 
+// Traceability:
+//   PRD:  spec/PRD/PRD.md §3.1
+//   ARCH: spec/ARCH/block_diagram.md §2
+//   MAS:  spec/MAS/M01_DataflowController/MAS.md
+//==============================================================================
+
+// @requirement REQ-M01-F01, REQ-M01-F02 @auto:rtl-gen
+module M01_DataflowController (
+    input  logic clk,
+    input  logic rst_n,
+    ...
+);
+
+    // @requirement REQ-M01-F03
+    always_ff @(posedge clk or negedge rst_n) begin
+        ...
+    end
+
+    // @verifies REQ-M01-F04
+    // @spec_ref MAS/M01/datapath.md §3.2
+    // @constraint 握手协议: valid 拉高后，ready 必须在 1-5 个周期内响应
+    property p_handshake;
+        @(posedge clk) disable iff (!rst_n)
+        valid |-> ##[1:5] ready;
+    endproperty
+    p_handshake_check: assert property (p_handshake)
+        else $error("[SPEC §3.2] Handshake protocol violation: valid without ready");
+
+    // @verifies REQ-M01-F05
+    // @spec_ref MAS/M01/datapath.md §3.3
+    // @constraint FIFO 不溢出: full 时禁止写入
+    property p_fifo_no_overflow;
+        @(posedge clk) disable iff (!rst_n)
+        (fifo_full && wr_en) |-> ##0 1'b0;
+    endproperty
+    p_fifo_no_overflow_check: assert property (p_fifo_no_overflow)
+        else $error("[SPEC §3.3] FIFO overflow: write when full");
+
+endmodule
+```
 
 **RTL 质量要求**：
 1. 端口定义：与 MAS.md §2.1 完全一致
@@ -307,6 +451,7 @@ mkdir -p {{ OUTPUT_DIR }}/M01a_IntegerALU/tb
 3. 数据通路：实现 datapath.md 流水线结构
 4. 可综合性：无 initial 块（除 testbench）、无 delay、无递归
 5. 时钟域：单一时钟域；CDC 模块需标注
+6. Traceability：每个功能块必须有 @requirement 注释
 
 **禁止事项**：
 - 禁止使用 `initial`（testbench除外）
@@ -314,6 +459,38 @@ mkdir -p {{ OUTPUT_DIR }}/M01a_IntegerALU/tb
 - 禁止使用 `force/release`
 - 禁止使用递归模块实例化
 - 禁止使用 `wait` 语句
+- 禁止省略 @requirement 注释
+
+**寄存器接口生成**（当模块有 `regmap.md` 时）：
+
+1. 从 `regmap.md` §1 读取寄存器列表，实现 APB 寄存器读写逻辑：
+   - RW 寄存器：写更新、读返回当前值
+   - RO 寄存器：写忽略、读返回硬件状态
+   - W1C 寄存器：写 1 清零对应位
+   - RESERVED 位：写入忽略
+
+2. 生成寄存器文档和 SVA 断言：
+   ```bash
+   uv run scripts/generate_regmap_doc.py \
+       --regmap spec/MAS/{{ MODULE_ID }}/regmap.md \
+       --output doc/regmap/
+
+   uv run scripts/generate_regmap_assertions.py \
+       --regmap spec/MAS/{{ MODULE_ID }}/regmap.md \
+       --output {{ OUTPUT_DIR }}/{{ MODULE_PATH }}/src/{{ MODULE_NAME }}_regmap_assertions.sv
+   ```
+
+3. 在 RTL 中 bind 生成的断言模块：
+   ```systemverilog
+   // 在 {{ MODULE_NAME }}.sv 末尾
+   `ifdef FORMAL
+   bind {{ MODULE_NAME }} {{ MODULE_NAME }}_regmap_assertions u_regmap_assertions (
+       .clk(clk), .rst_n(rst_n),
+       .addr(paddr), .sel(psel), .enable(penable),
+       .write(pwrite), .wdata(pwdata), .rdata(prdata)
+   );
+   `endif
+   ```
 ```
 
 ### 叶子模块 RTL 结构
@@ -586,7 +763,24 @@ EOF
 
 ---
 
-## Phase 8：Push to Remote
+## Phase 8：Traceability CSV 生成 + Push to Remote
+
+### 8.1 生成 impl phase CSV
+
+从 RTL 文件中的 `@requirement` 注释扫描 REQ_ID，生成 `traceability/requirements_matrix.impl.csv`：
+
+```bash
+uv run scripts/babel_traceability.py impl
+uv run scripts/babel_traceability.py src
+```
+
+### 8.2 唯一性检查
+
+```bash
+uv run scripts/check_req_uniqueness.py --check-deleted
+```
+
+### 8.3 Push
 
 ```bash
 git push

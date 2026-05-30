@@ -1,0 +1,220 @@
+<?xml version="1.0" ?>
+<device xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="1.3" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd">
+  <vendor>Babel</vendor>
+  <name>M04_SystemBus</name>
+  <version>1.0</version>
+  <description>M04_SystemBus Register Map</description>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
+  <cpu>
+    <name>CM0</name>
+    <revision>r0p0</revision>
+    <endian>little</endian>
+    <mpuPresent>false</mpuPresent>
+    <fpuPresent>false</fpuPresent>
+  </cpu>
+  <peripherals>
+    <peripheral>
+      <name>M04_SystemBus</name>
+      <baseAddress>0x00000000</baseAddress>
+      <registers>
+        <register>
+          <name>BUS_CTRL</name>
+          <description>总线控制：使能、仲裁模式</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00000001</resetValue>
+          <fields>
+            <field>
+              <name>BUS_ENABLE</name>
+              <description>总线使能。1=使能，0=禁用</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>ARB_MODE</name>
+              <description>仲裁模式。0=Round-Robin，1=Priority</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>6</bitWidth>
+              <access>-</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>ARB_CFG</name>
+          <description>仲裁优先级配置</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00003210</resetValue>
+          <fields>
+            <field>
+              <name>M00_PRI</name>
+              <description>M00 (Systolic) 优先级 (0=最高)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>M01_PRI</name>
+              <description>M01 (Dataflow) 优先级</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>M02_PRI</name>
+              <description>M02 (SRAM) 优先级</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>M03_PRI</name>
+              <description>M03 (DRAM) 优先级</description>
+              <bitOffset>12</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>16</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BUS_STATUS</name>
+          <description>总线状态：当前 master、busy、deadlock</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CURRENT_MASTER</name>
+              <description>当前占用总线的 Master ID</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>BUS_BUSY</name>
+              <description>总线忙标志</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>DEADLOCK_DETECT</name>
+              <description>死锁检测标志</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>-</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BW_COUNTER_M00</name>
+          <description>M00 带宽计数器 (bytes/ms)</description>
+          <addressOffset>0x0C</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>COUNT</name>
+              <description>M00 带宽计数 (bytes/ms)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+              <access>ro</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BW_COUNTER_M01</name>
+          <description>M01 带宽计数器</description>
+          <addressOffset>0x10</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>COUNT</name>
+              <description>M01 带宽计数 (bytes/ms)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+              <access>ro</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BW_COUNTER_M02</name>
+          <description>M02 带宽计数器</description>
+          <addressOffset>0x14</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>COUNT</name>
+              <description>M02 带宽计数 (bytes/ms)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+              <access>ro</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>BW_COUNTER_M03</name>
+          <description>M03 带宽计数器</description>
+          <addressOffset>0x18</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>COUNT</name>
+              <description>M03 带宽计数 (bytes/ms)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+              <access>ro</access>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+  </peripherals>
+</device>

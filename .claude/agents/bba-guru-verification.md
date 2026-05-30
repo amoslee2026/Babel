@@ -56,19 +56,25 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 {
   "functional_coverage": 0..100,
   "code_coverage": { "line": 0..100, "branch": 0..100, "toggle": 0..100 },
-  "tests": [{ "name": "...", "status": "pass|fail", "log": "..." }],
+  "tests": [{ "name": "...", "status": "pass|fail", "log": "...", "req_ids": ["REQ-M##-F##"] }],
   "inputs": [{ "path": "designs/<name>/rtl_artifact.json", "sha256": "..." }],
-  "iteration_count": 0..8
+  "iteration_count": 0..8,
+  "traceability": {
+    "req_coverage_pct": 0..100,
+    "tested_reqs": ["REQ-M##-F##"],
+    "untested_reqs": ["REQ-M##-F##"]
+  }
 }
 ```
 
 ## Workflow
 
 1. **Pick up work.** `bb-list-issues --label ready-for-verification`. Read `rtl_artifact.json`, verify each listed file's sha256 — if any file mutated since RTL closed, refuse and raise `rtl-needs-fix` via *Escalate-user Protocol* "drift detected".
-2. **Complete the verification plan.** Call `bb-create-verif-plan`: `verif_plan_seed.md` + MAS → `verification_plan.md` + `test_cases.md`. The plan must enumerate every functional cover point and every corner case.
+2. **Complete the verification plan.** Call `bb-create-verif-plan`: `verif_plan_seed.md` + MAS → `verification_plan.md` + `test_cases.md`. The plan must enumerate every functional cover point and every corner case. **REQ_ID 关联**：每个 test case 必须标注对应的 `REQ-M##-F##` 列表（从 MAS §10 提取），确保所有 REQ_ID 都有对应的测试用例。
 3. **Generate testbenches.** Call `bb-generate-tb`: MAS + RTL → SystemVerilog testbenches (`tb/*.sv`) and/or cocotb harnesses (`tb/*.py`).
 4. **Simulate.** Call `bb-invoke-verilator` (with coverage compile flags) on each test case. Capture `*.log` and `*.vcd` under `sim_results/`. Bash fallback: `source ~/wrk/eda_opensources/eda_env.sh && verilator --coverage --trace -f file_list.f`.
 5. **Collect coverage.** Call `bb-collect-coverage` → `coverage.json` with `functional`, `line`, `branch`, `toggle` percentages and per-bin breakdown.
+6. **SVA @verifies 校验.** 扫描 RTL 中的 `assert property`，确认每个 SVA 都有 `@verifies REQ-M##-F##` 标注。覆盖率要求：`sva_with_verifies / sva_total == 100%`。未标注的 SVA 必须在 `test_report.traceability` 中列出。
 6. **Optimization loop.** If any of `functional_coverage`, `code_coverage.line`, `code_coverage.branch`, `code_coverage.toggle` is `< 100`, or any sim failed → iterate. Levers, in order of preference:
    - add seeds / increase random iterations
    - add constrained-random corner cases
@@ -77,7 +83,7 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
    - `max_iter = 8`.
 7. **Functional bug triage.** If the same path fails > 3 times, stop iterating and raise `bb-create-issue --label rtl-needs-fix` with a minimal failing waveform reference (vcd timestamp + signal list).
 8. **Unreachable bin triage.** If coverage is stuck on a specific bin that the design genuinely cannot hit, raise `arch-needs-fix` instead — do not waive blindly.
-9. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`, then `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
+9. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`. **Traceability CSV**: 执行 `uv run scripts/babel_traceability.py test` 生成 `traceability/requirements_matrix.test.csv`，更新测试状态。then `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
 
 ## Convergence / Failure
 
@@ -99,6 +105,9 @@ Before opening `ready-for-synth`:
 - [ ] Every test in `test_cases.md` has a corresponding entry in `sim_results/` with `status: pass`.
 - [ ] `test_report.json` validates against `schemas/test_report.schema.json`.
 - [ ] `inputs[]` in `test_report.json` echoes rtl_artifact + mas sha (fix H-07).
+- [ ] `test_report.traceability.req_coverage_pct >= 90`.
+- [ ] All SVA assertions have `@verifies` annotation (100% coverage).
+- [ ] `traceability/requirements_matrix.test.csv` generated with test status for each REQ_ID.
 
 ## Edge Cases
 
@@ -141,6 +150,7 @@ Before opening `ready-for-synth`:
 
 - 测试数: <count>, pass: <count>, fail: <count>
 - 覆盖率: functional <pct>%, line <pct>%, branch <pct>%, toggle <pct>%
+- Traceability: REQ 覆盖 <pct>% (<tested>/<total>), SVA @verifies <pct>%
 - 迭代: <n>/8 (global_fix_iter <g>/10)
 - inputs sha 校验: PASS
 - Next: ready-for-synth 已开启

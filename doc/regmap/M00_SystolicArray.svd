@@ -1,0 +1,176 @@
+<?xml version="1.0" ?>
+<device xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="1.3" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd">
+  <vendor>Babel</vendor>
+  <name>M00_SystolicArray</name>
+  <version>1.0</version>
+  <description>M00_SystolicArray Register Map</description>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
+  <cpu>
+    <name>CM0</name>
+    <revision>r0p0</revision>
+    <endian>little</endian>
+    <mpuPresent>false</mpuPresent>
+    <fpuPresent>false</fpuPresent>
+  </cpu>
+  <peripherals>
+    <peripheral>
+      <name>M00_SystolicArray</name>
+      <baseAddress>0x00000000</baseAddress>
+      <registers>
+        <register>
+          <name>SA_CTRL</name>
+          <description>控制寄存器：start、soft_rst、precision、dataflow_mode</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>START</name>
+              <description>启动计算。写 1 启动，完成后自动清零</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>SOFT_RST</name>
+              <description>软复位。写 1 触发内部复位，自清零</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>PRECISION</name>
+              <description>精度选择。00=INT8, 01=FP16, 10=BF16</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>DATAFLOW_MODE</name>
+              <description>数据流模式。0=output-stationary, 1=weight-stationary</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>3</bitWidth>
+              <access>-</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SA_STATUS</name>
+          <description>状态寄存器：busy、done、stall、fsm_state</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>BUSY</name>
+              <description>忙标志。1=正在计算</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>DONE</name>
+              <description>完成标志。1=上次计算完成</description>
+              <bitOffset>1</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>STALL</name>
+              <description>停顿标志。1=数据通路停顿</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>FSM_STATE</name>
+              <description>当前 FSM 状态编码</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SA_DIM_CFG</name>
+          <description>矩阵维度配置：dim_m、dim_n、dim_k</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>DIM_M</name>
+              <description>矩阵 M 维度 (0-31)</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>5</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>DIM_N</name>
+              <description>矩阵 N 维度 (0-31)</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>5</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>DIM_K</name>
+              <description>矩阵 K 维度 (0-1023)</description>
+              <bitOffset>10</bitOffset>
+              <bitWidth>10</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>20</bitOffset>
+              <bitWidth>12</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>SA_PERF_CNT</name>
+          <description>计算周期计数器（每次 start 清零）</description>
+          <addressOffset>0x0C</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>COUNT</name>
+              <description>计算周期计数。每次 START 清零</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>32</bitWidth>
+              <access>ro</access>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+  </peripherals>
+</device>
