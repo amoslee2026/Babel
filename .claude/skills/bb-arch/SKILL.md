@@ -130,6 +130,7 @@ PROJECT_DIR       = {{ --project_dir 或 auto-detect }}
 INPUT_DIR         = {{ idea_dir 参数 }}
 OUTPUT_DIR        = {{ PROJECT_DIR }}/spec_arch
 SCRIPT_DIR        = ~/.claude/scripts
+PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
 SKILL_FILE        = ~/.claude/skills/bb-arch/SKILL.md
 KNOWLEDGE_DIR     = ~/.claude/skills/bb-arch/knowledge
 TEMPLATE_DIR      = ~/.claude/skills/bb-arch/templates
@@ -487,9 +488,9 @@ REQ-NFR-## (PRD)  → 贯穿全 pipeline（PPA/功耗/时序约束）
 1. 读取 `spec/PRD/PRD.md` 中的 REQ-SYS-## 列表
 2. 读取 `spec/ARCH/` 中的 REQ-ARCH-## 列表
 3. 对每个 IP 模块，分解出 REQ-M##-F## 列表
-4. 使用 `scripts/allocate_req_id.py` 自动分配编号：
+4. 使用 `$PROJECT_SCRIPTS/allocate_req_id.py` 自动分配编号：
    ```bash
-   uv run scripts/allocate_req_id.py 01  # → REQ-M01-F01
+   uv run $PROJECT_SCRIPTS/allocate_req_id.py 01  # → REQ-M01-F01
    ```
 5. 在 IP block 文档中嵌入 REQ_ID 标注
 
@@ -500,8 +501,8 @@ REQ-NFR-## (PRD)  → 贯穿全 pipeline（PPA/功耗/时序约束）
 - `traceability/requirements_matrix.arch.csv`（从 ARCH 生成）
 
 ```bash
-uv run scripts/babel_traceability.py prd
-uv run scripts/babel_traceability.py arch
+uv run $PROJECT_SCRIPTS/babel_traceability.py prd
+uv run $PROJECT_SCRIPTS/babel_traceability.py arch
 ```
 
 ---
@@ -543,7 +544,7 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 1. 生成 `design_notes.md` 总结报告
 2. 验证 traceability CSV 完整性：
    ```bash
-   uv run scripts/check_req_uniqueness.py
+   uv run $PROJECT_SCRIPTS/check_req_uniqueness.py
    ```
 3. 更新 manifest
 4. 清理上下文
@@ -589,7 +590,7 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 |---------------|---------|
 | WebSearch / Agent 超时 | 使用本地 `knowledge/` 目录材料继续；在输出文档标注 "⚠️ 竞品调研受限" |
 | drawio 文件无法解析 | 要求用户提供文字描述，或从 `.md` 重建架构意图 |
-| it.spec-review 不可用 | 使用 Phase 11 内置评审维度表手动检查，结果写入 `.review/manual_review.md` |
+| it.spec-review 不可用 | 使用 Phase 12 内置评审维度表手动检查，结果写入 `.review/manual_review.md` |
 | 知识库文件缺失（knowledge/） | 降级为模型领域知识；输出中标注 "⚠️ 未加载知识库：{文件名}" |
 | 并行 Agent 配额不足 | 顺序执行 Phase 2 的三个 Agent，总时间增加但结果等价 |
 

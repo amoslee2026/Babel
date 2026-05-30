@@ -14,6 +14,12 @@ description: "从 MAS（clock_domains / io_timing / path_exceptions）派生 Syn
 - 下游：`bb-check-cdc`、`bb-invoke-yosys`、`bb-invoke-opensta`
 - 禁止使用：Task / Agent / Skill
 
+## Global Paths
+
+```
+PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
+```
+
 ## Input Args
 
 | arg | type | required | 默认 | 说明 |
@@ -87,7 +93,7 @@ set_multicycle_path 2 -setup -from [...]  ;# from MAS.path_exceptions
 1. 读取 MAS.md §7 时序约束
 2. 从 `traceability/requirements_matrix.arch.csv` 查找关联 REQ_ID
 3. 生成 SDC 文件，每个约束前添加 `@requirement` + `@spec_ref` 注释
-4. 计算 `@spec_hash`（使用 `scripts/compute_spec_hash.py`）
+4. 计算 `@spec_hash`（使用 `$PROJECT_SCRIPTS/compute_spec_hash.py`）
 5. 生成 `traceability/requirements_matrix.sdc.csv`
 
 ### CSV 输出
@@ -120,7 +126,7 @@ io_max = period * io_delay_pct
 sta -exit "read_sdc <artifact_path>; exit" 2>&1
 ```
 
-`scripts/parse_sdc.py`：
+`$PROJECT_SCRIPTS/parse_sdc.py`：
 
 - log 含 `Error:` → `valid=false`
 - 否则计 clocks / io_constraints / exceptions 数
@@ -139,7 +145,7 @@ sta -exit "read_sdc <artifact_path>; exit" 2>&1
 
 ## 资源索引
 
-- `scripts/render_sdc_py.py`、`scripts/run_sdc_gen.py`、`scripts/parse_sdc.py`
+- `$PROJECT_SCRIPTS/render_sdc_py.py`、`$PROJECT_SCRIPTS/run_sdc_gen.py`、`$PROJECT_SCRIPTS/parse_sdc.py`
 - `assets/sdc.tcl.tmpl`
 - `references/asap7_corner_period.md` — 各 corner 推荐 margin
 - `Gotcha/sdc_pitfalls.md` — virtual clock / clock group / generated clock

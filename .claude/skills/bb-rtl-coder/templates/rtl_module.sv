@@ -3,7 +3,7 @@
 // ---
 // module: {{ MODULE_ID }}
 // type: rtl
-// status: pending
+// status: draft
 // parent: {{ PARENT_ID }}
 // synthesizable: true
 // clock_domain: {{ DOMAIN_NAME }}

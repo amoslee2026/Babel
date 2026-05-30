@@ -136,7 +136,7 @@ def check_traceability(rtl_files, mas_path):
 无 `@requirement` 注释的代码块（排除 `traceability/ignore.txt` 白名单）：
 
 ```bash
-uv run scripts/check_req_uniqueness.py
+uv run $PROJECT_SCRIPTS/check_req_uniqueness.py
 ```
 
 ### SVA `@verifies` 覆盖率
@@ -253,7 +253,7 @@ def check_spec_hash_consistency(rtl_files):
 
         # 计算 spec 文件实际 hash
         result = subprocess.run(
-            ["uv", "run", "scripts/compute_spec_hash.py", spec_file],
+            ["uv", "run", "$PROJECT_SCRIPTS/compute_spec_hash.py", spec_file],
             capture_output=True, text=True
         )
         actual_hash = result.stdout.strip()
@@ -264,7 +264,7 @@ def check_spec_hash_consistency(rtl_files):
                 "status": "FAIL",
                 "rtl_hash": rtl_hash,
                 "spec_hash": actual_hash,
-                "fix": f"uv run scripts/compute_spec_hash.py {spec_file} --inject {f}"
+                "fix": f"uv run $PROJECT_SCRIPTS/compute_spec_hash.py {spec_file} --inject {f}"
             })
         else:
             results.append({
@@ -286,7 +286,7 @@ def check_spec_hash_consistency(rtl_files):
 - @spec_hash 一致性: 87.5% (7/8)
 - 不一致文件:
   - M01_DataflowController.sv: RTL=sha256:abc123, spec=sha256:def456
-    Fix: `uv run scripts/compute_spec_hash.py spec/MAS/M01/MAS.md --inject rtl/M01.sv`
+    Fix: `uv run $PROJECT_SCRIPTS/compute_spec_hash.py spec/MAS/M01/MAS.md --inject rtl/M01.sv`
 ```
 
 ## 选择性内联检查
@@ -449,9 +449,15 @@ def check_sdc_traceability(design_name):
 | pass=false & iter<3 | 反馈 bb-rtl-coder 重生成 |
 | iter≥3 | 开 `arch-needs-fix` |
 
+## Global Paths
+
+```
+PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
+```
+
 ## 资源索引
 
-- `scripts/build_prompt.py`、`scripts/run_review.py`、`scripts/parse_review.py`
+- `$PROJECT_SCRIPTS/build_prompt.py`、`$PROJECT_SCRIPTS/run_review.py`、`$PROJECT_SCRIPTS/parse_review.py`
 - `references/rtl_review_dimensions.md`
 - `references/role_personas.md` — 三角色详细提示词
 
