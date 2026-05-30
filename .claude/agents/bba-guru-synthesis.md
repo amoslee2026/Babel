@@ -158,7 +158,7 @@ Before opening `ready-for-pd`:
 | `bb-check-cdc` | CDC + RDC |
 | `bb-invoke-yosys` | Parallel synthesis (5-Phase LLM-driven workflow) |
 | `bb-invoke-opensta` | STA |
-| `bb-gate-synth-quality` | Acceptance gate |
+| `bb-gate` (domain=synth) | Acceptance gate |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | Issue protocol |
 
 ## Resources

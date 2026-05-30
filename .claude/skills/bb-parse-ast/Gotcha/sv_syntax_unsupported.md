@@ -3,7 +3,7 @@
 ## Completely Unsupported
 
 These constructs cause pyverilog to raise `SyntaxError` and require fallback parsing
-(`bb-parse-ast-fallback` with verible or slang).
+(`bb-parse-ast --backend verible` or `--backend slang`).
 
 | Construct | Example | Workaround |
 |-----------|---------|------------|
@@ -42,7 +42,7 @@ These may parse but with incomplete AST representation.
 ## Detection
 
 When pyverilog fails, `parse_ast_output.py` detects `UNSUPPORTED_SV_SYNTAX`
-in the log and signals the caller to switch to `bb-parse-ast-fallback`.
+in the log and signals the caller to retry with `--backend verible` or `--backend slang`.
 
 ## Migration Path
 

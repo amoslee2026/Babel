@@ -131,7 +131,7 @@ Before opening `ready-for-synth`:
 | `bb-generate-tb`        | TB + cocotb harness         | Babel-internal, installed |
 | `bb-invoke-verilator`   | simulate with coverage      | wraps `verilator`, installed |
 | `bb-collect-coverage`   | parse fc + line/branch/toggle | wraps `verilator_coverage`, installed |
-| `bb-gate-test-quality`  | acceptance gate             | Babel-internal, installed |
+| `bb-gate` (domain=test)  | acceptance gate             | Babel-internal, installed |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | issue protocol | Babel-internal, installed |
 
 ## Resources
