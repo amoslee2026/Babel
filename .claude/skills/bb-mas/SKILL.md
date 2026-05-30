@@ -229,11 +229,14 @@ echo "{\"reason\":\"MAJOR\",\"timestamp\":\"$TIMESTAMP\"}" > "$ARCHIVE/CHANGE_RE
    - 若用户提供路径，验证存在
    - 否则自动检测最新子目录
 
-2. **验证必需文档**（至少 2 份）：
-   - `architecture_spec.md` — 芯片架构规范
-   - `functional_spec.md` — 功能需求
-   - `interface_spec.md` — 接口定义
-   - `timing_spec.md` — 时序要求
+2. **验证必需文档**（至少 2 份，来自 bb-arch 实际输出）：
+   - `chip_overview.md` 或 `block_overview.md` — 芯片/模块概述
+   - `block_diagram.md` — 系统/模块框图
+   - `clock_reset_spec.md` — 时钟复位架构
+   - `memory_map.md` — 存储架构与地址映射
+   - `power_spec.md` — 电源架构
+   - `io_pinout.md` — IO 与引脚定义
+   - `ip_blocks/*.md` — IP 模块详细设计（scope=chip 时）
 
 3. **创建输出目录**：
    ```
@@ -249,9 +252,8 @@ echo "{\"reason\":\"MAJOR\",\"timestamp\":\"$TIMESTAMP\"}" > "$ARCHIVE/CHANGE_RE
 ### 1.1 输入规模检测
 
 ```bash
-ARCH_SIZE=$(wc -c < "${INPUT_DIR}/architecture_spec.md")
-FUNC_SIZE=$(wc -c < "${INPUT_DIR}/functional_spec.md")
-TOTAL_SIZE=$((ARCH_SIZE + FUNC_SIZE))
+# Sum all .md files in spec_arch/ as input size
+TOTAL_SIZE=$(find "${INPUT_DIR}" -name "*.md" -exec wc -c {} + | tail -1 | awk '{print $1}')
 
 if [ "$TOTAL_SIZE" -lt 100000 ];  then READ_MODE="full"
 elif [ "$TOTAL_SIZE" -lt 300000 ]; then READ_MODE="section"
