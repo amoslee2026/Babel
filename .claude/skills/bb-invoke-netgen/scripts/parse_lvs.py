@@ -1,156 +1,88 @@
 #!/usr/bin/env python3
 """
-parse_lvs.py -- Parse Netgen LVS report into structured JSON.
+parse_lvs.py -- Parse Netgen LVS report and extract match status.
 
-Phase 3 of bb-invoke-netgen: extracts match/mismatch status,
-device count differences, and detailed discrepancies.
+Phase 3 of bb-invoke-netgen: reads LVS report, outputs JSON with match/errors.
 """
 
+import argparse
 import json
 import re
 import sys
 from pathlib import Path
 
 
-def parse_discrepancies(text: str) -> list[dict]:
-    """Extract detailed discrepancies from LVS report."""
-    discrepancies = []
-
-    # Net mismatches
-    net_pattern = re.compile(
-        r"Net mismatch.*?schematic:\s*(\S+).*?layout:\s*(\S+)",
-        re.DOTALL | re.IGNORECASE,
-    )
-    for m in net_pattern.finditer(text):
-        discrepancies.append({
-            "kind": "net_mismatch",
-            "schematic": m.group(1),
-            "layout": m.group(2),
-            "instance": "",
-        })
-
-    # Device mismatches
-    dev_pattern = re.compile(
-        r"Device mismatch.*?schematic:\s*(\S+).*?layout:\s*(\S+)",
-        re.DOTALL | re.IGNORECASE,
-    )
-    for m in dev_pattern.finditer(text):
-        discrepancies.append({
-            "kind": "device_mismatch",
-            "schematic": m.group(1),
-            "layout": m.group(2),
-            "instance": "",
-        })
-
-    # Instance count differences
-    inst_pattern = re.compile(
-        r"(\S+)\s+(\d+)\s+(\d+)\s+different",
-        re.IGNORECASE,
-    )
-    for m in inst_pattern.finditer(text):
-        discrepancies.append({
-            "kind": "count_difference",
-            "instance": m.group(1),
-            "schematic": int(m.group(2)),
-            "layout": int(m.group(3)),
-        })
-
-    # Pin/port mismatches
-    pin_pattern = re.compile(
-        r"Pin (mismatch|missing).*?(\S+)",
-        re.IGNORECASE,
-    )
-    for m in pin_pattern.finditer(text):
-        discrepancies.append({
-            "kind": f"pin_{m.group(1).lower()}",
-            "instance": m.group(2),
-            "schematic": "",
-            "layout": "",
-        })
-
-    return discrepancies
-
-
-def parse_device_summary(text: str) -> dict:
-    """Extract device count summary from LVS report."""
-    summary = {"schematic": {}, "layout": {}}
-
-    # Look for device summary tables
-    # Pattern: "Device type      Schematic count   Layout count"
-    dev_table = re.findall(
-        r"(\w+)\s+(\d+)\s+(\d+)",
-        text,
-    )
-    for dev_type, sch_count, lay_count in dev_table:
-        if dev_type.lower() not in ("total", "summary"):
-            summary["schematic"][dev_type] = int(sch_count)
-            summary["layout"][dev_type] = int(lay_count)
-
-    return summary
-
-
-def parse(output_path: str) -> dict:
+def parse_lvs_report(report_path: str) -> dict:
     """Parse Netgen LVS report and return structured results."""
-    path = Path(output_path)
+    path = Path(report_path)
     if not path.exists():
-        return {
-            "status": "error",
-            "valid": False,
-            "match": False,
-            "error": "REPORT_NOT_FOUND",
-        }
+        return {'valid': False, 'error': 'REPORT_NOT_FOUND'}
 
-    text = path.read_text(errors="replace")
+    content = path.read_text()
 
     # Check for unique match
-    match = bool(re.search(r"Circuits match uniquely", text, re.IGNORECASE))
+    match_unique = bool(re.search(r'Circuits match uniquely', content))
 
-    # Check for differences
-    differ = bool(re.search(r"Circuits differ", text, re.IGNORECASE))
+    # Check for mismatch
+    circuits_differ = bool(re.search(r'Circuits differ', content))
 
-    # Check for exit code in log
-    exit_match = re.search(r"exit:(\d+)", text)
-    exit_code = int(exit_match.group(1)) if exit_match else None
+    # Extract error/discrepancy counts
+    error_count = 0
+    net_errors = len(re.findall(r'Net mismatch', content, re.IGNORECASE))
+    device_errors = len(re.findall(r'Device mismatch', content, re.IGNORECASE))
+    property_errors = len(re.findall(r'Property mismatch', content, re.IGNORECASE))
+    error_count = net_errors + device_errors + property_errors
 
-    # Version mismatch
-    if "VERSION_MISMATCH" in text:
-        return {
-            "status": "error",
-            "valid": False,
-            "match": False,
-            "error": "VERSION_MISMATCH",
-        }
+    # Extract specific discrepancies
+    discrepancies = []
+    if net_errors:
+        for m in re.finditer(r'Net mismatch.*?(\S+)\s+(\S+)\s+(\S+)', content):
+            discrepancies.append({
+                'kind': 'net_mismatch',
+                'instance': m.group(1),
+                'schematic': m.group(2),
+                'layout': m.group(3),
+            })
+    if device_errors:
+        for m in re.finditer(r'Device mismatch.*?(\S+)\s+(\S+)\s+(\S+)', content):
+            discrepancies.append({
+                'kind': 'device_mismatch',
+                'instance': m.group(1),
+                'schematic': m.group(2),
+                'layout': m.group(3),
+            })
 
-    # Parse discrepancies
-    discrepancies = parse_discrepancies(text)
-    device_summary = parse_device_summary(text)
-
-    valid = (
-        (exit_code == 0 if exit_code is not None else True)
-        and not differ
-    )
-
-    error = None
-    if not match and not differ:
-        error = "INCONCLUSIVE_LVS_RESULT"
-    elif differ:
-        error = f"LVS_MISMATCH: {len(discrepancies)} discrepancies"
+    match = match_unique and not circuits_differ
 
     return {
-        "status": "parsed",
-        "valid": valid,
-        "match": match,
-        "discrepancies": discrepancies[:50],  # Limit output
-        "discrepancy_count": len(discrepancies),
-        "device_summary": device_summary,
-        "error": error,
+        'valid': True,
+        'match': match,
+        'errors': error_count,
+        'net_errors': net_errors,
+        'device_errors': device_errors,
+        'property_errors': property_errors,
+        'discrepancies': discrepancies,
+        'error': None if match else 'LVS_MISMATCH',
     }
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <lvs_report>", file=sys.stderr)
-        sys.exit(1)
-    result = parse(sys.argv[1])
-    print(json.dumps(result, indent=2))
-    sys.exit(0 if result.get("match") else 1)
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Parse Netgen LVS report")
+    parser.add_argument('--report', required=True, help='LVS report file path')
+    parser.add_argument('--out', required=True, help='Output JSON path')
+    args = parser.parse_args()
+
+    result = parse_lvs_report(args.report)
+    Path(args.out).write_text(json.dumps(result, indent=2))
+
+    if result.get('valid'):
+        status = 'MATCH' if result['match'] else f'MISMATCH ({result["errors"]} errors)'
+        print(f"LVS parsed: {status}")
+        return 0 if result['match'] else 1
+    else:
+        print(f"Parse error: {result.get('error')}")
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
