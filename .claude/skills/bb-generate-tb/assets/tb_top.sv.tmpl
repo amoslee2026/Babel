@@ -1,0 +1,31 @@
+// Testbench top-level template
+// Variables: {{ top_module }}, {{ clock_period }}, {{ reset_cycles }}
+`timescale 1ns/1ps
+
+module tb_{{ top_module }};
+  logic clk;
+  logic rst_n;
+
+  initial clk = 0;
+  always #({{ clock_period }}/2) clk = ~clk;
+
+  initial begin
+    rst_n = 0;
+    repeat({{ reset_cycles }}) @(posedge clk);
+    rst_n = 1;
+  end
+
+  {{ top_module }} dut (
+    .clk(clk),
+    .rst_n(rst_n)
+    // {{ port_connections }}
+  );
+
+  // {{ test_sequences }}
+
+  initial begin
+    @(posedge rst_n);
+    // {{ stimulus }}
+    $finish;
+  end
+endmodule

@@ -472,11 +472,11 @@ endmodule
 
 2. 生成寄存器文档和 SVA 断言：
    ```bash
-   uv run scripts/generate_regmap_doc.py \
+   uv run $PROJECT_SCRIPTS/generate_regmap_doc.py \
        --regmap spec/MAS/{{ MODULE_ID }}/regmap.md \
        --output doc/regmap/
 
-   uv run scripts/generate_regmap_assertions.py \
+   uv run $PROJECT_SCRIPTS/generate_regmap_assertions.py \
        --regmap spec/MAS/{{ MODULE_ID }}/regmap.md \
        --output {{ OUTPUT_DIR }}/{{ MODULE_PATH }}/src/{{ MODULE_NAME }}_regmap_assertions.sv
    ```

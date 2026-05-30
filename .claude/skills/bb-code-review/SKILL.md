@@ -51,7 +51,7 @@ description: "对抗性代码评审：代码质量 / 可维护性 / 时序风险
 
 ### Phase 1 — build_review_prompt
 
-`scripts/build_prompt.py`：
+`$PROJECT_SCRIPTS/build_prompt.py`：
 
 ```python
 ROLE_PROMPTS = {
@@ -76,7 +76,7 @@ prompt = render_prompt(
 
 ### Phase 3 — parse_review
 
-`scripts/parse_review.py`：
+`$PROJECT_SCRIPTS/parse_review.py`：
 
 - 提取 dimensions 段（`## Timing Risks` / `## Maintainability` 等）
 - 计数 severity 标签 `[CRITICAL] / [HIGH] / [MEDIUM] / [LOW]`
