@@ -470,6 +470,42 @@ Agent_3:
 
 **输出产物**：`ip_blocks/*.md`
 
+## Phase 9.5: REQ_ID 分解
+
+**目的**：将系统级需求分解到模块级 REQ_ID，建立 traceability 基础。
+
+### 分解规则
+
+```
+REQ-SYS-## (PRD)  → REQ-M##-F## (模块级功能)
+REQ-ARCH-## (ARCH) → REQ-M##-F## (模块级功能)
+REQ-NFR-## (PRD)  → 贯穿全 pipeline（PPA/功耗/时序约束）
+```
+
+### 分解步骤
+
+1. 读取 `spec/PRD/PRD.md` 中的 REQ-SYS-## 列表
+2. 读取 `spec/ARCH/` 中的 REQ-ARCH-## 列表
+3. 对每个 IP 模块，分解出 REQ-M##-F## 列表
+4. 使用 `scripts/allocate_req_id.py` 自动分配编号：
+   ```bash
+   uv run scripts/allocate_req_id.py 01  # → REQ-M01-F01
+   ```
+5. 在 IP block 文档中嵌入 REQ_ID 标注
+
+### 输出产物
+
+- 各 IP block 文档中的 REQ_ID 标注
+- `traceability/requirements_matrix.prd.csv`（从 PRD 生成）
+- `traceability/requirements_matrix.arch.csv`（从 ARCH 生成）
+
+```bash
+uv run scripts/babel_traceability.py prd
+uv run scripts/babel_traceability.py arch
+```
+
+---
+
 ## Phase 10: 验证策略
 
 **加载知识库**：`knowledge/verification_strategy.md`
@@ -505,8 +541,12 @@ Skill(skill="it.spec-review", args="--spec-path {{ OUTPUT_DIR }} --output-dir {{
 ## Phase 12: 总结与交付
 
 1. 生成 `design_notes.md` 总结报告
-2. 更新 manifest
-3. 清理上下文
+2. 验证 traceability CSV 完整性：
+   ```bash
+   uv run scripts/check_req_uniqueness.py
+   ```
+3. 更新 manifest
+4. 清理上下文
 
 ---
 

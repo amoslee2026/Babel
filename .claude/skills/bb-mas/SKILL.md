@@ -320,6 +320,7 @@ fi
 - §4 状态机：FSM 定义、状态编码、转移条件
 - §5 验证策略：功能覆盖点、断言、仿真场景
 - §6 DFT 方案：扫描链、BIST、JTAG 接口
+- §10 需求追踪矩阵：REQ_ID 列表 + 验收标准
 
 3. frontmatter 格式：
    ---
@@ -330,6 +331,35 @@ fi
    module_type: compute|storage|interconnect|io
    generated: {{ NOW }}
    ---
+```
+
+### REQ_ID 分配与标注
+
+**分配规则**：
+1. 从 arch_spec 中的 REQ-SYS/ARCH 分解到模块级 REQ-M##-F##
+2. 使用 `scripts/allocate_req_id.py` 自动分配编号（禁止手动编号）
+3. 每个功能点对应一个 REQ_ID（P-4: 禁止复用；P-5: 禁止一对多）
+
+**标注规则**：
+1. **MAS.md §10**：生成需求追踪矩阵表
+2. **章节标题下**：添加 HTML 注释 `<!-- REQ-M##-F01, REQ-M##-F02 -->`
+3. **表格中**：在 REQ_ID 列直接标注
+
+示例：
+```markdown
+## 3. 流水线结构
+
+<!-- REQ-M01-F01, REQ-M01-F02, REQ-M01-F03 -->
+
+| 级  | 名称 | REQ_ID | 功能 | 延迟 |
+|-----|------|--------|------|------|
+| IF  | 取指 | F01 | AXI Burst 读 | 1–8 cycle |
+
+## 10. 需求追踪矩阵
+
+| REQ_ID | 需求描述 | 优先级 | 验收标准 | 边界条件 | RTL 组件 | 测试用例 |
+|--------|---------|--------|---------|---------|---------|---------|
+| REQ-M01-F01 | IF 取指 | P0 | IQ 填充延迟 ≤8 cycle | IQ 满时 back-pressure | M01_DataflowController | TC-M01-L1-001 |
 ```
 
 ---
@@ -434,7 +464,9 @@ graph TB
 
 ---
 
-## 阶段 5：生成全局计划
+## 阶段 5：生成全局计划 + Traceability CSV
+
+### 5.1 全局计划
 
 汇总所有模块的 tasks，生成 `{{ OUTPUT_DIR }}/plan.md`：
 
@@ -442,6 +474,26 @@ graph TB
 - 实现阶段定义
 - 并行实现矩阵
 - 验证里程碑
+
+### 5.2 Traceability CSV 生成
+
+从所有模块 MAS.md §10 提取 REQ_ID，生成 `traceability/requirements_matrix.arch.csv`：
+
+```bash
+uv run scripts/babel_traceability.py arch
+```
+
+### 5.3 唯一性验证
+
+```bash
+uv run scripts/check_req_uniqueness.py --check-deleted
+```
+
+### 5.4 完成标准追加
+
+- [ ] 每个 MAS.md §10 包含需求追踪矩阵（REQ_ID + 验收标准）
+- [ ] `traceability/requirements_matrix.arch.csv` 生成成功
+- [ ] `check_req_uniqueness.py` 通过
 
 ---
 

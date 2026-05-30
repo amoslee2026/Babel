@@ -1,0 +1,14 @@
+# ── Path glob：匹配的文件不要求 @requirement ──
+rtl/**/tb_*
+rtl/**/*_testbench.sv
+rtl/**/*_tb.sv
+rtl/**/synth/**
+rtl/**/netlist_*
+rtl/designs/*/gdsii/**
+rtl/designs/*/pd/**
+designs/**
+
+# ── Pragma suppression（在代码中使用）──
+# // @no-requirement: testbench
+# // @no-requirement: synthesis-artifact
+# // @no-requirement: pd-artifact

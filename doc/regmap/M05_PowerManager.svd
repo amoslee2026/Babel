@@ -1,0 +1,159 @@
+<?xml version="1.0" ?>
+<device xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="1.3" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd">
+  <vendor>Babel</vendor>
+  <name>M05_PowerManager</name>
+  <version>1.0</version>
+  <description>M05_PowerManager Register Map</description>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
+  <cpu>
+    <name>CM0</name>
+    <revision>r0p0</revision>
+    <endian>little</endian>
+    <mpuPresent>false</mpuPresent>
+    <fpuPresent>false</fpuPresent>
+  </cpu>
+  <peripherals>
+    <peripheral>
+      <name>M05_PowerManager</name>
+      <baseAddress>0x00000000</baseAddress>
+      <registers>
+        <register>
+          <name>PWR_CTRL</name>
+          <description>电源控制：电源请求、睡眠使能、唤醒源选择</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>PWR_REQ</name>
+              <description>软件电源请求。编码同 DVFS 工作点：00=NOM, 01=LOW, 10=HIGH</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>SLEEP_EN</name>
+              <description>允许进入 SLEEP 状态。1=允许，0=禁止</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>WAKEUP_SRC_SEL</name>
+              <description>唤醒源选择。0=外部中断，1=定时器</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>4</bitWidth>
+              <access>-</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DVFS_CFG</name>
+          <description>DVFS 配置：电压/频率稳定计数、DVFS 模式</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>rw</access>
+          <resetValue>0x00000810</resetValue>
+          <fields>
+            <field>
+              <name>V_SETTLE_CNT</name>
+              <description>电压稳定等待计数（CLK_AON 周期）</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>8</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>F_SETTLE_CNT</name>
+              <description>频率切换等待计数（CLK_AON 周期）</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>8</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>DVFS_MODE</name>
+              <description>DVFS 模式。00=手动，01=自动（硬件 DVFS）</description>
+              <bitOffset>16</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>rw</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留，必须写 0</description>
+              <bitOffset>18</bitOffset>
+              <bitWidth>14</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>PWR_STATUS</name>
+          <description>电源状态：当前 FSM 状态、DVFS 工作点、PMIC PG</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>ro</access>
+          <resetValue>0x00000000</resetValue>
+          <fields>
+            <field>
+              <name>CUR_STATE</name>
+              <description>当前 FSM 状态编码</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>CUR_DVFS</name>
+              <description>当前 DVFS 工作点。00=NOM, 01=LOW, 10=HIGH</description>
+              <bitOffset>2</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>DVFS_BUSY</name>
+              <description>DVFS 切换进行中标志</description>
+              <bitOffset>4</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>PMIC_PG</name>
+              <description>PMIC Power Good 状态。1=电源稳定</description>
+              <bitOffset>5</bitOffset>
+              <bitWidth>1</bitWidth>
+              <access>ro</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留</description>
+              <bitOffset>6</bitOffset>
+              <bitWidth>2</bitWidth>
+              <access>-</access>
+            </field>
+            <field>
+              <name>RESERVED</name>
+              <description>保留</description>
+              <bitOffset>8</bitOffset>
+              <bitWidth>24</bitWidth>
+              <access>-</access>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+  </peripherals>
+</device>
