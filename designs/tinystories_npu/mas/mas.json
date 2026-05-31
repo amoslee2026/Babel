@@ -1,0 +1,406 @@
+{
+  "design_name": "tinystories_npu",
+  "top_module": "NPU_top",
+  "target_freq_mhz": 500,
+  "target_pdk": "asap7",
+  "area_budget_um2": 90000000,
+  "power_budget_mw": 1800,
+  "clock_domains": [
+    {"name": "clk_sys", "freq_mhz": 500, "source": "PLL (M06), VCO/2"},
+    {"name": "clk_io", "freq_mhz": 50, "source": "PLL (M06), VCO/20"},
+    {"name": "clk_aon", "freq_mhz": 0.032, "source": "Internal RC oscillator (M06)"},
+    {"name": "clk_d2d", "freq_mhz": 625, "source": "PLL (M06), DDR"}
+  ],
+  "io_timing": {
+    "inputs": [
+      {"name": "ext_clk_50MHz", "width": 1, "delay_ns": 0.5, "description": "External 50 MHz oscillator input; note: ARCH says 25 MHz but existing netlist uses 50 MHz"},
+      {"name": "ext_rst_por_n", "width": 1, "delay_ns": 0.5, "description": "External power-on reset, active low"},
+      {"name": "pll_lock_ext", "width": 1, "delay_ns": 0.5, "description": "PLL lock indicator from external analog PLL"},
+      {"name": "TCK", "width": 1, "delay_ns": 1.0, "description": "JTAG test clock"},
+      {"name": "TMS", "width": 1, "delay_ns": 1.0, "description": "JTAG test mode select"},
+      {"name": "TDI", "width": 1, "delay_ns": 1.0, "description": "JTAG test data in"},
+      {"name": "TRST_n", "width": 1, "delay_ns": 1.0, "description": "JTAG test reset"},
+      {"name": "isa_cmd_i", "width": 32, "delay_ns": 1.0, "description": "ISA command input bus"},
+      {"name": "isa_cmd_valid_i", "width": 1, "delay_ns": 1.0, "description": "ISA command valid"},
+      {"name": "isa_rsp_ready_i", "width": 1, "delay_ns": 1.0, "description": "ISA response ready from host"}
+    ],
+    "outputs": [
+      {"name": "pll_pwr_en", "width": 1, "delay_ns": 0.5, "description": "PLL power enable to external analog PLL"},
+      {"name": "irq_compute_done", "width": 1, "delay_ns": 0.5, "description": "Compute done interrupt to host"},
+      {"name": "status_sec_boot_done", "width": 1, "delay_ns": 0.5, "description": "Secure boot status indicator"},
+      {"name": "TDO", "width": 1, "delay_ns": 1.0, "description": "JTAG test data out"},
+      {"name": "isa_cmd_ready_o", "width": 1, "delay_ns": 1.0, "description": "ISA command ready to host"},
+      {"name": "isa_rsp_o", "width": 32, "delay_ns": 1.0, "description": "ISA response output bus"},
+      {"name": "isa_rsp_valid_o", "width": 1, "delay_ns": 1.0, "description": "ISA response valid to host"}
+    ]
+  },
+  "io_ring": [
+    {"side": "N", "pads": ["ext_clk_50MHz", "ext_rst_por_n", "pll_lock_ext", "pll_pwr_en"]},
+    {"side": "S", "pads": ["irq_compute_done", "status_sec_boot_done"]},
+    {"side": "E", "pads": ["TCK", "TMS", "TDI", "TDO", "TRST_n"]},
+    {"side": "W", "pads": ["isa_cmd_i", "isa_cmd_valid_i", "isa_cmd_ready_o", "isa_rsp_o", "isa_rsp_valid_o", "isa_rsp_ready_i"]}
+  ],
+  "cdc_waivers": [
+    {"from_clk": "clk_sys", "to_clk": "clk_io", "signal": "M04_bus_to_M15_M16", "justification": "2-stage synchronizer (single-bit) / Async FIFO (bus data); standard async domain crossing"},
+    {"from_clk": "clk_io", "to_clk": "clk_sys", "signal": "M15_M16_bus_to_M04", "justification": "2-stage synchronizer / Async FIFO"},
+    {"from_clk": "clk_sys", "to_clk": "clk_aon", "signal": "dvfs_req_from_M05", "justification": "Handshake protocol (req/ack); low rate <1kHz, no timing requirement"},
+    {"from_clk": "clk_aon", "to_clk": "clk_sys", "signal": "status_from_M05_M06_M07", "justification": "2-stage synchronizer; status signals stable for many cycles"},
+    {"from_clk": "clk_sys", "to_clk": "clk_d2d", "signal": "M03_dma_to_d2d", "justification": "Async FIFO internal to M03; dedicated D2D data path"}
+  ],
+  "path_exceptions": [
+    {"type": "false_path", "from": "clk_sys", "to": "clk_aon", "cycles": null},
+    {"type": "false_path", "from": "clk_aon", "to": "clk_sys", "cycles": null},
+    {"type": "false_path", "from": "clk_sys", "to": "clk_io", "cycles": null},
+    {"type": "multicycle", "from": "M00_weight_buf", "to": "M00_PE_reg", "cycles": 2},
+    {"type": "multicycle", "from": "M03_dma_req", "to": "M03_d2d_cmd", "cycles": 3}
+  ],
+  "modules": [
+    {
+      "name": "M00_SystolicArray",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "rst_sys_n", "dir": "input", "width": 1},
+          {"name": "syst_mode_i", "dir": "input", "width": 2},
+          {"name": "syst_precision_i", "dir": "input", "width": 2},
+          {"name": "syst_start_i", "dir": "input", "width": 1},
+          {"name": "syst_done_o", "dir": "output", "width": 1},
+          {"name": "syst_err_o", "dir": "output", "width": 1},
+          {"name": "weight_data_i", "dir": "input", "width": 1024},
+          {"name": "weight_valid_i", "dir": "input", "width": 1},
+          {"name": "weight_ready_o", "dir": "output", "width": 1},
+          {"name": "act_data_i", "dir": "input", "width": 1024},
+          {"name": "act_valid_i", "dir": "input", "width": 1},
+          {"name": "act_ready_o", "dir": "output", "width": 1},
+          {"name": "out_data_o", "dir": "output", "width": 1024},
+          {"name": "out_valid_o", "dir": "output", "width": 1},
+          {"name": "out_ready_i", "dir": "input", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §4",
+      "datapath_ref": "mas/datapath/M00_SystolicArray_datapath.md"
+    },
+    {
+      "name": "M01_DataflowController",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "rst_sys_n", "dir": "input", "width": 1},
+          {"name": "syst_mode_o", "dir": "output", "width": 2},
+          {"name": "syst_precision_o", "dir": "output", "width": 2},
+          {"name": "syst_start_o", "dir": "output", "width": 1},
+          {"name": "syst_done_i", "dir": "input", "width": 1},
+          {"name": "op_valid_o", "dir": "output", "width": 1},
+          {"name": "op_ready_i", "dir": "input", "width": 1},
+          {"name": "op_code_o", "dir": "output", "width": 4},
+          {"name": "op_done_i", "dir": "input", "width": 1},
+          {"name": "mem_req_valid_o", "dir": "output", "width": 1},
+          {"name": "mem_req_ready_i", "dir": "input", "width": 1},
+          {"name": "sched_thread_en_i", "dir": "input", "width": 1},
+          {"name": "sched_yield_o", "dir": "output", "width": 1},
+          {"name": "irq_op_done_o", "dir": "output", "width": 1},
+          {"name": "reg_addr_i", "dir": "input", "width": 12}
+        ]
+      },
+      "fsm_ref": "mas/fsm/M01_DataflowController_fsm.md",
+      "datapath_ref": "mas/mas.md §3.2"
+    },
+    {
+      "name": "M02_SRAMScratchpad",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "rst_sys_n", "dir": "input", "width": 1},
+          {"name": "b0_rdata_o", "dir": "output", "width": 1024},
+          {"name": "b0_wdata_i", "dir": "input", "width": 256},
+          {"name": "ecc_err_corrected_o", "dir": "output", "width": 1},
+          {"name": "ecc_err_uncorrected_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.3",
+      "datapath_ref": "mas/mas.md §7.1"
+    },
+    {
+      "name": "M03_DRAMController",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys_i", "dir": "input", "width": 1},
+          {"name": "clk_d2d_i", "dir": "input", "width": 1},
+          {"name": "bus_cmd_valid_i", "dir": "input", "width": 1},
+          {"name": "bus_rsp_valid_o", "dir": "output", "width": 1},
+          {"name": "d2d_cmd_valid_o", "dir": "output", "width": 1},
+          {"name": "d2d_wdata_o", "dir": "output", "width": 128},
+          {"name": "dma_req_valid_i", "dir": "input", "width": 1},
+          {"name": "dma_done_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.4",
+      "datapath_ref": "mas/mas.md §9.4"
+    },
+    {
+      "name": "M04_SystemBus",
+      "reuse": "cbb/axi4-crossbar",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "clk_io", "dir": "input", "width": 1},
+          {"name": "clk_aon", "dir": "input", "width": 1},
+          {"name": "tl_m0_a_valid", "dir": "input", "width": 1},
+          {"name": "axi_m3_awvalid", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.5",
+      "datapath_ref": "mas/mas.md §8.1"
+    },
+    {
+      "name": "M05_PowerManager",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_aon_i", "dir": "input", "width": 1},
+          {"name": "dvfs_op_o", "dir": "output", "width": 2},
+          {"name": "pg_main_en_o", "dir": "output", "width": 1},
+          {"name": "power_state_o", "dir": "output", "width": 3}
+        ]
+      },
+      "fsm_ref": "mas/fsm/M05_PowerManager_fsm.md",
+      "datapath_ref": "mas/mas.md §3.6"
+    },
+    {
+      "name": "M06_ClockManager",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "ext_clk_i", "dir": "input", "width": 1},
+          {"name": "clk_sys_o", "dir": "output", "width": 1},
+          {"name": "clk_aon_o", "dir": "output", "width": 1},
+          {"name": "clk_io_o", "dir": "output", "width": 1},
+          {"name": "clk_gating_o", "dir": "output", "width": 17}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.7",
+      "datapath_ref": "mas/mas.md §5.2"
+    },
+    {
+      "name": "M07_ResetManager",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_aon_i", "dir": "input", "width": 1},
+          {"name": "rst_por_n_i", "dir": "input", "width": 1},
+          {"name": "rst_sys_n_o", "dir": "output", "width": 1},
+          {"name": "rst_io_n_o", "dir": "output", "width": 1},
+          {"name": "wdt_timeout_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/fsm/M07_ResetManager_fsm.md",
+      "datapath_ref": "mas/mas.md §3.8"
+    },
+    {
+      "name": "M08_ThreadScheduler",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "thread_cmd_valid", "dir": "input", "width": 1},
+          {"name": "dispatch_valid", "dir": "output", "width": 1},
+          {"name": "dispatch_tid", "dir": "output", "width": 2}
+        ]
+      },
+      "fsm_ref": "mas/fsm/M08_ThreadScheduler_fsm.md",
+      "datapath_ref": "mas/mas.md §8.3"
+    },
+    {
+      "name": "M09_AttentionUnit",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys_i", "dir": "input", "width": 1},
+          {"name": "q_valid_i", "dir": "input", "width": 1},
+          {"name": "q_data_i", "dir": "input", "width": 256},
+          {"name": "k_valid_i", "dir": "input", "width": 1},
+          {"name": "v_valid_i", "dir": "input", "width": 1},
+          {"name": "attn_valid_o", "dir": "output", "width": 1},
+          {"name": "attn_data_o", "dir": "output", "width": 256},
+          {"name": "kv_addr_o", "dir": "output", "width": 32}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §4",
+      "datapath_ref": "mas/datapath/M09_AttentionUnit_datapath.md"
+    },
+    {
+      "name": "M10_FFNMatMul",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys_i", "dir": "input", "width": 1},
+          {"name": "act_valid_i", "dir": "input", "width": 1},
+          {"name": "act_data_i", "dir": "input", "width": 256},
+          {"name": "syst_start_o", "dir": "output", "width": 1},
+          {"name": "ffn_valid_o", "dir": "output", "width": 1},
+          {"name": "ffn_data_o", "dir": "output", "width": 256}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §5.3",
+      "datapath_ref": "mas/datapath/M10_FFNMatMul_datapath.md"
+    },
+    {
+      "name": "M11_RMSNormUnit",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys_i", "dir": "input", "width": 1},
+          {"name": "data_valid_i", "dir": "input", "width": 1},
+          {"name": "data_i", "dir": "input", "width": 256},
+          {"name": "out_valid_o", "dir": "output", "width": 1},
+          {"name": "out_data_o", "dir": "output", "width": 256},
+          {"name": "op_done_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.12",
+      "datapath_ref": "mas/datapath/M11_RMSNormUnit_datapath.md"
+    },
+    {
+      "name": "M12_RoPESoftMaxUnit",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys_i", "dir": "input", "width": 1},
+          {"name": "rope_valid_i", "dir": "input", "width": 1},
+          {"name": "rope_data_i", "dir": "input", "width": 256},
+          {"name": "rope_out_valid_o", "dir": "output", "width": 1},
+          {"name": "rope_out_data_o", "dir": "output", "width": 256},
+          {"name": "softmax_valid_i", "dir": "input", "width": 1},
+          {"name": "softmax_data_i", "dir": "input", "width": 256},
+          {"name": "softmax_out_valid_o", "dir": "output", "width": 1},
+          {"name": "softmax_out_data_o", "dir": "output", "width": 256},
+          {"name": "op_done_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.13",
+      "datapath_ref": "mas/datapath/M12_RoPESoftMaxUnit_datapath.md"
+    },
+    {
+      "name": "M13_ISADecoder",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "isa_cmd_valid", "dir": "input", "width": 1},
+          {"name": "isa_cmd_data", "dir": "input", "width": 32},
+          {"name": "thread_cmd_valid", "dir": "output", "width": 1},
+          {"name": "decode_err", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": "mas/mas.md §3.14",
+      "datapath_ref": null
+    },
+    {
+      "name": "M14_SecureBoot",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_sys", "dir": "input", "width": 1},
+          {"name": "fw_data_valid", "dir": "input", "width": 1},
+          {"name": "fw_data", "dir": "input", "width": 256},
+          {"name": "sec_status", "dir": "output", "width": 4}
+        ]
+      },
+      "fsm_ref": "mas/fsm/M14_SecureBoot_fsm.md",
+      "datapath_ref": null
+    },
+    {
+      "name": "M15_JTAGInterface",
+      "reuse": "cbb/jtag-tap",
+      "interface": {
+        "ports": [
+          {"name": "TCK", "dir": "input", "width": 1},
+          {"name": "TMS", "dir": "input", "width": 1},
+          {"name": "TDI", "dir": "input", "width": 1},
+          {"name": "TDO", "dir": "output", "width": 1},
+          {"name": "TRST_n", "dir": "input", "width": 1}
+        ]
+      },
+      "fsm_ref": null,
+      "datapath_ref": null
+    },
+    {
+      "name": "M16_ISAInterface",
+      "reuse": "none",
+      "interface": {
+        "ports": [
+          {"name": "clk_io_i", "dir": "input", "width": 1},
+          {"name": "isa_cmd_i", "dir": "input", "width": 32},
+          {"name": "isa_cmd_valid_i", "dir": "input", "width": 1},
+          {"name": "isa_cmd_ready_o", "dir": "output", "width": 1},
+          {"name": "isa_rsp_o", "dir": "output", "width": 32},
+          {"name": "crc_err_o", "dir": "output", "width": 1}
+        ]
+      },
+      "fsm_ref": null,
+      "datapath_ref": null
+    }
+  ],
+  "inputs": [
+    {
+      "path": "mas/mas.md",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "path": "mas/mas.json",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "path": "mas/fsm/M01_DataflowController_fsm.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/fsm/M05_PowerManager_fsm.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/fsm/M07_ResetManager_fsm.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/fsm/M08_ThreadScheduler_fsm.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/fsm/M14_SecureBoot_fsm.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/datapath/M00_SystolicArray_datapath.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/datapath/M09_AttentionUnit_datapath.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/datapath/M10_FFNMatMul_datapath.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/datapath/M11_RMSNormUnit_datapath.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/datapath/M12_RoPESoftMaxUnit_datapath.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/verif_plan_seed.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "path": "mas/dft_plan_seed.md",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ]
+}

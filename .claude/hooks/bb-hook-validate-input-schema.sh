@@ -40,7 +40,7 @@ if [ -z "$AGENT" ] || [ -z "$DESIGN" ]; then
   if [ -n "${INPUT:-}" ]; then
     PROMPT="$(printf '%s' "$INPUT" | python3 -c \
       'import sys,json; d=json.load(sys.stdin); print(d.get("prompt",""))' 2>/dev/null || echo "")"
-    AGENT="$(printf '%s' "$PROMPT" | sed -nE 's|^/(bb-guru-[a-z]+)\b.*|\1|p')"
+    AGENT="$(printf '%s' "$PROMPT" | sed -nE 's|^/(bba-guru-[a-z-]+)\b.*|\1|p')"
     DESIGN="$(printf '%s' "$PROMPT" | sed -nE 's|.*designs/([a-zA-Z0-9_-]+).*|\1|p')"
   fi
 fi
@@ -48,25 +48,25 @@ fi
 [ -z "$DESIGN" ] && exit 0
 
 case "$AGENT" in
-  bb-guru-rtl|bb-guru-verification|bb-guru-synthesis|bb-guru-pd) ;;
+  bba-guru-rtl|bba-guru-verification|bba-guru-synthesis|bba-guru-pd) ;;
   *) exit 0 ;;
 esac
 
 declare -A ART SCHEMA UPSTREAM
-ART["bb-guru-rtl"]="designs/$DESIGN/mas/mas.json"
-ART["bb-guru-verification"]="designs/$DESIGN/rtl_artifact.json"
-ART["bb-guru-synthesis"]="designs/$DESIGN/test_report.json"
-ART["bb-guru-pd"]="designs/$DESIGN/synth_report.json"
+ART["bba-guru-rtl"]="designs/$DESIGN/mas/mas.json"
+ART["bba-guru-verification"]="designs/$DESIGN/rtl_artifact.json"
+ART["bba-guru-synthesis"]="designs/$DESIGN/test_report.json"
+ART["bba-guru-pd"]="designs/$DESIGN/synth_report.json"
 
-SCHEMA["bb-guru-rtl"]=".claude/schemas/mas.schema.json"
-SCHEMA["bb-guru-verification"]=".claude/schemas/rtl_artifact.schema.json"
-SCHEMA["bb-guru-synthesis"]=".claude/schemas/test_report.schema.json"
-SCHEMA["bb-guru-pd"]=".claude/schemas/synth_report.schema.json"
+SCHEMA["bba-guru-rtl"]=".claude/schemas/mas.schema.json"
+SCHEMA["bba-guru-verification"]=".claude/schemas/rtl_artifact.schema.json"
+SCHEMA["bba-guru-synthesis"]=".claude/schemas/test_report.schema.json"
+SCHEMA["bba-guru-pd"]=".claude/schemas/synth_report.schema.json"
 
-UPSTREAM["bb-guru-rtl"]="arch"
-UPSTREAM["bb-guru-verification"]="rtl"
-UPSTREAM["bb-guru-synthesis"]="rtl"
-UPSTREAM["bb-guru-pd"]="synth"
+UPSTREAM["bba-guru-rtl"]="arch"
+UPSTREAM["bba-guru-verification"]="rtl"
+UPSTREAM["bba-guru-synthesis"]="rtl"
+UPSTREAM["bba-guru-pd"]="synth"
 
 A="${ART[$AGENT]}"
 S="${SCHEMA[$AGENT]}"

@@ -214,10 +214,10 @@ def generate_sdc(design_name: str, target_freq_mhz: int, clock_domains: dict,
 
     # JTAG IO delays
     sdc_content.append("# JTAG Interface delays (TCK domain)")
-    sdc_content.append(f"set_input_delay -clock TCK -max 2.0 [get_ports {tms tdi trst_n}]")
-    sdc_content.append(f"set_input_delay -clock TCK -min 0.5 [get_ports {tms tdi trst_n}]")
-    sdc_content.append(f"set_output_delay -clock TCK -max 5.0 [get_ports tdo]")
-    sdc_content.append(f"set_output_delay -clock TCK -min 0.5 [get_ports tdo]")
+    sdc_content.append("set_input_delay -clock TCK -max 2.0 [get_ports {tms tdi trst_n}]")
+    sdc_content.append("set_input_delay -clock TCK -min 0.5 [get_ports {tms tdi trst_n}]")
+    sdc_content.append("set_output_delay -clock TCK -max 5.0 [get_ports tdo]")
+    sdc_content.append("set_output_delay -clock TCK -min 0.5 [get_ports tdo]")
     sdc_content.append("")
 
     # ========================================

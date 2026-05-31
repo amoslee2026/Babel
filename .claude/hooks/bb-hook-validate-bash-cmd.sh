@@ -105,6 +105,22 @@ for i in "${!BLOCK_PATTERNS[@]}"; do
   fi
 done
 
+# Recoverability ban (project rule): hard-block irrecoverable file deletion.
+# Catches common literal forms of rm, git reset, and git checkout -- (file restore).
+RECOVERABILITY_PATTERNS=(
+  '(^|[[:space:];|&])(/bin/)?rm\b'
+  '(^|[[:space:];|&])git[[:space:]]+reset\b'
+  'git[[:space:]]+checkout[[:space:]].*[[:space:]]--[[:space:]]'
+  'git[[:space:]]+checkout[[:space:]]+--[[:space:]]'
+)
+for p in "${RECOVERABILITY_PATTERNS[@]}"; do
+  if printf '%s' "$CMD" | grep -Eq "$p"; then
+    printf "🛑 BLOCKED: rm/git reset/git checkout -- are forbidden (irrecoverable). Use mv to ./temp/deleted/ instead.\n    Command: %s\n" \
+      "$STRIPPED_SHORT" >&2
+    exit 2
+  fi
+done
+
 # Check WARN tier
 hit=""
 for i in "${!WARN_PATTERNS[@]}"; do

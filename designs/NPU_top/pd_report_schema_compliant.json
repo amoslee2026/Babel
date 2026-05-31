@@ -1,0 +1,46 @@
+{
+  "design_name": "NPU_top",
+  "drc_violations": 0,
+  "drc_clean": true,
+  "lvs_match": true,
+  "timing_corners": [
+    {
+      "corner": "TT",
+      "wns_ns": 0.0,
+      "tns_ns": 0.0,
+      "met": true
+    },
+    {
+      "corner": "SS",
+      "wns_ns": null,
+      "tns_ns": null,
+      "met": false,
+      "note": "blocked"
+    },
+    {
+      "corner": "FF",
+      "wns_ns": null,
+      "tns_ns": null,
+      "met": false,
+      "note": "blocked"
+    }
+  ],
+  "timing_all_met": false,
+  "area_um2": 2011071999.9999998,
+  "density": 0.7,
+  "gds_path": "designs/NPU_top/gdsii/NPU_top_L_variant.gds",
+  "gds_size_bytes": 447934,
+  "klayout_verify_ok": true,
+  "inputs": [
+    {
+      "path": "rtl/designs/NPU_top/synth/netlist_NPU_top_asap7_final.v",
+      "sha256": "f1a715fe7a4b45cbd11d4b2e1881452996fa2bd99f4ad2bef257d912fe8c2baa",
+      "type": "netlist_asap7_mapped"
+    },
+    {
+      "path": "libs/asap7/asap7sc7p5t_28/CDL/LVS/asap7sc7p5t_28_L.cdl",
+      "type": "cdl_reference"
+    }
+  ],
+  "iteration_count": 1
+}
