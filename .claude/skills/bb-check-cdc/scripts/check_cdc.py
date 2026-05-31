@@ -172,8 +172,8 @@ def check_rdc_violations(rtl_files: List[str]) -> List[Dict]:
                             "line": "unknown",
                             "from_domain": "POR",
                             "to_domain": get_module_clock_domain(module_name),
-                            "waived": True,  # Waived for first run
-                            "waive_reason": "Standard async reset pattern - acceptable for first run"
+                            "waived": False,  # UNWAIVED by default; only explicit per-signal waivers may waive
+                            "waive_reason": None
                         })
 
         except Exception as e:
@@ -206,8 +206,48 @@ def generate_cdc_report(design_name: str, rtl_dir: str) -> Dict:
     # Combine violations
     all_violations = cdc_violations + rdc_violations
 
-    # Filter unwaived violations
+    # Filter unwaived violations (only explicit per-signal waivers count as waived)
     unwaived = [v for v in all_violations if not v.get("waived", False)]
+
+    # CDC crossings are derived from the synchronizers actually detected in the
+    # parsed RTL — never fabricated. Each detected 2-stage synchronizer is
+    # reported as an implemented crossing protection.
+    cdc_paths = [
+        {
+            "module": s.get("module", "unknown"),
+            "target_clk": s.get("target_clk", "unknown"),
+            "stage1": s.get("stage1", "unknown"),
+            "stage2": s.get("stage2", "unknown"),
+            "source": s.get("source", "unknown"),
+            "method": "2-stage_synchronizer",
+            "status": "implemented",
+        }
+        for s in synchronizers
+    ]
+
+    # Fail CLOSED: the current backend only detects synchronizer *structures*; it
+    # does not perform full source->sink cross-domain reachability analysis.
+    # Therefore we cannot affirmatively certify the design as CDC-clean here.
+    # A real CDC analysis backend must set analysis_complete=True.
+    analysis_complete = False
+    no_files = len(rtl_files) == 0
+
+    if no_files:
+        valid = False
+        status = "error"
+        error = f"No RTL files found under {rtl_dir}; cannot perform CDC analysis"
+        clean = False
+    elif not analysis_complete:
+        valid = False
+        status = "error"
+        error = ("CDC reachability analysis not available; structural "
+                 "synchronizer detection alone cannot certify CDC-clean")
+        clean = False
+    else:
+        valid = True
+        status = "ok"
+        error = None
+        clean = len(unwaived) == 0
 
     # Generate summary
     report = {
@@ -215,25 +255,17 @@ def generate_cdc_report(design_name: str, rtl_dir: str) -> Dict:
         "generated": datetime.now().isoformat(),
         "clock_domains": CLOCK_DOMAINS,
         "reset_domains": RESET_DOMAINS,
-        "cdc_paths": [
-            {"from": "CLK_SYS", "to": "CLK_AON", "method": "2-stage_synchronizer", "status": "implemented"},
-            {"from": "CLK_AON", "to": "CLK_SYS", "method": "handshake_protocol", "status": "implemented"},
-            {"from": "CLK_IO", "to": "CLK_SYS", "method": "2-stage_synchronizer", "status": "implemented"},
-            {"from": "CLK_SYS", "to": "CLK_IO", "method": "async_fifo", "status": "implemented"},
-            {"from": "TCK", "to": "CLK_IO", "method": "pulse_synchronizer", "status": "implemented"}
-        ],
+        "rtl_files_analyzed": len(rtl_files),
+        "analysis_complete": analysis_complete,
+        "cdc_paths": cdc_paths,
         "synchronizers_found": synchronizers,
         "violations": all_violations,
         "unwaived_count": len(unwaived),
         "total_violations": len(all_violations),
-        "clean": len(unwaived) == 0,
-        "valid": True,
-        "error": None,
-        "first_run_notes": [
-            "CDC/RDC check completed for first_run_acceptable",
-            "All violations have been waived for pipeline reachability test",
-            "Full CDC verification will be performed in subsequent iterations"
-        ]
+        "clean": clean,
+        "valid": valid,
+        "status": status,
+        "error": error,
     }
 
     return report

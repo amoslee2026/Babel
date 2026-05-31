@@ -33,11 +33,11 @@ Upstream: `bba-architect`. Downstream: `bba-guru-verification`.
 
 ## Core Responsibilities
 
-1. Pick up `ready-for-rtl` work and verify the handed-off MAS is schema-valid and unchanged (sha256 of `mas.json` against the value stored in the ready-for-rtl handoff).
+1. Pick up `ready-for-rtl` work and verify the handed-off MAS is schema-valid and unchanged: recompute sha256 of each file listed in `mas.json.outputs[]` and compare to the stored hash (drift check, CR-5).
 2. Translate MAS (`mas.json` + `fsm/*` + `datapath/*`) into hierarchical SystemVerilog via `bb-rtl-coder`.
-3. Topologically sort modules into `file_list.f` (leaves first, top last).
+3. Topologically sort modules into `designs/<name>/rtl/file_list.f` (leaves first, top last).
 4. Run `bb-check-lint`; on errors, feed the report back into `bb-rtl-coder` (≤ 3 iterations).
-5. Produce `rtl_artifact.json` with `inputs[]:{path, sha256}` (echo of mas inputs) plus per-output-file sha256 and `lint_clean: true` (fix H-07).
+5. Produce `rtl_artifact.json` with `inputs[]:{path,sha256}` (MAS files consumed), `outputs[]:{path,sha256}` (every emitted `.sv` plus `file_list.f`), and `lint_clean: true` (fix H-07, CR-5).
 6. Hand off `ready-for-verification`; absorb `rtl-needs-fix` bounces.
 7. Escalate `arch-needs-fix` when lint cannot close in 3 iterations — that's almost always an ambiguous MAS, not a coding miss.
 8. Update both per-agent and global fix_iter counters; respect *Escalate-user Protocol* on overflow (fix H-06).
@@ -46,21 +46,21 @@ Upstream: `bba-architect`. Downstream: `bba-guru-verification`.
 
 | Direction | Artifact | Schema |
 |-----------|----------|--------|
-| in  | `designs/<name>/mas/mas.json` + `mas/fsm/*` + `mas/datapath/*` (with `inputs[]` from architect) | `schemas/mas.schema.json` |
+| in  | `designs/<name>/mas/mas.json` + `mas/fsm/*` + `mas/datapath/*` (with `outputs[]` from architect, used for the drift check) | `schemas/mas.schema.json` |
 | out | `designs/<name>/rtl/**/*.sv` | — |
-| out | `designs/<name>/file_list.f` (topologically ordered, leaves first, top last) | — |
-| out | `designs/<name>/rtl_artifact.json` (carries `inputs[]:{path,sha256}` of consumed MAS files) | `schemas/rtl_artifact.schema.json` |
+| out | `designs/<name>/rtl/file_list.f` (topologically ordered, leaves first, top last) | — |
+| out | `designs/<name>/rtl_artifact.json` (carries `inputs[]:{path,sha256}` of consumed MAS files **and** `outputs[]:{path,sha256}` of every emitted `.sv` + `file_list.f`) | `schemas/rtl_artifact.schema.json` |
 
 ## Workflow
 
 1. **Pick up work.** `bb-list-issues --label ready-for-rtl` (or read `designs/<name>/.handoff/ready-for-rtl.md`). Extract the design name and the MAS sha256 hint.
-2. **Drift check.** Recompute sha256 over `mas.json` and listed `fsm/*` / `datapath/*`. If it differs from the handoff record, refuse — raise `arch-needs-fix` "MAS-drift detected" via *Escalate-user Protocol* with old vs new sha (fix H-07).
+2. **Drift check.** Recompute sha256 over each file listed in `mas.json.outputs[]` (the MAS spec docs). If any differs from the stored hash, refuse — raise `arch-needs-fix` "MAS-drift detected" via *Escalate-user Protocol* with old vs new sha (fix H-07, CR-5).
 3. **Read inputs.** `mas.json` first, then `fsm/*` and `datapath/*`. Do not start coding until you can recite each FSM's states and each datapath's ports back to yourself.
 4. **Generate RTL.** Invoke the `bb-rtl-coder` skill with MAS as input → hierarchical SV (one file per module). Output under `designs/<name>/rtl/`.
-5. **Dependency graph + file list.** Call `bb-find-module-deps` to topologically sort modules → `file_list.f` (leaves first, top last). Fallback: `Bash grep -E '^\s*module\b' designs/<name>/rtl/**/*.sv` + manual topo sort (fix L-02).
+5. **Dependency graph + file list.** Call `bb-find-module-deps` to topologically sort modules → `designs/<name>/rtl/file_list.f` (leaves first, top last). Fallback: `Bash grep -E '^\s*module\b' designs/<name>/rtl/**/*.sv` + manual topo sort (fix L-02).
 6. **Lint.** Call `bb-check-lint` (verible-verilog-lint with ASAP7 ruleset). If skill is pending, Bash: `verible-verilog-lint --rules_config=wiki/pdk/asap7-rules.md designs/<name>/rtl/**/*.sv`.
 7. **Lint optimization loop.** If lint reports errors (warnings do not count), feed the report back into `bb-rtl-coder` and regenerate the affected files. `max_iter = 3`.
-8. **Artifact.** Write `rtl_artifact.json` with: module list, per-file sha256, `inputs[]:{path,sha256}` (MAS files consumed), `lint_clean: true`, `iteration_count`, `top_module`. Validate against `schemas/rtl_artifact.schema.json`.
+8. **Artifact.** Write `rtl_artifact.json` with: `modules[]`, `file_list` (path to `rtl/file_list.f`), `outputs[]:{path,sha256}` for every emitted `.sv` and `file_list.f` (compute via Bash `sha256sum`), `inputs[]:{path,sha256}` (MAS files consumed), `lint_clean: true`, `iteration_count`, `top_module`. Validate against `schemas/rtl_artifact.schema.json`.
 9. **Handoff.** `bb-create-issue --label ready-for-verification --artifact designs/<name>/rtl_artifact.json`. Fallback: write `designs/<name>/.handoff/ready-for-verification.md`.
 
 ## Convergence / Failure
@@ -91,7 +91,7 @@ Before opening `ready-for-verification`, verify:
 
 - [ ] `verible-verilog-lint` reports **0 unwaived errors**.
 - [ ] `file_list.f` is topologically correct — every module appears after its dependencies; top module is last.
-- [ ] `rtl_artifact.json` validates against schema **and** sha256 of every listed file matches disk **and** `inputs[]` echoes the upstream MAS sha (drift contract).
+- [ ] `rtl_artifact.json` validates against schema **and** `outputs[]` lists every emitted `.sv` + `file_list.f` with a sha256 matching disk **and** the Step-2 MAS drift check passed against `mas.json.outputs[]`.
 - [ ] No module references a CBB that is not present in `wiki/cbb/` or in this design.
 
 ## Edge Cases
@@ -107,7 +107,7 @@ Before opening `ready-for-verification`, verify:
 
 | Skill | Purpose | Status |
 |-------|---------|--------|
-| `bb-rtl-coder`        | MAS → hierarchical SV       | external, installed |
+| `bb-rtl-coder`        | MAS → hierarchical SV       | Babel-internal, installed |
 | `bb-check-lint`       | verible-verilog-lint         | Babel-internal, installed |
 | `bb-find-module-deps` | topological sort → file_list | Babel-internal, installed |
 | `bb-gate` (domain=rtl) | RTL acceptance gate          | Babel-internal, installed |

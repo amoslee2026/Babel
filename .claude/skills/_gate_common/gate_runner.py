@@ -12,14 +12,18 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Field names below MUST match the inter-stage JSON schemas in .claude/schemas/.
+# Cross-checked against rtl_artifact / test_report / synth_report / pd_report schemas.
+# Coverage policy (CR-6): functional==100, line==100, branch>=95, toggle>=90.
 GATE_CONFIGS = {
     "rtl": {
         "name": "RTL Quality Gate",
-        "required_fields": ["modules", "lint_pass", "file_list_hash"],
+        # rtl_artifact.schema: lint flag is `lint_clean` (bool); file list is `file_list` (path string).
+        "required_fields": ["modules", "lint_clean", "file_list"],
         "checks": {
-            "lint_clean": lambda d: d.get("lint_pass", False),
+            "lint_clean": lambda d: d.get("lint_clean", False) is True,
             "modules_nonempty": lambda d: len(d.get("modules", [])) > 0,
-            "file_list_valid": lambda d: bool(d.get("file_list_hash", "")),
+            "file_list_valid": lambda d: bool(d.get("file_list", "")),
         }
     },
     "test": {
@@ -34,20 +38,27 @@ GATE_CONFIGS = {
     },
     "synth": {
         "name": "Synthesis Quality Gate",
-        "required_fields": ["wns_ns", "area_um2", "cell_count"],
+        # synth_report.schema: top-level worst-corner `wns_ns` plus per-corner `corners[].timing_met`.
+        "required_fields": ["wns_ns", "area_um2", "cell_count", "corners"],
         "checks": {
-            "timing_met": lambda d: d.get("wns_ns", -1) >= 0,
+            # Worst-corner WNS must close AND every signoff corner must meet timing.
+            "timing_met": lambda d: d.get("wns_ns", -1) >= 0
+            and bool(d.get("corners"))
+            and all(c.get("timing_met", False) is True for c in d.get("corners", [])),
             "area_reasonable": lambda d: d.get("area_um2", 0) > 0,
             "cells_exist": lambda d: d.get("cell_count", 0) > 0,
         }
     },
     "pd": {
         "name": "PD Quality Gate",
-        "required_fields": ["drc_clean", "lvs_clean", "wns_ns"],
+        # pd_report.schema: `drc_violations` (int), `lvs_match` (bool), per-corner `timing_corners[]`.
+        "required_fields": ["drc_violations", "lvs_match", "timing_corners"],
         "checks": {
-            "drc_clean": lambda d: d.get("drc_clean", False),
-            "lvs_clean": lambda d: d.get("lvs_clean", False),
-            "timing_met": lambda d: d.get("wns_ns", -1) >= 0,
+            "drc_clean": lambda d: d.get("drc_violations", 1) == 0,
+            "lvs_clean": lambda d: d.get("lvs_match", False) is True,
+            # All signoff corners must meet timing (no flat wns_ns in pd_report).
+            "timing_met": lambda d: bool(d.get("timing_corners"))
+            and all(c.get("timing_met", False) is True for c in d.get("timing_corners", [])),
         }
     }
 }
