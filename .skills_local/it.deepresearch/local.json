@@ -1,6 +1,0 @@
-{
-  "schema": "adaptive-config-v1",
-  "skill": "it.deepresearch",
-  "project": {"name": "Babel"},
-  "overrides": {"output_dir": "/home/lxx/wrk/Babel/research_reports"}
-}
