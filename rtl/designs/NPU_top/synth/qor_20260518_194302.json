@@ -1,0 +1,29 @@
+{
+  "stamp": "20260518_194302",
+  "design_name": "NPU_top",
+  "top_module": "NPU_top",
+  "artifact_path": null,
+  "netlist_path": null,
+  "qor_path": "rtl/designs/NPU_top/synth/qor_20260518_194302.json",
+  "tcl_path": "rtl/designs/NPU_top/synth/yosys_20260518_194302.ys",
+  "log_path": "rtl/designs/NPU_top/synth/yosys_20260518_194302.log",
+  "valid": false,
+  "cell_count": null,
+  "chip_area_um2": null,
+  "wire_count": null,
+  "error": "YOSYS_PARSE_ERROR: Yosys 0.35 does not support multi-dimensional unpacked arrays (logic [A-1:0][B-1:0][C-1:0]). This is valid SystemVerilog (IEEE 1800-2017) but requires yosys >= 0.36 or alternative synthesis tool. Affected file: rtl/M00/src/M00_SystolicArray.sv line 137.",
+  "root_cause": {
+    "file": "rtl/M00/src/M00_SystolicArray.sv",
+    "line": 137,
+    "code": "logic [PE_ROWS-1:0][PE_COLS-1:0][DATA_W_MAX-1:0] pe_weight_reg;",
+    "yosys_version": "0.35",
+    "supported_sv_features": "Limited multi-dimensional array support",
+    "workarounds": [
+      "Upgrade yosys to >= 0.36",
+      "Use Synopsys DC/Cadys Genus for full SV support",
+      "Modify RTL: flatten arrays to single dimension or use packed arrays",
+      "Use verilator --lint-only for verification, then synth with different tool"
+    ]
+  },
+  "tech_lib_used": "/home/lxx/wrk/libs/asap7_reference_design/lib/asap7sc7p5t_AO_LVT_TT_nldm_211120.lib"
+}

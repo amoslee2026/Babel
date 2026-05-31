@@ -20,9 +20,22 @@ def parse_drc_report(report_path: str) -> dict:
 
     content = path.read_text()
 
-    # Count total violations
+    # Fail closed: the DRC report MUST contain a recognizable summary anchor.
+    # Magic's DRC summary always reports an error count (e.g. "0 errors" /
+    # "Total errors: N" / "N error(s)"). If no such anchor exists, the report
+    # is unparseable and must NOT be treated as a clean (0-violation) result.
     count_match = re.search(r'(\d+)\s+error', content, re.IGNORECASE)
-    total_violations = int(count_match.group(1)) if count_match else 0
+    if count_match is None:
+        return {
+            'valid': False,
+            'parse_ok': False,
+            'clean': False,
+            'violations': None,
+            'error': 'DRC_SUMMARY_NOT_FOUND',
+        }
+
+    # Count total violations
+    total_violations = int(count_match.group(1))
 
     # Extract violation types
     violation_types = []
@@ -53,6 +66,7 @@ def parse_drc_report(report_path: str) -> dict:
 
     return {
         'valid': True,
+        'parse_ok': True,
         'clean': clean,
         'violations': total_violations if total_violations else len(violations),
         'violation_types': violation_types,

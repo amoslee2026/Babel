@@ -1,0 +1,77 @@
+{
+  "design_name": "NPU_top",
+  "generated": "2026-05-22T00:42:52.870576",
+  "status": "pd_flow_executed",
+  "flow_stage": "complete",
+  "iteration": 1,
+  "max_iterations": 8,
+  "synthesis_status": {
+    "netlist_sha256": "f1a715fe7a4b45cbd11d4b2e1881452996fa2bd99f4ad2bef257d912fe8c2baa",
+    "netlist_lines": 76731,
+    "wns_pre_pd": 0.0
+  },
+  "floorplan_status": {
+    "success": false,
+    "error": "__init__() got an unexpected keyword argument 'capture_output'"
+  },
+  "placement_status": {
+    "step": "placement",
+    "success": true,
+    "def_path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/placed_20260522_004252.def",
+    "cells_placed": 50,
+    "grid_cols": 4567,
+    "grid_rows": 5481,
+    "placement_method": "grid_placement"
+  },
+  "routing_status": {
+    "success": false,
+    "error": "__init__() got an unexpected keyword argument 'capture_output'"
+  },
+  "drc_status": {
+    "success": false,
+    "error": "unexpected '{' in field name"
+  },
+  "lvs_status": {
+    "success": false,
+    "error": "__init__() got an unexpected keyword argument 'capture_output'"
+  },
+  "timing_status": {
+    "success": false,
+    "error": "__init__() got an unexpected keyword argument 'capture_output'"
+  },
+  "gds_status": {
+    "success": false,
+    "error": "__init__() got an unexpected keyword argument 'capture_output'"
+  },
+  "inputs": [
+    {
+      "path": "/home/lxx/wrk/Babel/rtl/designs/NPU_top/synth/netlist_NPU_top_asap7_final.v",
+      "sha256": "f1a715fe7a4b45cbd11d4b2e1881452996fa2bd99f4ad2bef257d912fe8c2baa",
+      "type": "netlist"
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/mas/mas.json",
+      "sha256": "ff81e0d8d761fa19001ed3c65b7d32a3e797aed775234b7cf3220bbabbbeb97e",
+      "type": "mas"
+    }
+  ],
+  "acceptance_criteria_status": {
+    "drc_zero_violations": false,
+    "lvs_match": false,
+    "wns_ge_zero": false,
+    "gds_exists": false
+  },
+  "blockers": [
+    {
+      "category": "routing",
+      "issue": "QRouter may have failed",
+      "resolution": "Check qrouter log for details"
+    },
+    {
+      "category": "lvs",
+      "issue": "LVS mismatch or incomplete",
+      "resolution": "Ensure proper SPICE extraction from routed layout"
+    }
+  ],
+  "notes": []
+}

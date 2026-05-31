@@ -23,7 +23,7 @@ https://github.com/amoslee2026/Babel
 
 ### 1. AI 原生 Chiplet 设计范式
 
-首个完整开源的"AI Coding Agent 驻动"芯片设计流程，从自然语言需求到 GDSII signoff 全流程由 Agent 自动化完成。打破传统 IC 设计依赖资深工程师手工迭代的方式，用专业化 Agent 代替人力完成设计、验证、综合、物理设计各阶段。
+完整开源的"AI Coding Agent 驱动"芯片设计流程，从自然语言需求到 GDSII signoff 全流程由 Agent 自动化完成。打破传统 IC 设计依赖资深工程师手工迭代的方式，用专业化 Agent 代替人力完成设计、验证、综合、物理设计各阶段。
 
 ### 2. 5-Agent 流水线 + Issue Handoff 协议
 

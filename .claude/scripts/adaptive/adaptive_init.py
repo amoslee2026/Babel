@@ -50,7 +50,11 @@ def main() -> int:
             "last_snapshot_hash": "",
             "status": "initialized"
         }
-        state_file.write_text(json.dumps(state, indent=2))
+        # Atomic write: write to a temp file in the same dir, then replace.
+        # Prevents corrupt JSON if interrupted mid-write (M-6).
+        tmp_file = state_file.with_suffix(state_file.suffix + ".tmp")
+        tmp_file.write_text(json.dumps(state, indent=2))
+        os.replace(tmp_file, state_file)
 
     # Output ready status
     print(json.dumps({

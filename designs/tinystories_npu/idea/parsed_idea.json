@@ -1,0 +1,11 @@
+{
+  "design_name": "tinystories_npu",
+  "protocols": ["jtag", "lpddr4x", "axi4-lite"],
+  "target_freq_mhz": 500,
+  "target_pdk": "asap7",
+  "clock_domains": [{"name": "sysclk", "freq_mhz": 500}],
+  "reset_domains": ["sysrst"],
+  "area_budget_um2": 90000000,
+  "power_budget_mw": 1800,
+  "notes": "PRD targets SF4 (Samsung 4nm); mapped to ASAP7 for RTL implementation flow. Design target: 90mm2 (100mm2 hard limit), 1.8W (2W TDP). Edge NPU for TinyStories 15M LLM inference with 3D stacked DRAM. Existing RTL at designs/tinystories_npu/rtl/ with 17 modules (M00-M16)."
+}

@@ -147,7 +147,11 @@ def synthesize_module(task: dict, timeout: int) -> dict:
     with open(qor_path, 'w') as f:
         json.dump(qor, f, indent=2)
 
-    print(f"[{name}] Completed: cells={qor['cell_count']}, area={qor['chip_area_um2']:.2f}µm²")
+    if qor.get('valid'):
+        print(f"[{name}] Completed: cells={qor['cell_count']}, "
+              f"area={qor['chip_area_um2']:.2f}µm²")
+    else:
+        print(f"[{name}] QoR FAILED: {qor.get('error')}")
 
     return qor
 

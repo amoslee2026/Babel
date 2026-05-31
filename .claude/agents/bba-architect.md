@@ -49,8 +49,15 @@ mapping rules verbatim — do not invent fields, do not omit required fields:
   raw.budgets.area_um2            → area_budget_um2
   raw.budgets.power_mw            → power_budget_mw
 
-For each MAS source file (mas.json itself, fsm/*, datapath/*), append to
-inputs[]: {path, sha256(file-bytes)}. Compute sha256 via Bash `sha256sum`.
+For freshness tracking, populate two hash arrays. The architect has NO Bash —
+compute hashes with the bb-mas helper `scripts/hash_outputs.py` (invoked via the
+`Skill`/bb-mas flow); NEVER fabricate a 64-hex string:
+  - inputs[]:  {path, sha256} for each idea/spec file CONSUMED
+               (designs/<name>/idea/parsed_idea.json, arch_spec/*).
+  - outputs[]: {path, sha256} for each spec doc PRODUCED
+               (PRD.md, arch_spec/*.md, mas/mas.md, mas/fsm/*, mas/datapath/*).
+Downstream RTL recomputes the outputs[] hashes to detect MAS drift, so both
+arrays are required by mas.schema.json.
 
 Output strict JSON; no markdown fences, no comments, no trailing commas.
 Validate against .claude/schemas/mas.schema.json before writing to disk; on
@@ -98,7 +105,7 @@ Upstream: user. Downstream: `bba-guru-rtl`.
 
 ## Core Responsibilities
 
-1. Parse a free-form design idea into structured `designs/<name>/.handoff/parsed_idea.json` and validate against `schemas/idea.schema.json`.
+1. Parse a free-form design idea into structured `designs/<name>/idea/parsed_idea.json` and validate against `schemas/idea.schema.json`.
 2. Drive `bb-prd → bb-arch → bb-mas` to produce PRD, arch_spec, and MAS.
 3. Normalize bb-mas raw output to `mas.schema.json` via the inline post-invoke adapter (policy `IC_ADAPTER` above).
 4. Reuse existing protocols and CBBs from `wiki/` before deriving new ones.
@@ -118,7 +125,7 @@ Upstream: user. Downstream: `bba-guru-rtl`.
 | out | `designs/<name>/ADR/*.md` | — |
 | out | `designs/<name>/.handoff/{ready-for-rtl.md, parsed_idea.json, fix_iter.json, global_fix_iter.json}` | — |
 
-Every MAS file referenced by downstream agents carries `inputs[]: [{path, sha256}]` in the eventual `mas.json` so downstream agents can detect drift (fix H-07).
+Every MAS file referenced by downstream agents carries `inputs[]: [{path, sha256}]` (files consumed) **and** `outputs[]: [{path, sha256}]` (spec docs produced) in the eventual `mas.json`, so downstream agents recompute `outputs[]` to detect drift (fix H-07, CR-5). Both arrays are hashed via `bb-mas scripts/hash_outputs.py` — the architect has no Bash.
 
 ## Workflow
 
@@ -199,13 +206,13 @@ Before opening `ready-for-rtl`, verify and report:
 
 ## Skills You Call
 
-Status meanings: `installed` = present under `.claude/skills/`; `external` = third-party skill installed at user level.
+Status meanings: `installed` = present under `.claude/skills/`; `Babel-internal` = ships with this repo under `.claude/skills/`.
 
 | Skill | Purpose | Status |
 |-------|---------|--------|
-| `bb-prd`                  | parsed_idea → PRD                       | external, installed |
-| `bb-arch`                 | PRD → arch_spec                          | external, installed |
-| `bb-mas`                  | arch → MAS                               | external, installed |
+| `bb-prd`                  | parsed_idea → PRD                       | Babel-internal, installed |
+| `bb-arch`                 | PRD → arch_spec                          | Babel-internal, installed |
+| `bb-mas`                  | arch → MAS (+ hash_outputs.py)           | Babel-internal, installed |
 | `bb-search-protocol`      | reuse `wiki/protocols`                   | Babel-internal, installed |
 | `bb-search-cbb`           | reuse `wiki/cbb`                         | Babel-internal, installed |
 | `bb-get-interface-template` | fetch bus template                     | Babel-internal, installed |
@@ -242,7 +249,7 @@ PASS (中文摘要 + 英文表 — fix L-04):
 - KPIs: <freq>, <area_budget>, <power_budget>
 - 产物文件数: <count> under designs/<name>/
 - mas.json schema: PASS
-- bb-spec-review: <high>HIGH / <med>MEDIUM 残留
+- bb-spec-review: 0 HIGH (gate requires zero) / <med>MEDIUM 残留
 - fix_iter: <per>/3, global_fix_iter: <global>/10
 - Next: ready-for-rtl 已开启 (issue 或 .handoff/ready-for-rtl.md)
 ```

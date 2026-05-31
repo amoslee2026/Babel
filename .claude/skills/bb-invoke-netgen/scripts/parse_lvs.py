@@ -20,11 +20,30 @@ def parse_lvs_report(report_path: str) -> dict:
 
     content = path.read_text()
 
-    # Check for unique match
+    # Check for unique match (Netgen's canonical success verdict line).
     match_unique = bool(re.search(r'Circuits match uniquely', content))
 
-    # Check for mismatch
-    circuits_differ = bool(re.search(r'Circuits differ', content))
+    # Check for mismatch verdict lines. Netgen prints the word "match" in BOTH
+    # success and failure outcomes (e.g. "Circuits do not match"), so verdicts
+    # must be decided by anchored lines, never by an unanchored substring.
+    circuits_differ = bool(
+        re.search(r'Circuits do not match', content, re.IGNORECASE)
+        or re.search(r'Circuits differ', content, re.IGNORECASE)
+        or re.search(r'Netlists do not match', content, re.IGNORECASE)
+    )
+
+    # Fail closed: a valid LVS report MUST contain a recognizable verdict line.
+    # If neither a success nor a mismatch verdict is present, the report is
+    # unparseable and must NOT be reported as a match.
+    if not match_unique and not circuits_differ:
+        return {
+            'valid': False,
+            'parse_ok': False,
+            'match': False,
+            'errors': None,
+            'discrepancies': [],
+            'error': 'LVS_VERDICT_NOT_FOUND',
+        }
 
     # Extract error/discrepancy counts
     error_count = 0
@@ -56,6 +75,7 @@ def parse_lvs_report(report_path: str) -> dict:
 
     return {
         'valid': True,
+        'parse_ok': True,
         'match': match,
         'errors': error_count,
         'net_errors': net_errors,

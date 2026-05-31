@@ -143,17 +143,30 @@ stat
             error = error_lines[0] if error_lines else f"Yosys exit code: {result.returncode}"
 
         # Extract stats from log
+        cells_parsed = False
         for line in log_content.split('\n'):
             if "Number of cells:" in line:
                 try:
                     cell_count = int(line.split(':')[1].strip())
-                except:
+                    cells_parsed = True
+                except (ValueError, IndexError):
                     pass
             if "Number of wires:" in line:
                 try:
                     wire_count = int(line.split(':')[1].strip())
-                except:
+                except (ValueError, IndexError):
                     pass
+
+        # Fail closed: a successful generic synthesis must yield a parseable,
+        # non-zero cell count AND a non-empty netlist file. A clean exit code
+        # with no stats / empty netlist is NOT a pass.
+        netlist_ok = netlist_path.exists() and netlist_path.stat().st_size > 0
+        if error is None and not cells_parsed:
+            error = "STAT_PARSE_FAILED: cell count not found in log"
+        elif error is None and cell_count == 0:
+            error = "ZERO_CELLS"
+        elif error is None and not netlist_ok:
+            error = "NETLIST_MISSING" if not netlist_path.exists() else "NETLIST_EMPTY"
 
         valid = result.returncode == 0 and error is None
 
@@ -215,7 +228,9 @@ def run_parallel_synthesis(rtl_files: list, output_dir: str, timeout: int = 600)
 
     start_time = datetime.now()
 
-    with ProcessPoolExecutor(max_workers=min(idle_cpus, len(modules))) as executor:
+    # max_workers must be >= 1: guard against empty module list or idle_cpus==0
+    # (either would otherwise raise ValueError: max_workers must be greater than 0).
+    with ProcessPoolExecutor(max_workers=max(1, min(idle_cpus, len(modules)))) as executor:
         futures = {
             executor.submit(run_single_synthesis, mod, file, output_dir, timeout): mod
             for mod, file in modules

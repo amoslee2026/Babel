@@ -15,6 +15,7 @@
     "lvs_match":      {"type": "boolean"},
     "timing_corners": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "required": ["corner", "wns_ns", "timing_met"],

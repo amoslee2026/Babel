@@ -12,20 +12,60 @@ from pathlib import Path
 from datetime import datetime
 
 CRITICAL_RULES = [
-    ("NO_INITIAL", r"initial\s+(?!@(posedge|negedge))"),
+    ("NO_INITIAL", r"\binitial\b(?!\s*@\s*\(\s*(?:posedge|negedge))"),
     ("NO_DELAY", r"#\d+"),
-    ("NO_FORCE", r"force\s+"),
-    ("NO_RELEASE", r"release\s+"),
-    ("NO_WAIT", r"wait\s*\("),
+    ("NO_FORCE", r"\bforce\b"),
+    ("NO_RELEASE", r"\brelease\b"),
+    ("NO_WAIT", r"\bwait\s*\("),
 ]
 
-HIGH_RULES = [
-    ("NO_LATCH", r"always_comb.*if.*[^;]*;[^e]*end"),
-]
+
+def strip_comments_and_strings(content: str) -> str:
+    """Remove // line comments, /* */ block comments, and string literals.
+
+    Replaces stripped regions with spaces so the heuristics below cannot match
+    cosmetic occurrences (e.g. `#5` inside a comment) and cause false CRITICALs.
+    """
+    out = []
+    i = 0
+    n = len(content)
+    while i < n:
+        c = content[i]
+        nxt = content[i + 1] if i + 1 < n else ''
+        if c == '/' and nxt == '/':
+            while i < n and content[i] != '\n':
+                out.append(' ')
+                i += 1
+        elif c == '/' and nxt == '*':
+            out.append('  ')
+            i += 2
+            while i < n and not (content[i] == '*' and i + 1 < n and content[i + 1] == '/'):
+                out.append('\n' if content[i] == '\n' else ' ')
+                i += 1
+            out.append('  ')
+            i += 2
+        elif c == '"':
+            out.append(' ')
+            i += 1
+            while i < n and content[i] != '"':
+                if content[i] == '\\' and i + 1 < n:
+                    out.append('  ')
+                    i += 2
+                    continue
+                out.append('\n' if content[i] == '\n' else ' ')
+                i += 1
+            if i < n:
+                out.append(' ')
+                i += 1
+        else:
+            out.append(c)
+            i += 1
+    return ''.join(out)
 
 
 def check_file(filepath):
-    content = filepath.read_text()
+    raw = filepath.read_text()
+    content = strip_comments_and_strings(raw)
     violations = []
 
     for rule_name, pattern in CRITICAL_RULES:
@@ -34,16 +74,6 @@ def check_file(filepath):
             violations.append({
                 "rule": rule_name,
                 "severity": "CRITICAL",
-                "count": len(matches),
-                "file": str(filepath)
-            })
-
-    for rule_name, pattern in HIGH_RULES:
-        matches = re.findall(pattern, content, re.MULTILINE | re.DOTALL)
-        if matches:
-            violations.append({
-                "rule": rule_name,
-                "severity": "HIGH",
                 "count": len(matches),
                 "file": str(filepath)
             })
@@ -69,12 +99,21 @@ def main():
     critical_count = sum(1 for v in all_violations if v["severity"] == "CRITICAL")
     high_count = sum(1 for v in all_violations if v["severity"] == "HIGH")
 
+    # Best-effort, non-blocking note: real latch detection requires the synth
+    # tool (e.g. Yosys); the previous regex heuristic was meaningless and is
+    # intentionally removed so it cannot hard-fail the pipeline.
+    notes = [
+        "Latch inference is NOT checked here; rely on synthesis (Yosys) for "
+        "authoritative combinational-latch detection."
+    ]
+
     report = {
         "timestamp": datetime.now().isoformat(),
         "input_dir": str(input_dir),
         "files_checked": len(sv_files),
         "summary": {"critical": critical_count, "high": high_count},
         "violations": all_violations,
+        "notes": notes,
         "status": "FAIL" if critical_count > 0 else "PASS"
     }
 

@@ -498,6 +498,25 @@ uv run $PROJECT_SCRIPTS/check_req_uniqueness.py --check-deleted
 - [ ] `traceability/requirements_matrix.arch.csv` 生成成功
 - [ ] `check_req_uniqueness.py` 通过
 
+### 5.5 生成 MAS handoff 新鲜度哈希（CR-5）
+
+bba-architect 没有 Bash 工具，无法运行 `sha256sum`。本 skill 提供 `scripts/hash_outputs.py`
+供 architect（经 IC_ADAPTER）填充 `mas.json` 的 `inputs[]`（消费的 idea/arch 文件）与
+`outputs[]`（产出的 PRD/arch_spec/MAS 文档），二者均为 `mas.schema.json` 必填项；下游 RTL
+重算 `outputs[]` 哈希以检测 MAS 漂移。
+
+```bash
+# inputs[]：消费的上游文件
+uv run python scripts/hash_outputs.py --base designs/<name> \
+  designs/<name>/idea/parsed_idea.json designs/<name>/arch_spec/*.md
+# outputs[]：本阶段产出的规格文档
+uv run python scripts/hash_outputs.py --base designs/<name> \
+  designs/<name>/PRD.md designs/<name>/arch_spec/*.md \
+  designs/<name>/mas/mas.md designs/<name>/mas/fsm/* designs/<name>/mas/datapath/*
+```
+
+脚本输出按 path 排序的 `[{path, sha256}]` JSON；缺失文件 → 退出码 1 且**不**伪造哈希（fail-closed）。
+
 ---
 
 ## Chiplet 特定章节
@@ -576,6 +595,7 @@ generated: [ISO 8601 时间戳]
 - `progress_check.sh` — 进度检查
 - `checkpoint_manager.sh` — checkpoint 管理
 - `analyze_spec.sh` — 文档质量分析
+- `hash_outputs.py` — 计算文件 sha256 填充 mas.json `inputs[]`/`outputs[]`（供无 Bash 的 architect 使用，CR-5）
 
 ---
 

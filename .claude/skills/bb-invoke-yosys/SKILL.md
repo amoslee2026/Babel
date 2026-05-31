@@ -17,7 +17,7 @@ user-invocable: true
 3. **LLM检查迭代**: 分析 `synthesis_summary.json`，修复问题并重试
 
 调用者：`bba-guru-synthesis`。
-被调用方：`bb-invoke-abc`（间接，由 yosys 内部 `abc` 命令触发）。
+被调用方：Yosys 内置 `abc` 命令（独立 skill `bb-invoke-abc` 已 **DEPRECATED**，仅 `mapping_effort=high` 等高级调优时才链式调用）。
 禁止使用：Task / Agent / Skill（本 skill 是叶子 skill，不递归调用其他 agent）。
 
 ## Input Args
@@ -26,7 +26,7 @@ user-invocable: true
 |-----|------|----------|------|------|
 | file_list | path | true | — | `file_list.f`，每行一个 RTL 源文件路径 |
 | sdc_path | path | true | — | `constraints/<name>.sdc`（yosys 仅做时序参考） |
-| tech_lib | path | true | — | ASAP7 Liberty |
+| tech_lib | path | false | `libs/asap7/.../asap7sc7p5t.lib` | ASAP7 Liberty（脚本 `--tech-lib` 有默认值，可省略） |
 | top_module | string | true | — | 顶层模块名 |
 | design_name | string | true | — | 用于路径 `designs/<name>/synth_parallel/` |
 | abc_options | string | false | `-g AND,OR,NAND,NOR,XOR` | ABC 优化参数 |
@@ -187,6 +187,7 @@ python3 scripts/run_parallel_synthesis.py \
 - `scripts/render_yosys_tcl.py` — Phase 2（TCL渲染）
 - `scripts/run_parallel_synthesis.py` — Phase 3（并行执行）
 - `scripts/run_yosys.py` — 单模块执行器
+- `scripts/run_synthesis_first_run.py` — 首轮/无库通用综合执行器（被 `run_parallel_synthesis.py` 使用）
 - `scripts/parse_qor.py` — Phase 4（QoR解析）
 - `references/yosys_tcl_template.md` — TCL 模板
 - `references/asap7_libs.md` — ASAP7 库位置
