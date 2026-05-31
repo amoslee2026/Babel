@@ -9,7 +9,8 @@ from pathlib import Path
 REQUIRED_KEYS = ('top_module', 'die_size', 'core_area')
 
 
-def validate_fp_config(config_file: str) -> tuple[dict | None, str | None]:
+def validate_fp_config(config_file):
+    # type: (str) -> tuple  # (config_dict_or_None, error_str_or_None) — 3.6-compatible (no PEP 604)
     """Validate the floorplan config before emitting Magic TCL.
 
     Fail loudly (return an error) rather than producing a TCL that silently

@@ -1,12 +1,34 @@
-// Verilator waiver file for testbench patterns
-// Apply to *_tb.sv and *_tb.v files
-lint_off -rule INITIAL_BLOCK -file "*_tb.sv"  // Allow initial blocks
-lint_off -rule INITIAL_BLOCK -file "*_tb.v"
-lint_off -rule SYSTEM_TASK   -file "*_tb.sv"  // Allow $display, $monitor, $finish
-lint_off -rule SYSTEM_TASK   -file "*_tb.v"
-lint_off -rule DELAY         -file "*_tb.sv"  // Allow delays (#)
-lint_off -rule DELAY         -file "*_tb.v"
-lint_off -rule UNUSEDSIGNAL  -file "*_tb.sv"  // Allow unused stimulus signals
-lint_off -rule UNUSEDSIGNAL  -file "*_tb.v"
-lint_off -rule WIDTH         -file "*_tb.sv"  // Allow wide concatenations
-lint_off -rule WIDTH         -file "*_tb.v"
+# Verible lint waiver file for testbench (*_tb.sv / *_tb.v) sources.
+# Used via:  verible-verilog-lint --waiver_files=tb_waiver.vbl <files>
+#
+# Format (per Verible documentation): one `waive` directive per line.
+#   waive --rule=<rule-name> --location="<regex>"   # waive rule where file path matches the RE2 regex
+#   waive --rule=<rule-name> --regex="<regex>"       # waive lines whose text matches regex
+#   waive --rule=<rule-name> --line=<N>              # waive a single line
+# NOTE: --location is an RE2 REGEX over the file path, NOT a shell glob.
+#   So a testbench match is ".*_tb\.sv" (regex), not "*_tb.sv" (glob).
+# A directive with only --rule (no location/regex/line) waives that rule
+# everywhere; we always scope to the *_tb.* path regex so synthesizable src is
+# unaffected.
+#
+# Intent (ported from the previous Verilator tb waiver):
+#   Testbenches legitimately use verification constructs that the style linter
+#   would otherwise flag. The Verilator version waived INITIAL_BLOCK /
+#   SYSTEM_TASK / DELAY / UNUSEDSIGNAL / WIDTH for *_tb.sv|*_tb.v. The Verible
+#   equivalents below relax the corresponding *style* rules for testbench files
+#   only; functional checks remain active. Only rules that exist in the Verible
+#   catalog are listed (e.g. forbidden-anonymous-structs-unions is NOT a Verible
+#   rule and has been removed).
+
+# Testbench files often share a file with multiple/UVM-style modules, so the
+# module name need not match the filename.
+waive --rule=module-filename --location=".*_tb\.sv"
+waive --rule=module-filename --location=".*_tb\.v"
+
+# Stimulus/assertion lines are frequently long; do not enforce line length in TB.
+waive --rule=line-length --location=".*_tb\.sv"
+waive --rule=line-length --location=".*_tb\.v"
+
+# TB parameter/localparam naming is informal (e.g. CLK_PERIOD, T).
+waive --rule=parameter-name-style --location=".*_tb\.sv"
+waive --rule=parameter-name-style --location=".*_tb\.v"

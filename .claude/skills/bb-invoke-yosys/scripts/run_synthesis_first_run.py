@@ -228,7 +228,9 @@ def run_parallel_synthesis(rtl_files: list, output_dir: str, timeout: int = 600)
 
     start_time = datetime.now()
 
-    with ProcessPoolExecutor(max_workers=min(idle_cpus, len(modules))) as executor:
+    # max_workers must be >= 1: guard against empty module list or idle_cpus==0
+    # (either would otherwise raise ValueError: max_workers must be greater than 0).
+    with ProcessPoolExecutor(max_workers=max(1, min(idle_cpus, len(modules)))) as executor:
         futures = {
             executor.submit(run_single_synthesis, mod, file, output_dir, timeout): mod
             for mod, file in modules

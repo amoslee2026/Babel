@@ -59,7 +59,10 @@ def parse(coverage_dir: str) -> dict:
     line_cov = pct(line_covered, line_total)
     branch_cov = pct(branch_covered, branch_total)
     toggle_cov = pct(toggle_covered, toggle_total)
-    meets_target = (line_cov >= 100.0 and branch_cov >= 100.0 and toggle_cov >= 100.0)
+    # Coverage gate policy (CR-6), consistent with bb-gate test domain + SKILL.md:
+    # line==100, branch>=95, toggle>=90. (functional_coverage is merged in by the
+    # verification agent layer, which parses it from the sim log.)
+    meets_target = (line_cov >= 100.0 and branch_cov >= 95.0 and toggle_cov >= 90.0)
 
     return {
         "valid": True,

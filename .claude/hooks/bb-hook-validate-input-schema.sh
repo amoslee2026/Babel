@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bb-hook-validate-input-schema.sh — v1.3 MVP (BLOCKING)
 #
-# Triggered by UserPromptSubmit when user invokes /bb-guru-* slash command
+# Triggered by UserPromptSubmit when user invokes /bba-guru-* slash command
 # (registered in .claude/settings.json). Also callable directly as:
 #   ./bb-hook-validate-input-schema.sh <agent> <design>
 #
@@ -25,7 +25,7 @@ if ! uv run python -c "import jsonschema" >/dev/null 2>&1; then
 ❌ validate-input-schema BLOCKED: python package 'jsonschema' not importable.
    The upstream-artifact → renderer chain depends on schema validation.
    Fix: `uv add --dev jsonschema` (or `uv pip install jsonschema`).
-   Until fixed, /bb-guru-* slash commands are BLOCKED to prevent
+   Until fixed, /bba-guru-* slash commands are BLOCKED to prevent
    schema-laundered injection (D8-06).
 EOF
   exit 2
@@ -80,7 +80,7 @@ if [ ! -f "$A" ]; then
 - timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 - artifact: $A (MISSING)
 - schema: $S
-- reason: upstream artifact not present; agent must produce it before /bb-guru-* proceeds.
+- reason: upstream artifact not present; agent must produce it before /bba-guru-* proceeds.
 - triggered_by: bb-hook-validate-input-schema (agent=$AGENT)
 EOF
   cat >&2 <<EOF

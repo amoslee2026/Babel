@@ -124,9 +124,12 @@ After synthesis passes:
 
 ### Step 6 — Handoff
 
-Write `synth_report.json` (include `outputs[]:{path,sha256}` for `synth/netlist.v` + `qor.json`, computed via Bash `sha256sum`), validate schema, then:
-- `bb-create-issue --label ready-for-pd`
-- Fallback: `designs/<name>/.handoff/ready-for-pd.md`
+1. **Materialize the canonical top netlist.** Copy the top module's synthesized netlist to `designs/<name>/synth/netlist.v` (the single path `synth_report.outputs[]` and PD consume). The per-module netlists live at `synth_parallel/<module>/netlist.v`; for a single-top design copy that one, for hierarchical synthesis use the elaborated top.
+2. **Aggregate metrics into `synth_report.json`** (do NOT leave schema-required fields blank): populate `wns_ns`/`tns_ns`/`corners[]` from the OpenSTA results, and `cell_count`/`area_um2` from `synth_parallel/*/qor.json`. `cell_count` is schema-required and the synth gate fails if it is 0 — never write a fabricated or zero value.
+3. **Freshness.** Include `inputs[]:{path,sha256}` (rtl_artifact + mas + test_report) and `outputs[]:{path,sha256}` for `synth/netlist.v` + `qor.json`, computed via Bash `sha256sum`.
+4. Validate against `schemas/synth_report.schema.json`, then:
+   - `bb-create-issue --label ready-for-pd`
+   - Fallback: `designs/<name>/.handoff/ready-for-pd.md`
 
 ## Convergence / Failure
 
@@ -156,7 +159,7 @@ Before opening `ready-for-pd`:
 |-------|---------|
 | `bb-create-sdc` | MAS → SDC |
 | `bb-check-cdc` | CDC + RDC |
-| `bb-invoke-yosys` | Parallel synthesis (3-Phase: config → parallel run → LLM analyze) |
+| `bb-invoke-yosys` | Parallel synthesis (5-Phase: config → render → parallel → parse → LLM iterate; this agent drives Phase 1 & Phase 3) |
 | `bb-invoke-opensta` | STA |
 | `bb-gate` (domain=synth) | Acceptance gate |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | Issue protocol |

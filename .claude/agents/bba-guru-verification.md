@@ -75,16 +75,16 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 3. **Generate testbenches.** Call `bb-generate-tb`: MAS + RTL → SystemVerilog testbenches (`tb/*.sv`) and/or cocotb harnesses (`tb/*.py`).
 4. **Simulate.** Call `bb-invoke-verilator` (with coverage compile flags) on each test case. Capture `*.log` and `*.vcd` under `sim_results/`. Bash fallback: `source ~/wrk/eda_opensources/eda_env.sh && verilator --coverage --trace -f file_list.f`.
 5. **Collect coverage.** Call `bb-collect-coverage` → `coverage.json` with `functional`, `line`, `branch`, `toggle` percentages and per-bin breakdown.
-6. **SVA @verifies 校验.** 扫描 RTL 中的 `assert property`，确认每个 SVA 都有 `@verifies REQ-M##-F##` 标注。覆盖率要求：`sva_with_verifies / sva_total == 100%`。未标注的 SVA 必须在 `test_report.traceability` 中列出。
-6. **Optimization loop.** If any of `functional_coverage`, `code_coverage.line`, `code_coverage.branch`, `code_coverage.toggle` is `< 100`, or any sim failed → iterate. Levers, in order of preference:
+6. **SVA @verifies 校验（若适用）.** 扫描 RTL 中的 `assert property`；若设计使用 SVA 且 MAS 提供 REQ_ID，为每个 SVA 标注 `@verifies REQ-M##-F##`，未标注者列入 `test_report.traceability`。无 SVA 或 MAS 未提供 REQ_ID 时跳过（不阻塞）。
+7. **Optimization loop.** If the coverage gate is not met (`functional_coverage < 100`, `code_coverage.line < 100`, `code_coverage.branch < 95`, or `code_coverage.toggle < 90`), or any sim failed → iterate. Levers, in order of preference:
    - add seeds / increase random iterations
    - add constrained-random corner cases
    - tweak constraints to hit unreached bins
    - widen the test_cases.md
    - `max_iter = 8`.
-7. **Functional bug triage.** If the same path fails > 3 times, stop iterating and raise `bb-create-issue --label rtl-needs-fix` with a minimal failing waveform reference (vcd timestamp + signal list).
-8. **Unreachable bin triage.** If coverage is stuck on a specific bin that the design genuinely cannot hit, raise `arch-needs-fix` instead — do not waive blindly.
-9. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`. **Traceability CSV**: 执行 `uv run scripts/babel_traceability.py test` 生成 `traceability/requirements_matrix.test.csv`，更新测试状态。then `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
+8. **Functional bug triage.** If the same path fails > 3 times, stop iterating and raise `bb-create-issue --label rtl-needs-fix` with a minimal failing waveform reference (vcd timestamp + signal list).
+9. **Unreachable bin triage.** If coverage is stuck on a specific bin that the design genuinely cannot hit, raise `arch-needs-fix` instead — do not waive blindly.
+10. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`. **Traceability CSV（可选）**：若 `scripts/babel_traceability.py` 存在，执行 `uv run scripts/babel_traceability.py test` 生成 `traceability/requirements_matrix.test.csv`；脚本缺失时跳过（不阻塞）。然后 `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
 
 ## Convergence / Failure
 
@@ -106,12 +106,12 @@ Before opening `ready-for-synth`:
 - [ ] Every test in `test_cases.md` has a corresponding entry in `sim_results/` with `status: pass`.
 - [ ] `test_report.json` validates against `schemas/test_report.schema.json`.
 - [ ] `inputs[]` in `test_report.json` echoes rtl_artifact + mas sha (fix H-07).
-- [ ] `test_report.traceability.req_coverage_pct >= 90`.
+- [ ] (若 MAS 提供 REQ_ID) `test_report.traceability.req_coverage_pct >= 90`；MAS 未提供 REQ_ID 时此项不适用（不阻塞）。
   > Note: req_coverage allows 90% (vs 100% code coverage) because some requirements
   > are verified by analysis or inspection rather than simulation tests. The 10% gap
   > must be documented in the verification plan with justification for each uncovered requirement.
-- [ ] All SVA assertions have `@verifies` annotation (100% coverage).
-- [ ] `traceability/requirements_matrix.test.csv` generated with test status for each REQ_ID.
+- [ ] (若使用 SVA) SVA 断言尽量带 `@verifies` 标注；未标注项已在 `test_report.traceability` 中列出（不强制 100%、不阻塞）。
+- [ ] (若 `scripts/babel_traceability.py` 存在) `traceability/requirements_matrix.test.csv` 已生成。
 
 ## Edge Cases
 

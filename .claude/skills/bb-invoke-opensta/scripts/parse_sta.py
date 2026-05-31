@@ -97,7 +97,9 @@ def parse_sta_report(log_path: str) -> dict:
         }
 
     worst_wns = min(c['wns_ns'] for c in corners)
-    total_tns = sum(c['tns_ns'] for c in corners)
+    # tns may be absent on a corner whose wns parsed; skip None to avoid a
+    # TypeError that would leave the --out file unwritten (gate keys on wns).
+    total_tns = sum(c['tns_ns'] for c in corners if c['tns_ns'] is not None)
     timing_met = all(c['timing_met'] for c in corners)
 
     return {
