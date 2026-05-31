@@ -15,7 +15,11 @@ def parse(results_path: str) -> dict:
             "category": item.get("category", "unknown"),
         })
     matches.sort(key=lambda x: x["relevance"], reverse=True)
-    return {"matches": matches, "total": len(matches)}
+    status = data.get("status")
+    if not status:
+        status = "found" if matches else "not_found"
+    return {"status": status, "matches": matches, "total": len(matches),
+            "errors": data.get("errors", [])}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

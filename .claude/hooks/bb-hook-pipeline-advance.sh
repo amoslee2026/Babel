@@ -11,6 +11,15 @@
 set -euo pipefail
 . "$(dirname "$0")/lib/common.sh"
 
+# Anchor to project root (D3-04: hooks must not depend on CWD) so that
+# designs/**/.handoff/*.md globs resolve from the project root regardless
+# of the caller's CWD.
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ]; then
+  cd "$CLAUDE_PROJECT_DIR"
+elif command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
+  cd "$(git rev-parse --show-toplevel)"
+fi
+
 label_to_next() {
   case "$1" in
     ready-for-rtl)           echo "/bba-guru-rtl" ;;

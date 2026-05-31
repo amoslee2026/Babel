@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bb-hook-validate-input-schema.sh — v1.3 MVP (BLOCKING)
 #
-# Triggered by UserPromptSubmit when user invokes /bb-guru-* slash command
+# Triggered by UserPromptSubmit when user invokes /bba-guru-* slash command
 # (registered in .claude/settings.json). Also callable directly as:
 #   ./bb-hook-validate-input-schema.sh <agent> <design>
 #
@@ -25,7 +25,7 @@ if ! uv run python -c "import jsonschema" >/dev/null 2>&1; then
 ❌ validate-input-schema BLOCKED: python package 'jsonschema' not importable.
    The upstream-artifact → renderer chain depends on schema validation.
    Fix: `uv add --dev jsonschema` (or `uv pip install jsonschema`).
-   Until fixed, /bb-guru-* slash commands are BLOCKED to prevent
+   Until fixed, /bba-guru-* slash commands are BLOCKED to prevent
    schema-laundered injection (D8-06).
 EOF
   exit 2
@@ -40,7 +40,7 @@ if [ -z "$AGENT" ] || [ -z "$DESIGN" ]; then
   if [ -n "${INPUT:-}" ]; then
     PROMPT="$(printf '%s' "$INPUT" | python3 -c \
       'import sys,json; d=json.load(sys.stdin); print(d.get("prompt",""))' 2>/dev/null || echo "")"
-    AGENT="$(printf '%s' "$PROMPT" | sed -nE 's|^/(bb-guru-[a-z]+)\b.*|\1|p')"
+    AGENT="$(printf '%s' "$PROMPT" | sed -nE 's|^/(bba-guru-[a-z-]+)\b.*|\1|p')"
     DESIGN="$(printf '%s' "$PROMPT" | sed -nE 's|.*designs/([a-zA-Z0-9_-]+).*|\1|p')"
   fi
 fi
@@ -48,25 +48,25 @@ fi
 [ -z "$DESIGN" ] && exit 0
 
 case "$AGENT" in
-  bb-guru-rtl|bb-guru-verification|bb-guru-synthesis|bb-guru-pd) ;;
+  bba-guru-rtl|bba-guru-verification|bba-guru-synthesis|bba-guru-pd) ;;
   *) exit 0 ;;
 esac
 
 declare -A ART SCHEMA UPSTREAM
-ART["bb-guru-rtl"]="designs/$DESIGN/mas/mas.json"
-ART["bb-guru-verification"]="designs/$DESIGN/rtl_artifact.json"
-ART["bb-guru-synthesis"]="designs/$DESIGN/test_report.json"
-ART["bb-guru-pd"]="designs/$DESIGN/synth_report.json"
+ART["bba-guru-rtl"]="designs/$DESIGN/mas/mas.json"
+ART["bba-guru-verification"]="designs/$DESIGN/rtl_artifact.json"
+ART["bba-guru-synthesis"]="designs/$DESIGN/test_report.json"
+ART["bba-guru-pd"]="designs/$DESIGN/synth_report.json"
 
-SCHEMA["bb-guru-rtl"]=".claude/schemas/mas.schema.json"
-SCHEMA["bb-guru-verification"]=".claude/schemas/rtl_artifact.schema.json"
-SCHEMA["bb-guru-synthesis"]=".claude/schemas/test_report.schema.json"
-SCHEMA["bb-guru-pd"]=".claude/schemas/synth_report.schema.json"
+SCHEMA["bba-guru-rtl"]=".claude/schemas/mas.schema.json"
+SCHEMA["bba-guru-verification"]=".claude/schemas/rtl_artifact.schema.json"
+SCHEMA["bba-guru-synthesis"]=".claude/schemas/test_report.schema.json"
+SCHEMA["bba-guru-pd"]=".claude/schemas/synth_report.schema.json"
 
-UPSTREAM["bb-guru-rtl"]="arch"
-UPSTREAM["bb-guru-verification"]="rtl"
-UPSTREAM["bb-guru-synthesis"]="rtl"
-UPSTREAM["bb-guru-pd"]="synth"
+UPSTREAM["bba-guru-rtl"]="arch"
+UPSTREAM["bba-guru-verification"]="rtl"
+UPSTREAM["bba-guru-synthesis"]="rtl"
+UPSTREAM["bba-guru-pd"]="synth"
 
 A="${ART[$AGENT]}"
 S="${SCHEMA[$AGENT]}"
@@ -80,7 +80,7 @@ if [ ! -f "$A" ]; then
 - timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 - artifact: $A (MISSING)
 - schema: $S
-- reason: upstream artifact not present; agent must produce it before /bb-guru-* proceeds.
+- reason: upstream artifact not present; agent must produce it before /bba-guru-* proceeds.
 - triggered_by: bb-hook-validate-input-schema (agent=$AGENT)
 EOF
   cat >&2 <<EOF

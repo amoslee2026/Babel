@@ -26,21 +26,25 @@ def parse_corners(log_content: str) -> list:
         tns = _extract_value(content, r'tns\s+([-\d.]+)')
         critical_path = _extract_critical_path(content)
 
+        # Fail closed: if the worst-slack value could not be parsed for this
+        # corner, the corner is invalid and must NOT be reported as met.
+        parse_ok = wns is not None
         corners.append({
             'corner': corner_name,
             'wns_ns': wns,
             'tns_ns': tns,
             'critical_path': critical_path,
-            'timing_met': wns >= 0.0,
+            'parse_ok': parse_ok,
+            'timing_met': parse_ok and wns >= 0.0,
         })
 
     return corners
 
 
-def _extract_value(text: str, pattern: str) -> float:
-    """Extract a float timing value from text."""
+def _extract_value(text: str, pattern: str):
+    """Extract a float timing value from text, or None if not found."""
     match = re.search(pattern, text)
-    return float(match.group(1)) if match else 0.0
+    return float(match.group(1)) if match else None
 
 
 def _extract_critical_path(text: str) -> str:
@@ -68,20 +72,39 @@ def parse_sta_report(log_path: str) -> dict:
         # Fallback: single-corner report without markers
         wns = _extract_value(content, r'worst slack\s+([-\d.]+)')
         tns = _extract_value(content, r'tns\s+([-\d.]+)')
+        parse_ok = wns is not None
         corners = [{
             'corner': 'default',
             'wns_ns': wns,
             'tns_ns': tns,
             'critical_path': _extract_critical_path(content),
-            'timing_met': wns >= 0.0,
+            'parse_ok': parse_ok,
+            'timing_met': parse_ok and wns >= 0.0,
         }]
 
+    # Fail closed: if any corner's slack could not be parsed, the timing
+    # report is untrustworthy. Do NOT emit numeric metrics that a >=0 gate
+    # would treat as "timing met".
+    if any(not c.get('parse_ok') for c in corners):
+        return {
+            'valid': False,
+            'parse_ok': False,
+            'timing_met': False,
+            'wns_ns': None,
+            'tns_ns': None,
+            'corners': corners,
+            'error': 'TIMING_PARSE_FAILED',
+        }
+
     worst_wns = min(c['wns_ns'] for c in corners)
-    total_tns = sum(c['tns_ns'] for c in corners)
+    # tns may be absent on a corner whose wns parsed; skip None to avoid a
+    # TypeError that would leave the --out file unwritten (gate keys on wns).
+    total_tns = sum(c['tns_ns'] for c in corners if c['tns_ns'] is not None)
     timing_met = all(c['timing_met'] for c in corners)
 
     return {
         'valid': True,
+        'parse_ok': True,
         'wns_ns': worst_wns,
         'tns_ns': total_tns,
         'timing_met': timing_met,

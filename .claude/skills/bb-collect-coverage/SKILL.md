@@ -37,7 +37,9 @@ user-invocable: true
 | `log_path` | `designs/<name>/sim_results/cov_<stamp>.log` |
 | `functional_coverage` | float（0..100） |
 | `code_coverage` | `{line: float, branch: float, toggle: float}` (NESTED, fix C-01) |
-| `meets_target` | bool（functional+code 三项均 ≥ target_pct） |
+| `meets_target` | bool（`functional == 100` AND `line == 100` AND `branch >= 95` AND `toggle >= 90`，与 test gate 一致） |
+| `tests` | `[{name, status, log}]`（test_report.schema 必填；逐用例结果） |
+| `iteration_count` | int 0..8（test_report.schema 必填） |
 | `uncovered_bins` | `[{group, bin, hits}]` |
 | `valid` | bool |
 
@@ -64,7 +66,7 @@ verilator_coverage --annotate designs/<name>/sim_results/annotate/ <coverage_dat
 - `meets_target = functional_coverage >= target_pct AND code_coverage.line >= target_pct AND code_coverage.branch >= 95 AND code_coverage.toggle >= 90`
   - 100% branch/toggle coverage is often unreachable due to defensive error-handling code. Targets of 95%/90% allow for documented unreachable bins while maintaining high quality.
 - 写 `coverage.json`（含 `inputs[]:{path,sha256}` 引用 sim_log + rtl_artifact.json）
-- 同时**生成 `test_report.json`**，遵循 `.claude/schemas/test_report.schema.json` 嵌套结构（fix C-01）
+- 同时**生成 `test_report.json`**，遵循 `.claude/schemas/test_report.schema.json` 嵌套结构（fix C-01）；必须填齐 schema required 字段：`functional_coverage`、`code_coverage{line,branch,toggle}`、`tests[]:{name,status,log}`（逐用例结果，由 verification 汇总）、`inputs[]:{path,sha256}`、`iteration_count`（fix M-03）
 
 ### Phase 4 — return
 

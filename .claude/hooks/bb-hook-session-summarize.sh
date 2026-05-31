@@ -16,6 +16,7 @@ elif command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 
 fi
 
 STAMP="$(stamp_now)"
+# Single canonical directory for write + archive + retention (M-5).
 OUT_DIR="${BB_SESSION_SUMMARY_DIR:-.claude/session_summaries}"
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/session_${STAMP}.md"
@@ -24,7 +25,7 @@ OUT="$OUT_DIR/session_${STAMP}.md"
   echo "# Session Summary — $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
   echo
   echo "## Designs touched (incremental, M-03)"
-  LAST_RUN=".claude/session_summaries/.last_run"
+  LAST_RUN="$OUT_DIR/.last_run"
   shopt -s nullglob globstar
   if [ -f "$LAST_RUN" ]; then
     for d in designs/*/; do
@@ -67,14 +68,15 @@ OUT="$OUT_DIR/session_${STAMP}.md"
 
   echo
   echo "## Next steps"
-  echo "- Run \`bash .claude/hooks/pipeline-advance.sh\` to see suggested next agents."
+  echo "- Run \`bash .claude/hooks/bb-hook-pipeline-advance.sh\` to see suggested next agents."
 } > "$OUT"
 
 echo "[session-summarize] wrote $OUT" >&2
 
 # Cleanup: keep only last 30 session summaries
+# Operate on the SAME canonical directory used for writing (M-5).
 # nullglob reset (B17): isolate per loop
-SUMMARY_DIR="$(dirname "$0")/../session_summaries"
+SUMMARY_DIR="$OUT_DIR"
 if [ -d "$SUMMARY_DIR" ]; then
   shopt -s nullglob
   mapfile -t ALL < <(ls -1t "$SUMMARY_DIR"/session_*.md 2>/dev/null)
@@ -90,11 +92,15 @@ if [ -d "$SUMMARY_DIR" ]; then
   fi
 fi
 
-# Retention: auto-delete archived sessions older than 14 days (C14/D2-04)
+# Retention: archived sessions older than 14 days are MOVED (not deleted) to
+# the project temp/deleted/ dir for recoverability (M-1; project rule).
+# CWD is already anchored to the project root at the top of this script.
 ARCHIVE_DIR="${SUMMARY_DIR}/../.review/archived"
+DELETED_DIR="temp/deleted"
 if [ -d "$ARCHIVE_DIR" ]; then
-  find "$ARCHIVE_DIR" -type f -name 'session_*.md' -mtime +14 -delete 2>/dev/null \
-    || echo "  [retention] cleanup of $ARCHIVE_DIR failed" >&2
+  mkdir -p "$DELETED_DIR"
+  find "$ARCHIVE_DIR" -type f -name 'session_*.md' -mtime +14 -exec mv -t "$DELETED_DIR/" {} + \
+    || echo "  [retention] move of aged $ARCHIVE_DIR sessions to $DELETED_DIR failed" >&2
 fi
 
 exit 0

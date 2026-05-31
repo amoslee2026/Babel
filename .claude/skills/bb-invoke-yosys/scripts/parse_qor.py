@@ -13,31 +13,31 @@ import sys
 from pathlib import Path
 
 
-def parse_chip_area(log_content: str, top_module: str) -> float:
-    """Extract chip area from stat output."""
+def parse_chip_area(log_content: str, top_module: str):
+    """Extract chip area from stat output. Returns None if not found."""
     pattern = rf"Chip area for module {top_module}:\s+([\d.]+)"
     match = re.search(pattern, log_content)
     if match:
         return float(match.group(1))
-    return 0.0
+    return None
 
 
-def parse_cell_count(log_content: str) -> int:
-    """Extract cell count from stat output."""
+def parse_cell_count(log_content: str):
+    """Extract cell count from stat output. Returns None if not found."""
     pattern = r"Number of cells:\s+(\d+)"
     match = re.search(pattern, log_content)
     if match:
         return int(match.group(1))
-    return 0
+    return None
 
 
-def parse_wire_count(log_content: str) -> int:
-    """Extract wire count from stat output."""
+def parse_wire_count(log_content: str):
+    """Extract wire count from stat output. Returns None if not found."""
     pattern = r"Number of wires:\s+(\d+)"
     match = re.search(pattern, log_content)
     if match:
         return int(match.group(1))
-    return 0
+    return None
 
 
 def parse_errors(log_content: str) -> list:
@@ -92,18 +92,44 @@ def parse_qor(log_path: str, netlist_path: str, top_module: str) -> dict:
     errors = parse_errors(log_content)
     warnings = parse_warnings(log_content)
 
-    # Validate netlist exists
-    netlist_valid = os.path.exists(netlist_path)
+    # Postcondition: a successful synthesis MUST produce a non-empty netlist
+    # file. Existence + non-zero size is required before trusting any QoR.
+    netlist_exists = os.path.exists(netlist_path)
+    netlist_size = os.path.getsize(netlist_path) if netlist_exists else 0
+    netlist_valid = netlist_exists and netlist_size > 0
+
+    # Fail closed on each independent failure mode:
+    #  - netlist missing or empty            -> not a real success
+    #  - QoR (area/cells) could not be parsed -> metrics untrustworthy
+    #  - cell_count == 0 on a "success"       -> empty/optimized-away design
+    #  - any ERROR in the log
+    qor_parse_ok = chip_area is not None and cell_count is not None
+    cells_ok = cell_count is not None and cell_count > 0
+
+    if not netlist_valid:
+        fail_reason = 'NETLIST_MISSING' if not netlist_exists else 'NETLIST_EMPTY'
+    elif not qor_parse_ok:
+        fail_reason = 'QOR_PARSE_FAILED'
+    elif not cells_ok:
+        fail_reason = 'ZERO_CELLS'
+    elif errors:
+        fail_reason = errors[0]
+    else:
+        fail_reason = None
+
+    valid = fail_reason is None
 
     return {
-        'valid': netlist_valid and not errors,
+        'valid': valid,
+        'parse_ok': qor_parse_ok,
         'netlist_path': netlist_path,
+        'netlist_size': netlist_size,
         'chip_area_um2': chip_area,
         'cell_count': cell_count,
         'wire_count': wire_count,
         'errors': errors,
         'warnings': warnings,
-        'error': None if not errors else errors[0]
+        'error': fail_reason,
     }
 
 

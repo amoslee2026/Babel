@@ -19,7 +19,8 @@ user-invocable: true
 ## Global Paths
 
 ```
-PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
+# Skill-local scripts (this skill's own scripts/ dir), consistent with all other bb-* skills.
+PROJECT_SCRIPTS   = .claude/skills/bb-create-sdc/scripts
 ```
 
 ## Input Args
@@ -95,7 +96,7 @@ set_multicycle_path 2 -setup -from [...]  ;# from MAS.path_exceptions
 1. 读取 MAS.md §7 时序约束
 2. 从 `traceability/requirements_matrix.arch.csv` 查找关联 REQ_ID
 3. 生成 SDC 文件，每个约束前添加 `@requirement` + `@spec_ref` 注释
-4. 计算 `@spec_hash`（使用 `$PROJECT_SCRIPTS/compute_spec_hash.py`）
+4. 计算 `@spec_hash`（使用 `.claude/skills/bb-rtl-coder/scripts/compute_spec_hash.py`，该 helper 归 bb-rtl-coder 所有）
 5. 生成 `traceability/requirements_matrix.sdc.csv`
 
 ### CSV 输出

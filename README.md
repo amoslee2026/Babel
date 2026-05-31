@@ -1,4 +1,4 @@
-# Babel v1.2
+# Babel v1.3
 
 这是一个开源的AI原生Chiplet设计流程，基于开源EDA工具链和AI Coding Agent
 

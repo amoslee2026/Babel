@@ -23,8 +23,10 @@ arguments:
 
 # bb-gate
 
-统一质量门禁，参数化替代原 4 个独立 skill：
-`bb-gate-rtl-quality`、`bb-gate-synth-quality`、`bb-gate-test-quality`、`bb-gate-pd-quality`。
+统一质量门禁，参数化的单一 skill（取代早期设想的 4 个独立 skill
+`bb-gate-rtl-quality` / `bb-gate-synth-quality` / `bb-gate-test-quality` / `bb-gate-pd-quality`，
+这些独立 skill 从未落地，调用方一律用 `bb-gate <domain>`）。
+所有 domain 的判定字段名严格对齐 `.claude/schemas/*.schema.json`。
 
 ## 职责
 
@@ -40,9 +42,9 @@ arguments:
 
 | 项 | 条件 |
 |----|------|
-| lint_clean | verible 0 error，无未 waive |
+| lint_clean | verible 0 error，无未 waive (`lint_clean == true`) |
 | modules_nonempty | `modules[]` 长度 > 0 |
-| file_list_valid | `file_list_hash` 非空 |
+| file_list_valid | `file_list` 非空 |
 
 ### domain=test
 
@@ -57,7 +59,7 @@ arguments:
 
 | 项 | 条件 |
 |----|------|
-| timing_met | `wns_ns >= 0` |
+| timing_met | `wns_ns >= 0` **且**所有 `corners[].timing_met == true` |
 | area_reasonable | `area_um2 > 0` |
 | cells_exist | `cell_count > 0` |
 
@@ -65,9 +67,9 @@ arguments:
 
 | 项 | 条件 |
 |----|------|
-| drc_clean | `drc_clean == true` |
-| lvs_clean | `lvs_clean == true` (或 `lvs_match`) |
-| timing_met | 所有 signoff corners `wns_ns >= 0` |
+| drc_clean | `drc_violations == 0` |
+| lvs_clean | `lvs_match == true` |
+| timing_met | 所有 `timing_corners[].timing_met == true` |
 
 Signoff corner 列表见 [`references/asap7_corner_signoff_list.md`](references/asap7_corner_signoff_list.md)。
 
