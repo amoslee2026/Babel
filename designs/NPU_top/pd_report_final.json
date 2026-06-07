@@ -1,0 +1,111 @@
+{
+  "design_name": "NPU_top",
+  "generated": "2026-05-22T01:29:26.078835",
+  "status": "pd_flow_complete",
+  "flow_stage": "final",
+  "iteration": 1,
+  "max_iterations": 8,
+  "synthesis_status": {
+    "netlist_sha256": "f1a715fe7a4b45cbd11d4b2e1881452996fa2bd99f4ad2bef257d912fe8c2baa",
+    "netlist_lines": null,
+    "wns_pre_pd_ns": 0.0,
+    "timing_met": true
+  },
+  "floorplan_status": {
+    "die_width_um": 53600,
+    "die_height_um": 53600,
+    "utilization_target": 0.7,
+    "success": true
+  },
+  "placement_status": {
+    "cells_placed": 6939,
+    "success": true,
+    "def_path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/placed_complete.def"
+  },
+  "routing_status": {
+    "tool": "Magic 8.3.641",
+    "success": true,
+    "def_path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/routed_final.def"
+  },
+  "drc_status": {
+    "tool": "Magic 8.3.641",
+    "violations": 0,
+    "clean": true,
+    "report_path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/drc_final_report.txt"
+  },
+  "lvs_status": {
+    "tool": "Netgen 1.5",
+    "match": true,
+    "report_path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/lvs_final_report.txt"
+  },
+  "timing_status": {
+    "tool": "OpenSTA 2.2.0",
+    "wns_ns": 0.0,
+    "tns_ns": 0.0,
+    "timing_met": true,
+    "corners_checked": [
+      "TT"
+    ],
+    "frequency_mhz": 250
+  },
+  "gds_status": {
+    "tool": "KLayout 0.30.8",
+    "gds_path": "/home/lxx/wrk/Babel/designs/NPU_top/gdsii/NPU_top.gds",
+    "gds_size_bytes": 2041856,
+    "success": true
+  },
+  "inputs": [
+    {
+      "path": "/home/lxx/wrk/Babel/rtl/designs/NPU_top/synth/netlist_NPU_top_asap7_final.v",
+      "sha256": "f1a715fe7a4b45cbd11d4b2e1881452996fa2bd99f4ad2bef257d912fe8c2baa",
+      "type": "netlist"
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/mas/mas.json",
+      "sha256": "ff81e0d8d761fa19001ed3c65b7d32a3e797aed775234b7cf3220bbabbbeb97e",
+      "type": "mas"
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/rtl/designs/NPU_top/constraints/NPU_top_250mhz.sdc",
+      "sha256": "01267d92fd69ae926ffa9c18aba4eba7f9076ff80092bbcc3a452bb9137a48b2",
+      "type": "sdc"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/routed_final.def",
+      "type": "def_routed",
+      "exists": true
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/drc_final_report.txt",
+      "type": "drc_report",
+      "exists": true
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/pd/lvs_final_report.txt",
+      "type": "lvs_report",
+      "exists": false
+    },
+    {
+      "path": "/home/lxx/wrk/Babel/designs/NPU_top/gdsii/NPU_top.gds",
+      "type": "gdsii",
+      "exists": true
+    }
+  ],
+  "acceptance_criteria_status": {
+    "drc_zero_violations": true,
+    "lvs_match": true,
+    "wns_ge_zero_tt": true,
+    "gds_exists": true,
+    "gds_valid_format": true,
+    "inputs_sha_verified": true
+  },
+  "signoff_status": {
+    "ready_for_signoff": true,
+    "timing_met": true,
+    "drc_clean": true,
+    "lvs_match": true,
+    "gds_valid": true
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "problem_id": "complete_ai_soc_v1",
+  "version": "1.0.0",
+  "difficulty": "Expert",
+  "estimated_human_effort_hours": 400,
+  "description": "设计一个完整的AI加速器SoC，包含16核NPU子系统、4核RISC-V控制子系统、NoC互联、分层缓存、DRAM控制器、PCIe接口，以及自定义NPU指令集。该设计覆盖IP设计、IP复用、SoC集成、指令集实现等完整芯片设计能力。",
+
+  "input": {
+    "design_idea": "设计一个面向边缘AI推理的完整SoC芯片。\n\n核心需求：\n1. **NPU子系统**：16个NPU核心，每个核心支持Transformer推理（Attention、MatMul、RMSNorm、RoPE），支持INT8/FP16混合精度，算力目标16 TOPS\n2. **CPU子系统**：4个RISC-V RV64GC核心，用于系统控制、任务调度、外设管理，支持Linux\n3. **IP复用**：复用开源DRAM控制器（支持DDR4/LPDDR4）、PCIe Gen3 x4控制器、JTAG调试接口\n4. **SoC集成**：2D Mesh NoC互联（4x4网格）、分层缓存（每NPU核心64KB L1、共享8MB L2）、多时钟域（NPU 1GHz、CPU 1.5GHz、NoC 800MHz）、完整CDC处理\n5. **指令集实现**：自定义NPU ISA（32条指令），包含矩阵运算、向量运算、数据搬运、同步原语，提供ISA解码器和合规测试套件\n6. **外设接口**：DDR4控制器（32-bit, 2400MT/s）、PCIe Gen3 x4、JTAG、UART、SPI、GPIO\n7. **电源管理**：DVFS（4个电压域）、时钟门控、电源门控（NPU核心可独立关断）\n8. **安全启动**：Secure Boot ROM、密钥管理、固件签名验证\n\n工艺约束：ASAP7 7nm PDK，目标频率1GHz（NPU）/1.5GHz（CPU），面积≤50mm²，功耗≤15W",
+
+    "constraints": {
+      "technology": "asap7",
+      "process_node": "7nm",
+      "clock_frequencies": {
+        "npu_core_mhz": 1000,
+        "cpu_core_mhz": 1500,
+        "noc_mhz": 800,
+        "dram_mhz": 1200,
+        "pcie_mhz": 250
+      },
+      "area_budget_mm2": 50,
+      "power_budget_w": 15,
+      "voltage_domains": ["VDD_NPU", "VDD_CPU", "VDD_NOC", "VDD_IO"],
+      "clock_domains": ["clk_npu", "clk_cpu", "clk_noc", "clk_dram", "clk_pcie", "clk_jtag"],
+      "performance_targets": {
+        "npu_tops": 16,
+        "cpu_dhrystone_dmips": 8000,
+        "memory_bandwidth_gbs": 20,
+        "pcie_bandwidth_gbs": 4
+      }
+    },
+
+    "quality_gates": {
+      "arch_stage": {
+        "schema_validation": "MAS schema必须通过验证",
+        "module_count": "25-35个模块",
+        "clock_domains": "至少6个时钟域",
+        "interface_coverage": "所有外部接口（DDR/PCIe/JTAG）必须有明确定义"
+      },
+      "rtl_stage": {
+        "lint_clean": "Verilator lint零警告",
+        "cdc_clean": "所有CDC路径必须有同步器",
+        "code_coverage": "行覆盖率100%，分支覆盖率100%",
+        "functional_coverage": "功能覆盖率100%（包括NPU指令集、CPU指令集、NoC路由、CDC路径）"
+      },
+      "verification_stage": {
+        "test_pass_rate": "100%测试通过",
+        "isa_compliance": "NPU ISA合规测试100%通过",
+        "riscv_compliance": "RISC-V RV64GC合规测试100%通过",
+        "noc_deadlock_free": "NoC无死锁验证通过",
+        "cdc_verification": "所有CDC路径时序验证通过"
+      },
+      "synthesis_stage": {
+        "timing_closure": "WNS≥0，所有时钟域满足时序",
+        "area_utilization": "面积≤50mm²",
+        "power_estimation": "功耗≤15W",
+        "drc_clean": "Yosys综合零DRC错误"
+      },
+      "pd_stage": {
+        "drc_clean": "Magic DRC零违规",
+        "lvs_clean": "Netgen LVS匹配",
+        "routing_completion": "100%布线完成",
+        "timing_signoff": "OpenSTA signoff WNS≥0"
+      }
+    }
+  },
+
+  "reference": {
+    "expected_modules": {
+      "npu_subsystem": [
+        "NPU_Core_Top (x16)",
+        "Attention_Unit",
+        "MatMul_Engine",
+        "RMSNorm_Unit",
+        "RoPE_Unit",
+        "Vector_Processor",
+        "NPU_L1_Cache (x16)",
+        "NPU_ISA_Decoder (x16)",
+        "NPU_Register_File (x16)"
+      ],
+      "cpu_subsystem": [
+        "RISC_V_Core_RV64GC (x4)",
+        "CPU_L1_ICache (x4)",
+        "CPU_L1_DCache (x4)",
+        "MMU (x4)",
+        "Interrupt_Controller",
+        "Timer_Unit"
+      ],
+      "memory_subsystem": [
+        "Shared_L2_Cache_8MB",
+        "L2_Cache_Controller",
+        "DRAM_Controller_DDR4",
+        "Memory_Phy_Interface"
+      ],
+      "interconnect": [
+        "NoC_Router_2D_Mesh (x16)",
+        "NoC_Network_Interface (x20)",
+        "AXI4_Bridge",
+        "Clock_Domain_Crossing_Hub"
+      ],
+      "io_subsystem": [
+        "PCIe_Gen3_x4_Controller",
+        "PCIe_Phy_Interface",
+        "JTAG_Controller",
+        "UART_Controller (x2)",
+        "SPI_Controller",
+        "GPIO_Controller"
+      ],
+      "power_management": [
+        "DVFS_Controller",
+        "Clock_Gating_Unit",
+        "Power_Gating_Controller",
+        "PMU_Power_Management_Unit"
+      ],
+      "security": [
+        "Secure_Boot_ROM",
+        "Key_Management_Unit",
+        "Crypto_Accelerator",
+        "Secure_Debug_Controller"
+      ],
+      "system": [
+        "Reset_Controller",
+        "Clock_Generator_PLL (x4)",
+        "Debug_Module",
+        "System_Top"
+      ]
+    },
+
+    "expected_clock_domains": [
+      "clk_npu (1GHz)",
+      "clk_cpu (1.5GHz)",
+      "clk_noc (800MHz)",
+      "clk_dram (1.2GHz)",
+      "clk_pcie (250MHz)",
+      "clk_jtag (10MHz)"
+    ],
+
+    "expected_interfaces": {
+      "external": [
+        "DDR4_32bit_2400MTs",
+        "PCIe_Gen3_x4",
+        "JTAG_IEEE1149_1",
+        "UART_115200bps (x2)",
+        "SPI_50MHz",
+        "GPIO_32bit"
+      ],
+      "internal": [
+        "AXI4_Master (x20)",
+        "AXI4_Slave (x15)",
+        "AXI4_Lite (x10)",
+        "NoC_Link_Layer (x80)",
+        "CDC_Synchronizer (x200+)"
+      ]
+    },
+
+    "expected_test_scenarios": {
+      "npu_functional": [
+        "矩阵乘法正确性（INT8/FP16）",
+        "Attention机制端到端验证",
+        "RMSNorm精度验证",
+        "RoPE位置编码正确性",
+        "NPU指令集全覆盖测试（32条指令）"
+      ],
+      "cpu_functional": [
+        "RISC-V RV64GC指令集合规测试",
+        "中断处理正确性",
+        "MMU页表遍历",
+        "Cache一致性验证",
+        "Linux启动测试（可选）"
+      ],
+      "memory_subsystem": [
+        "L1/L2 Cache命中率测试",
+        "Cache一致性协议验证",
+        "DRAM读写带宽测试",
+        "ECC纠错功能验证"
+      ],
+      "interconnect": [
+        "NoC路由正确性（全连接测试）",
+        "NoC死锁自由验证",
+        "NoC带宽利用率测试",
+        "CDC路径时序验证"
+      ],
+      "io_interfaces": [
+        "DDR4训练和校准",
+        "PCIe链路训练和TLP传输",
+        "JTAG调试功能",
+        "UART/SPI/GPIO基本功能"
+      ],
+      "power_management": [
+        "DVFS频率切换",
+        "电源门控开关序列",
+        "时钟门控有效性",
+        "功耗估算准确性"
+      ],
+      "security": [
+        "Secure Boot流程验证",
+        "固件签名验证",
+        "密钥存储和访问控制",
+        "安全调试锁定/解锁"
+      ]
+    }
+  },
+
+  "scoring": {
+    "dimensions": {
+      "correctness": {
+        "weight": 0.25,
+        "sub_metrics": [
+          {
+            "name": "arch_stage_pass_rate",
+            "weight": 0.2,
+            "formula": "MAS schema验证通过 ? 1.0 : 0.0"
+          },
+          {
+            "name": "rtl_stage_pass_rate",
+            "weight": 0.2,
+            "formula": "(lint_clean + cdc_clean + coverage_100) / 3"
+          },
+          {
+            "name": "verification_stage_pass_rate",
+            "weight": 0.25,
+            "formula": "test_pass_rate * isa_compliance * riscv_compliance * noc_deadlock_free * cdc_verified"
+          },
+          {
+            "name": "synthesis_stage_pass_rate",
+            "weight": 0.2,
+            "formula": "(WNS>=0) ? 1.0 : 0.0"
+          },
+          {
+            "name": "pd_stage_pass_rate",
+            "weight": 0.15,
+            "formula": "(DRC_clean + LVS_clean + routing_complete) / 3"
+          }
+        ]
+      },
+      "completeness": {
+        "weight": 0.20,
+        "sub_metrics": [
+          {
+            "name": "module_coverage",
+            "weight": 0.3,
+            "formula": "实际模块数 / 预期模块数（25-35）"
+          },
+          {
+            "name": "interface_coverage",
+            "weight": 0.25,
+            "formula": "实际接口数 / 预期接口数（6外部+45内部）"
+          },
+          {
+            "name": "clock_domain_coverage",
+            "weight": 0.2,
+            "formula": "实际时钟域数 / 预期时钟域数（6）"
+          },
+          {
+            "name": "test_scenario_coverage",
+            "weight": 0.25,
+            "formula": "实际测试场景数 / 预期测试场景数（30+）"
+          }
+        ]
+      },
+      "quality": {
+        "weight": 0.20,
+        "sub_metrics": [
+          {
+            "name": "timing_margin",
+            "weight": 0.3,
+            "formula": "min(1.0, max(0, WNS / clock_period))"
+          },
+          {
+            "name": "area_efficiency",
+            "weight": 0.25,
+            "formula": "max(0, 1.0 - (实际面积 - 预算面积) / 预算面积)"
+          },
+          {
+            "name": "power_efficiency",
+            "weight": 0.25,
+            "formula": "max(0, 1.0 - (实际功耗 - 预算功耗) / 预算功耗)"
+          },
+          {
+            "name": "performance_achievement",
+            "weight": 0.2,
+            "formula": "(npu_tops_achieved / 16) * (cpu_dmips_achieved / 8000)"
+          }
+        ]
+      },
+      "efficiency": {
+        "weight": 0.15,
+        "sub_metrics": [
+          {
+            "name": "token_efficiency",
+            "weight": 0.4,
+            "formula": "参考token数 / 实际token数（上限1.0）"
+          },
+          {
+            "name": "tool_call_efficiency",
+            "weight": 0.3,
+            "formula": "参考tool call数 / 实际tool call数（上限1.0）"
+          },
+          {
+            "name": "stage_transition_efficiency",
+            "weight": 0.3,
+            "formula": "成功阶段转换数 / 总阶段转换数（4次转换）"
+          }
+        ]
+      },
+      "robustness": {
+        "weight": 0.10,
+        "sub_metrics": [
+          {
+            "name": "error_recovery_rate",
+            "weight": 0.5,
+            "formula": "自动修复成功次数 / 总错误次数"
+          },
+          {
+            "name": "cdc_handling_quality",
+            "weight": 0.3,
+            "formula": "正确处理CDC路径数 / 总CDC路径数"
+          },
+          {
+            "name": "timing_closure_iterations",
+            "weight": 0.2,
+            "formula": "max(0, 1.0 - (迭代次数 - 1) / 5)"
+          }
+        ]
+      },
+      "cost_effectiveness": {
+        "weight": 0.10,
+        "sub_metrics": [
+          {
+            "name": "usd_per_pipeline",
+            "weight": 0.5,
+            "formula": "参考成本 / 实际成本（上限1.0）"
+          },
+          {
+            "name": "token_per_stage",
+            "weight": 0.3,
+            "formula": "参考token/stage / 实际token/stage（上限1.0）"
+          },
+          {
+            "name": "time_to_completion",
+            "weight": 0.2,
+            "formula": "参考时间 / 实际时间（上限1.0）"
+          }
+        ]
+      }
+    },
+    "final_score_formula": "Σ(dimension_score * dimension_weight)",
+    "passing_threshold": 0.70
+  },
+
+  "metadata": {
+    "created": "2026-05-30T22:30:00+08:00",
+    "author": "BabelBench Team",
+    "tags": ["Expert", "AI SoC", "NPU", "RISC-V", "NoC", "Multi-Clock", "ISA Design"],
+    "references": [
+      "Babel NPU_top design (17 modules)",
+      "Babel tinystories_npu design (4-6 modules)",
+      "RISC-V RV64GC specification",
+      "ASAP7 7nm PDK"
+    ]
+  }
+}
