@@ -1,0 +1,30 @@
+{
+  "schema": "project-context-v1",
+  "project": {
+    "name": "Babel",
+    "path": "/mnt/big10T/wrk/Babel",
+    "type": "documentation"
+  },
+  "tech_stack": {
+    "language": "python",
+    "framework": null
+  },
+  "git": {
+    "is_git_repo": true,
+    "branch": "master",
+    "main_branch": "main",
+    "last_commit": {
+      "hash": "916ebb08a61d9a93f5f8e2c6b916f8cd44e97535",
+      "message": "[checkpoint] 2026-06-07 10:49:49 (UTC+8)",
+      "date": "2026-06-07 10:49:49 +0800"
+    },
+    "remote": "https://gitlink.org.cn/amoslee2011/Babel.git"
+  },
+  "directories": {
+    "scripts": "scripts"
+  },
+  "metadata": {
+    "collected_at": "2026-06-07T08:14:22Z",
+    "collector_version": "1.0.0"
+  }
+}

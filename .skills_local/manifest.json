@@ -1,0 +1,13 @@
+{
+  "schema": "manifest-v1",
+  "project": {
+    "name": "Babel",
+    "type": "root_project"
+  },
+  "skills": [
+    {
+      "name": "it.deepresearch",
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "skill-paths-v1",
+  "skill": "it.deepresearch",
+  "defaults": {
+    "output_dir": "\"{{ PROJECT_DIR }}/research_reports\"",
+    "language": "zh-CN",
+    "default_model": "claude-sonnet-4-6",
+    "scope": "standard",
+    "focus": "all",
+    "deepsearcher_dir": "/mnt/big10T/wrk/mySkills/DeepSearcher"
+  },
+  "global_paths": {
+    "PROJECT_DIR": "{{ --output_dir 参数 或 auto-detect }}",
+    "OUTPUT_BASE": "由 Self-Adaptive 初始化决定（首次：realpath of output_dir 参数；后续：从 local.json 读取）",
+    "TOPIC_DIR": "{{ OUTPUT_BASE }}/<topic_slug>/",
+    "SCRIPT_DIR": "~/.claude/scripts",
+    "SKILL_FILE": "~/.claude/skills/it.deepresearch/SKILL.md",
+    "DEEPSEARCHER_DIR": "/mnt/big10T/wrk/mySkills/DeepSearcher",
+    "EVOLUTION_FRAMEWORK": "~/.claude/evolution-framework"
+  },
+  "resolved_paths": {
+    "EVOLUTION_FRAMEWORK": "/home/lxx/.claude/evolution-framework",
+    "SKILL_FILE": "/home/lxx/.claude/skills/it.deepresearch/SKILL.md",
+    "SCRIPT_DIR": "/home/lxx/.claude/scripts",
+    "PROJECT_DIR": "/mnt/big10T/wrk/Babel",
+    "OUTPUT_BASE": "/mnt/big10T/wrk/Babel/由 Self-Adaptive 初始化决定（首次：realpath of output_dir 参数；后续：从 local.json 读取）",
+    "TOPIC_DIR": "/mnt/big10T/wrk/Babel/<topic_slug>",
+    "DEEPSEARCHER_DIR": "/mnt/big10T/wrk/mySkills/DeepSearcher",
+    "DEFAULT_OUTPUT_DIR": "/mnt/big10T/wrk/Babel/\"/mnt/big10T/wrk/Babel/research_reports\"",
+    "DEFAULT_DEEPSEARCHER_DIR": "/mnt/big10T/wrk/mySkills/DeepSearcher",
+    "SKILL_LOCAL_DIR": "/mnt/big10T/wrk/Babel/.skills_local/it.deepresearch",
+    "LOG_DIR": "/mnt/big10T/wrk/Babel/.logs"
+  },
+  "relative_paths": {
+    "EVOLUTION_FRAMEWORK": "~/.claude/evolution-framework",
+    "SKILL_FILE": "~/.claude/skills/it.deepresearch/SKILL.md",
+    "SCRIPT_DIR": "~/.claude/scripts",
+    "PROJECT_DIR": ".",
+    "OUTPUT_BASE": "由 Self-Adaptive 初始化决定（首次：realpath of output_dir 参数；后续：从 local.json 读取）",
+    "TOPIC_DIR": "<topic_slug>",
+    "DEEPSEARCHER_DIR": "(outside project: /mnt/big10T/wrk/mySkills/DeepSearcher)",
+    "DEFAULT_OUTPUT_DIR": "\"/mnt/big10T/wrk/Babel/research_reports\"",
+    "DEFAULT_DEEPSEARCHER_DIR": "../mySkills/DeepSearcher",
+    "SKILL_LOCAL_DIR": ".skills_local/it.deepresearch",
+    "LOG_DIR": ".logs"
+  },
+  "metadata": {
+    "project_dir": "/mnt/big10T/wrk/Babel",
+    "project_name": "Babel",
+    "resolved_at": "2026-06-07T08:14:22Z"
+  }
+}
