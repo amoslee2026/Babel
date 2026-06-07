@@ -1,0 +1,8 @@
+{
+  "schema": "adaptive-config-v1",
+  "skill": "it.fetch",
+  "project": {
+    "name": "Babel"
+  },
+  "overrides": {}
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "skill-paths-v1",
+  "skill": "it.fetch",
+  "defaults": {},
+  "global_paths": {
+    "PROJECT_DIR": "{{ auto-detect }}",
+    "SCRIPT_DIR": "~/.claude/scripts",
+    "SKILL_FILE": "~/.claude/skills/it.fetch/SKILL.md",
+    "FETCH_CLI": "~/.claude/skills/it.fetch/scripts/fetch.py",
+    "OUTPUT_DIR": "{{ PROJECT_DIR }}/fetch_results",
+    "PROXY": "{{ HTTP_PROXY 或 socks5h://127.0.0.1:7898 }}"
+  },
+  "resolved_paths": {
+    "SKILL_FILE": "/home/lxx/.claude/skills/it.fetch/SKILL.md",
+    "SCRIPT_DIR": "/home/lxx/.claude/scripts",
+    "PROJECT_DIR": "/mnt/big10T/wrk/Babel",
+    "FETCH_CLI": "/home/lxx/.claude/skills/it.fetch/scripts/fetch.py",
+    "OUTPUT_DIR": "/mnt/big10T/wrk/Babel/fetch_results",
+    "PROXY": "/mnt/big10T/wrk/Babel",
+    "SKILL_LOCAL_DIR": "/mnt/big10T/wrk/Babel/.skills_local/it.fetch",
+    "LOG_DIR": "/mnt/big10T/wrk/Babel/fetch_results/.logs"
+  },
+  "relative_paths": {
+    "SKILL_FILE": "~/.claude/skills/it.fetch/SKILL.md",
+    "SCRIPT_DIR": "~/.claude/scripts",
+    "PROJECT_DIR": ".",
+    "FETCH_CLI": "(outside project: /home/lxx/.claude/skills/it.fetch/scripts/fetch.py)",
+    "OUTPUT_DIR": "fetch_results",
+    "PROXY": ".",
+    "SKILL_LOCAL_DIR": ".skills_local/it.fetch",
+    "LOG_DIR": "fetch_results/.logs"
+  },
+  "metadata": {
+    "project_dir": "/mnt/big10T/wrk/Babel",
+    "project_name": "Babel",
+    "resolved_at": "2026-06-07T08:19:13Z"
+  }
+}

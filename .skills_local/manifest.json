@@ -8,6 +8,10 @@
     {
       "name": "it.deepresearch",
       "enabled": true
+    },
+    {
+      "name": "it.fetch",
+      "enabled": true
     }
   ]
 }
