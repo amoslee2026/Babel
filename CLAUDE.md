@@ -51,6 +51,7 @@ libs/             # ASAP7 PDK (symlink)
 | QRouter | 1.4 | Detailed routing |
 | KLayout | 0.30.8 | GDSII viewer/DRC |
 | Verilator | 5.012 | Verilog sim |
+| Babel-LSP | 0.2.0 | HDL LSP+MCP（SV 语法检查 / 诊断） |
 
 Env: `source ~/wrk/eda_opensources/eda_env.sh` (override: `BB_EDA_ENV`)
 
