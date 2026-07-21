@@ -437,7 +437,7 @@ alias sta-run='sta'
 alias magic-run='magic'
 
 echo "EDA工具链环境已加载"
-echo "可用工具: yosys, abc, magic, netgen, qrouter, sta, klayout, verilator"
+echo "可用工具: yosys, abc, magic, netgen, qrouter, sta, klayout, verilator, babel-lsp"
 EOF
 
     chmod +x "$ENV_SCRIPT"
