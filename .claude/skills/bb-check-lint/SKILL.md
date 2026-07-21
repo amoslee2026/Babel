@@ -1,7 +1,37 @@
 ---
 name: bb-check-lint
-description: "调用 verible-verilog-lint 检查 SV 源码。src 必须可综合（零 syntax error），tb 允许 verification constructs。发现 src error 时自动修复重检（max 3 iter）。触发：(1) bba-guru-rtl 生成后；(2) RTL 修复重检；(3) 显式 /bb-check-lint。"
+description: "调用 babel-lsp / verible-verilog-lint 检查 SV 源码。src 必须可综合（零 syntax error），tb 允许 verification constructs。发现 src error 时自动修复重检（max 3 iter）。触发：(1) bba-guru-rtl 生成后；(2) RTL 修复重检；(3) 显式 /bb-check-lint。"
 user-invocable: true
+arguments:
+  - name: target_dir
+    type: path
+    required: false
+    description: "目标目录（自动扫描所有 .sv/.v/.vh 文件）"
+  - name: file_list
+    type: path
+    required: false
+    description: "file_list.f；显式指定检查文件列表"
+  - name: rules_config
+    type: path
+    required: false
+    description: "verible rules.cfg（仅 verible 后端使用）"
+  - name: design_name
+    type: string
+    required: false
+    description: "设计名称"
+  - name: stamp
+    type: string
+    required: false
+    description: "时间戳"
+  - name: lint_mode
+    type: enum<src_only,src_and_tb,tb_only>
+    required: false
+    default: src_only
+  - name: backend
+    type: enum<auto,babel-lsp,verible>
+    required: false
+    default: auto
+    description: "auto = babel-lsp → verible 自动降级"
 
 ---
 
@@ -9,7 +39,15 @@ user-invocable: true
 
 ## 职责
 
-对 HDL 源码执行 verible lint 检查，提取所有 error / warning 至 JSON。**src 代码必须可综合**，零 error 才通过；tb 代码允许 verification constructs（covergroup 等）。不允许 waive src 错误。
+对 HDL 源码执行 lint 检查，提取所有 error / warning 至 JSON。**src 代码必须可综合**，零 error 才通过；tb 代码允许 verification constructs（covergroup 等）。不允许 waive src 错误。
+
+### 后端选择（2026-07-21 新增 babel-lsp）
+
+| backend | 触发条件 | 实现 |
+|---------|---------|------|
+| `auto` | 默认 | 按 `babel-lsp → verible` 顺序尝试 |
+| `babel-lsp` | 显式指定或 auto 首选 | `babel-lsp` MCP/CLI，基于 slang 引擎（IEEE 1800-2023） |
+| `verible` | 显式指定或 babel-lsp 不可用 | `verible-verilog-lint`，CHIPS Alliance |
 
 - 调用者：`bba-guru-rtl`
 - 禁止使用：Task / Agent / Skill
