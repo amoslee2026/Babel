@@ -1,3 +1,8 @@
+# Peach
+Peach项目是一个基于开源Babel的学习项目，看看怎么用，能不能用，有什么问题，环境和flow都是怎么配置的。
+希望能以一个flash controller为实例，验证AI开发是不是可以实际使用。
+
+
 # Babel v1.3
 
 这是一个开源的AI原生Chiplet设计流程，基于开源EDA工具链和AI Coding Agent
