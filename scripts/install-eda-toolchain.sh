@@ -456,7 +456,7 @@ verify_installation() {
 
     source "${HOME}/wrk/eda_opensources/eda_env.sh" 2>/dev/null || true
 
-    TOOLS=("yosys" "abc" "magic" "netgen" "qrouter" "sta" "klayout" "verilator")
+    TOOLS=("yosys" "abc" "magic" "netgen" "qrouter" "sta" "klayout" "verilator" "babel-lsp")
 
     echo ""
     echo "=========================================="
@@ -474,6 +474,7 @@ verify_installation() {
                 sta)     version=$(sta --version 2>&1 | head -1) ;;
                 klayout) version=$(klayout --version 2>&1 | head -1) ;;
                 verilator) version=$(verilator --version | head -1) ;;
+                babel-lsp) version=$(babel-lsp --version 2>&1 | head -1) ;;
             esac
             echo -e "  ${GREEN}✓${NC} $tool: $version"
         else
