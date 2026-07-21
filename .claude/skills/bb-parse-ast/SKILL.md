@@ -51,7 +51,7 @@ arguments:
 |-----|------|----------|------|------|
 | file_list | path | true | — | `file_list.f` |
 | design_name | string | true | — | — |
-| backend | enum | false | `auto` | `auto\|pyverilog\|verible\|slang` |
+| backend | enum | false | `auto` | `auto\|babel-lsp\|pyverilog\|verible\|slang` |
 | output_format | enum | false | `json` | `json\|pickle` |
 | stamp | string | false | `<auto>` | — |
 
