@@ -1,6 +1,6 @@
 ---
 name: bb-parse-ast
-description: "解析 SystemVerilog RTL 为 AST JSON，供 CDC 检查 / signal path tracing / module dep 分析。统一 3 个后端 (pyverilog / verible / slang)，auto 模式自动降级。触发场景：(1) bba-guru-synthesis CDC 前；(2) bb-trace-signal-path / bb-find-module-deps 之前；(3) 显式 /bb-parse-ast。"
+description: "解析 SystemVerilog RTL 为 AST JSON，供 CDC 检查 / signal path tracing / module dep 分析。统一 4 个后端 (babel-lsp / pyverilog / verible / slang)，auto 模式自动降级。触发场景：(1) bba-guru-synthesis CDC 前；(2) bb-trace-signal-path / bb-find-module-deps 之前；(3) 显式 /bb-parse-ast。"
 user-invocable: true
 arguments:
   - name: file_list
@@ -11,10 +11,10 @@ arguments:
     type: string
     required: true
   - name: backend
-    type: enum<auto,pyverilog,verible,slang>
+    type: enum<auto,babel-lsp,pyverilog,verible,slang>
     required: false
     default: auto
-    description: "auto = pyverilog → verible → slang 自动降级"
+    description: "auto = babel-lsp → pyverilog → verible → slang 自动降级"
   - name: output_format
     type: enum<json,pickle>
     required: false
@@ -27,7 +27,7 @@ arguments:
 
 # bb-parse-ast
 
-解析 RTL 为 AST JSON。统一 3 个后端，对下游透明。
+解析 RTL 为 AST JSON。统一 4 个后端，对下游透明。
 
 ## 职责
 
@@ -35,11 +35,12 @@ arguments:
 - 输出 schema 对所有 backend 一致（下游无需感知差异）
 - 禁止使用：Task / Agent / Skill
 
-## Backend 选择
+## Backend 选择（2026-07-21 新增 babel-lsp）
 
 | backend | 触发条件 | 实现 |
 |---------|---------|------|
-| `auto` | 默认 | 按 `pyverilog → verible → slang` 顺序尝试 |
+| `auto` | 默认 | 按 `babel-lsp → pyverilog → verible → slang` 顺序尝试 |
+| `babel-lsp` | 显式指定或 auto 首选 | Babel-LSP sv-analyzer，基于 slang 引擎（IEEE 1800-2023） |
 | `pyverilog` | 显式指定 | 纯 Python，覆盖 SystemVerilog 2012 子集 |
 | `verible` | 显式指定或 pyverilog 失败 | `verible-verilog-syntax`，覆盖 SV 2017 |
 | `slang` | 显式指定或前两者都失败 | `slang`，覆盖 SV 2017 + UVM |
