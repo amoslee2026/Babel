@@ -202,7 +202,8 @@ if not src_clean and iteration < 3:
 
 ## 资源索引
 
-- `scripts/render_lint_sh.py`、`scripts/run_lint.py`、`scripts/parse_lint.py`
+- `scripts/babel_lsp_lint.py` — babel-lsp CLI wrapper（slang 诊断 + 可综合性检查）
+- `scripts/render_lint_sh.py`、`scripts/run_lint.py`、`scripts/parse_lint.py` — verible 后端
 - `assets/asap7_rules.cfg` — 默认 verible 规则集
 - `assets/tb_waiver.vbl` — testbench waiver（跳过 covergroup/coverpoint/bins）
 - `Gotcha/verible_rule_pitfalls.md`
