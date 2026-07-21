@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "babel-lsp": {
+      "command": "babel-lsp",
+      "args": ["--mcp"]
+    }
+  }
+}
