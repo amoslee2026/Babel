@@ -17,6 +17,7 @@ Last verified: 2026-05-30 (Beijing time).
 | KLayout | 0.30.8 | `~/wrk/eda_opensources/eda_env.sh` | `klayout -v` |
 | Verilator | 5.012 | `~/wrk/eda_opensources/eda_env.sh` | `verilator --version` |
 | ABC | (yosys-bundled) | via `yosys -m …` | `yosys -p "abc -v"` |
+| Babel-LSP | 0.2.0 | `~/.local/bin/babel-lsp` | `babel-lsp --version` |
 
 ## Environment setup
 
