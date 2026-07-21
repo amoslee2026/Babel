@@ -1,0 +1,47 @@
+{
+  "project": {
+    "name": "Babel"
+  },
+  "hdl": {
+    "source_dirs": ["rtl/designs/**/*.sv", "rtl/designs/**/*.v"],
+    "defines": [],
+    "include_dirs": ["rtl/designs/"],
+    "filelists": [],
+    "cell_libraries": ["libs/asap7/asap7sc7p5t_27/asap7sc7p5t_27.v"]
+  },
+  "vhdl": {
+    "source_dirs": [],
+    "libraries": {}
+  },
+  "tcl": {
+    "source_dirs": ["scripts/**/*.tcl"],
+    "eda_tools": ["synopsys_dc"]
+  },
+  "classification": {
+    "rtl_patterns": ["rtl/designs/*/src/**"],
+    "tb_patterns": ["rtl/designs/*/tb/**"],
+    "netlist_patterns": ["designs/*/synth/**/*.v"]
+  },
+  "server": {
+    "lsp_port": 6030,
+    "mcp_port": 3000,
+    "mcp_token": null,
+    "diagnostic_trigger": "on_change",
+    "max_threads": 0
+  },
+  "synth": {
+    "rules": "all",
+    "rtl_patterns": ["rtl/designs/*/src/**/*.sv"],
+    "tb_patterns": ["rtl/designs/*/tb/**"],
+    "netlist_patterns": ["designs/*/synth/**/*.v"]
+  },
+  "logging": {
+    "level": "warn",
+    "file": null,
+    "rotation": "daily",
+    "max_files": 7
+  },
+  "memory": {
+    "scan_interval_minutes": 5
+  }
+}
