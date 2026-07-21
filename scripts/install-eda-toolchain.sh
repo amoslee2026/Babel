@@ -318,6 +318,68 @@ install_verilator() {
     verilator --version
 }
 
+# 安装 Babel-LSP (HDL Language Server — Rust + slang)
+# 2026-07-21: 新增 Babel-LSP 依赖，用于 SV 语法检查和 MCP 服务
+install_babel_lsp() {
+    log_info "安装 Babel-LSP ${TOOL_VERSIONS[babel_lsp]}..."
+
+    local BABEL_LSP_DIR="${HOME}/.local/bin"
+
+    # 检查是否已安装
+    if command -v babel-lsp &>/dev/null; then
+        local installed_ver
+        installed_ver=$(babel-lsp --version 2>/dev/null | grep -oP '[\d.]+' | head -1 || echo "unknown")
+        log_info "babel-lsp 已安装: ${installed_ver}"
+        return
+    fi
+
+    # 检查/安装 Rust
+    if ! command -v cargo &>/dev/null; then
+        log_info "安装 Rust 工具链..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain stable
+        # shellcheck source=/dev/null
+        source "${HOME}/.cargo/env"
+    fi
+
+    # 检查/安装 slang
+    if ! command -v slang &>/dev/null; then
+        log_info "安装 slang (SV 解析引擎)..."
+        local arch
+        arch=$(uname -m)
+        case "$arch" in
+            x86_64)  arch="x64" ;;
+            aarch64) arch="arm64" ;;
+            *) log_error "不支持的架构: $arch"; return 1 ;;
+        esac
+        local tmpdir
+        tmpdir=$(mktemp -d)
+        curl -fsSL "https://github.com/MikePopoloski/slang/releases/latest/download/slang-linux-${arch}.tar.gz" \
+            -o "$tmpdir/slang.tar.gz"
+        tar xzf "$tmpdir/slang.tar.gz" -C "$tmpdir"
+        mkdir -p "$BABEL_LSP_DIR"
+        cp "$tmpdir/bin/slang" "$BABEL_LSP_DIR/"
+        log_success "slang 已安装"
+    fi
+
+    # 克隆/更新 Babel-LSP
+    local repo_dir="${SRC_DIR}/Babel-LSP"
+    if [[ ! -d "$repo_dir/.git" ]]; then
+        git clone --depth 1 https://github.com/amoslee2026/Babel-LSP.git "$repo_dir"
+    fi
+    cd "$repo_dir"
+
+    # 编译
+    log_info "编译 Babel-LSP (release mode)..."
+    cargo build --release
+
+    mkdir -p "$BABEL_LSP_DIR"
+    cp target/release/babel-lsp "$BABEL_LSP_DIR/babel-lsp"
+    chmod +x "$BABEL_LSP_DIR/babel-lsp"
+
+    log_success "Babel-LSP 已安装到: ${BABEL_LSP_DIR}/babel-lsp"
+}
+
 # 安装 OSS CAD Suite (预编译的 Yosys+ABC+其他)
 install_oss_cad_suite() {
     log_info "安装 OSS CAD Suite..."
