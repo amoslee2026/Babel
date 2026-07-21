@@ -506,6 +506,7 @@ main() {
             klayout)    install_klayout ;;
             verilator)  install_verilator ;;
             oss-cad-suite) install_oss_cad_suite ;;
+            babel-lsp)   install_babel_lsp ;;
             all)
                 install_oss_cad_suite
                 install_yosys
@@ -516,10 +517,11 @@ main() {
                 install_opensta
                 install_klayout
                 install_verilator
+                install_babel_lsp
                 ;;
             *)
                 log_error "未知工具: $SPECIFIC_TOOL"
-                echo "可用工具: yosys, abc, magic, netgen, qrouter, opensta, klayout, verilator, oss-cad-suite, all"
+                echo "可用工具: yosys, abc, magic, netgen, qrouter, opensta, klayout, verilator, oss-cad-suite, babel-lsp, all"
                 exit 1
                 ;;
         esac
