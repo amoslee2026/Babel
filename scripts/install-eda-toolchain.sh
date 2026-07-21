@@ -535,6 +535,7 @@ main() {
         install_opensta
         install_klayout
         install_verilator
+        install_babel_lsp
     fi
 
     generate_env_script
