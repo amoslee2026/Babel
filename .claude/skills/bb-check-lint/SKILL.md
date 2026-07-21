@@ -58,10 +58,11 @@ arguments:
 |-----|------|----------|------|------|
 | target_dir | path | false | — | 目标目录（自动扫描所有 `.sv/.v/.vh` 文件） |
 | file_list | path | false | — | `file_list.f`；显式指定检查文件列表 |
-| rules_config | path | false | 内置 ASAP7 default ruleset | verible rules.cfg |
+| rules_config | path | false | 内置 ASAP7 default ruleset | verible rules.cfg（仅 verible 后端） |
 | design_name | string | false | `<target_dir或file_list_basename>` | 设计名称 |
 | stamp | string | false | `<auto>` | 时间戳 |
 | lint_mode | string | false | `src_only` | `src_only` / `src_and_tb` / `tb_only` |
+| backend | string | false | `auto` | `auto` / `babel-lsp` / `verible` |
 
 **输入优先级**：
 1. 若提供 `file_list` → 使用 file_list 中列出的文件
