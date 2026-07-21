@@ -77,6 +77,7 @@ declare -A TOOL_VERSIONS=(
     [opensta]="2.2.0"
     [klayout]="0.30.8"
     [verilator]="5.024"
+    [babel_lsp]="0.2.0"
 )
 
 # 创建目录结构
