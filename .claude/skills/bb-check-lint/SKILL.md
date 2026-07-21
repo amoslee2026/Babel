@@ -126,6 +126,28 @@ esac
 
 ### Phase 1 — render_lint_sh
 
+根据 backend 选择渲染不同脚本：
+
+**babel-lsp 后端**（默认优先）：
+```bash
+#!/bin/bash
+set -eo pipefail
+# babel-lsp 语法检查 — 使用 slang 引擎，IEEE 1800-2023 完整支持
+# 2026-07-21: 新增 babel-lsp 后端，替代 verible 作为首选
+
+# 优先使用 MCP 工具（若 babel-lsp MCP server 已配置）
+# 回退到 CLI: slang --check-only 直接调用
+
+for f in $src_files; do
+    slang --check-only --error-limit=0 "$f" 2>&1
+done
+
+for f in $tb_files; do
+    slang --check-only --error-limit=0 "$f" 2>&1
+done
+```
+
+**verible 后端**（回退）：
 ```bash
 #!/bin/bash
 set -eo pipefail
