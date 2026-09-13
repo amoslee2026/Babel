@@ -223,3 +223,4 @@ synth/**/netlist*.v
 *.vcd
 *.gch
 # VCD waveform files
+.serena/
