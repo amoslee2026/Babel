@@ -8,7 +8,7 @@ Job (per SKILL.md): "基于 AST 检查 CDC/RDC 违例：对比 MAS clock_domains
 
 ============================ IMPORTANT LIMITATION ============================
 The normalized AST emitted by `bb-parse-ast` (see
-.claude/skills/bb-parse-ast/lib/ast_serializer.py and the normalize_* scripts)
+.omp/skills/bb-parse-ast/lib/ast_serializer.py and the normalize_* scripts)
 contains ONLY:
     - modules:     [module_name, ...]
     - ports:       {module_name: [{name, direction, width}, ...]}

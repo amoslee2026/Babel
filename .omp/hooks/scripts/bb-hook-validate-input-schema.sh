@@ -2,10 +2,10 @@
 # bb-hook-validate-input-schema.sh — v1.3 MVP (BLOCKING)
 #
 # Triggered by UserPromptSubmit when user invokes /bba-guru-* slash command
-# (registered in .claude/settings.json). Also callable directly as:
+# (registered in .omp/settings.json). Also callable directly as:
 #   ./bb-hook-validate-input-schema.sh <agent> <design>
 #
-# Validates upstream artifact JSON against schema in .claude/schemas/.
+# Validates upstream artifact JSON against schema in .omp/schemas/.
 # Blocks (exit 2) on schema fail and writes <upstream>-needs-fix handoff.
 
 set -euo pipefail
@@ -58,10 +58,10 @@ ART["bba-guru-verification"]="designs/$DESIGN/rtl_artifact.json"
 ART["bba-guru-synthesis"]="designs/$DESIGN/test_report.json"
 ART["bba-guru-pd"]="designs/$DESIGN/synth_report.json"
 
-SCHEMA["bba-guru-rtl"]=".claude/schemas/mas.schema.json"
-SCHEMA["bba-guru-verification"]=".claude/schemas/rtl_artifact.schema.json"
-SCHEMA["bba-guru-synthesis"]=".claude/schemas/test_report.schema.json"
-SCHEMA["bba-guru-pd"]=".claude/schemas/synth_report.schema.json"
+SCHEMA["bba-guru-rtl"]=".omp/schemas/mas.schema.json"
+SCHEMA["bba-guru-verification"]=".omp/schemas/rtl_artifact.schema.json"
+SCHEMA["bba-guru-synthesis"]=".omp/schemas/test_report.schema.json"
+SCHEMA["bba-guru-pd"]=".omp/schemas/synth_report.schema.json"
 
 UPSTREAM["bba-guru-rtl"]="arch"
 UPSTREAM["bba-guru-verification"]="rtl"

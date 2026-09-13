@@ -125,14 +125,14 @@ spec_mas/ ──→ [bb-rtl-coder] ──→ rtl/ ──→ bb-code-review ─�
 PROJECT_DIR       = {{ project_dir 参数 或 auto-detect }}
 INPUT_DIR         = {{ PROJECT_DIR }}/spec_mas
 OUTPUT_DIR        = {{ PROJECT_DIR }}/rtl
-TEMPLATE_DIR      = ~/.claude/skills/bb-rtl-coder/templates
-REFERENCE_DIR     = ~/.claude/skills/bb-rtl-coder/references
-SCRIPT_DIR        = ~/.claude/skills/bb-rtl-coder/scripts
+TEMPLATE_DIR      = ~/.omp/skills/bb-rtl-coder/templates
+REFERENCE_DIR     = ~/.omp/skills/bb-rtl-coder/references
+SCRIPT_DIR        = ~/.omp/skills/bb-rtl-coder/scripts
 PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
 PROGRESS_DIR      = {{ OUTPUT_DIR }}/.progress
 CHECKPOINT_DIR    = {{ OUTPUT_DIR }}/.checkpoint
-SKILL_FILE        = ~/.claude/skills/bb-rtl-coder/SKILL.md
-EVOLUTION_FRAMEWORK = ~/.claude/evolution-framework
+SKILL_FILE        = ~/.omp/skills/bb-rtl-coder/SKILL.md
+EVOLUTION_FRAMEWORK = ~/.omp/evolution-framework
 ```
 
 ---
@@ -190,9 +190,9 @@ IF spec_snapshot.json 存在 → 逐文件比较哈希：
 
 ```bash
 # 读取 SessionStart hook 预生成的上下文预算
-cat ~/.claude/ctx_budget.env 2>/dev/null || echo "SAFE_TOKENS=100000"
+cat ~/.omp/ctx_budget.env 2>/dev/null || echo "SAFE_TOKENS=100000"
 
-SAFE_TOKENS=$(grep SAFE_TOKENS ~/.claude/ctx_budget.env | cut -d= -f2)
+SAFE_TOKENS=$(grep SAFE_TOKENS ~/.omp/ctx_budget.env | cut -d= -f2)
 TOTAL_MODULES=$(grep -c "^- M" "${INPUT_DIR}/module_tree.md" 2>/dev/null || echo 0)
 
 INLINE_MODULE_MAX=$(python3 -c "t=$SAFE_TOKENS; print(min(t//1000,30))")

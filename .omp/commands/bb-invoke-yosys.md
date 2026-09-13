@@ -14,6 +14,6 @@ Required parameters:
 
 Use this when the user wants to debug yosys synthesis directly without going through the full bba-guru-synthesis pipeline.
 
-See `.claude/skills/bb-invoke-yosys/SKILL.md` for the full 3-Phase contract.
+See `.omp/skills/bb-invoke-yosys/SKILL.md` for the full 3-Phase contract.
 
 On failure: report the error summary from the skill/agent output. Do not retry automatically — let the user decide next steps.

@@ -13,6 +13,6 @@ Required parameters:
 
 Use this when the user wants to debug timing analysis directly without going through the full bba-guru-synthesis pipeline.
 
-See `.claude/skills/bb-invoke-opensta/SKILL.md` for the full contract.
+See `.omp/skills/bb-invoke-opensta/SKILL.md` for the full contract.
 
 On failure: report the error summary from the skill/agent output. Do not retry automatically — let the user decide next steps.

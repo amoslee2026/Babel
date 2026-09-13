@@ -70,7 +70,7 @@ update: auto
 
 1. Self-Adaptive 初始化 + 项目上下文收集 + 路径解析（MANDATORY）
    ```bash
-   SCRIPT_DIR=~/.claude/scripts
+   SCRIPT_DIR=~/.omp/scripts
    python3 "$SCRIPT_DIR/adaptive/adaptive_init.py" \
      --skill "bb-mas" \
      --project-dir "{{ PROJECT_DIR }}"
@@ -142,12 +142,12 @@ spec_arch/ ──→ [bb-mas] ──→ spec_mas/ ──→ bb-spec-review ─�
 PROJECT_DIR       = {{ project_dir 参数 或 auto-detect }}
 INPUT_DIR         = {{ PROJECT_DIR }}/spec_arch
 OUTPUT_DIR        = {{ PROJECT_DIR }}/spec_mas
-TEMPLATE_DIR      = ~/.claude/skills/bb-mas/templates
+TEMPLATE_DIR      = ~/.omp/skills/bb-mas/templates
 PROGRESS_DIR      = {{ OUTPUT_DIR }}/.progress
 CHECKPOINT_DIR    = {{ OUTPUT_DIR }}/.checkpoint
-SCRIPT_DIR        = ~/.claude/scripts
+SCRIPT_DIR        = ~/.omp/scripts
 PROJECT_SCRIPTS   = {{ PROJECT_DIR }}/scripts
-SKILL_FILE        = ~/.claude/skills/bb-mas/SKILL.md
+SKILL_FILE        = ~/.omp/skills/bb-mas/SKILL.md
 ```
 
 ---

@@ -17,7 +17,7 @@ fi
 
 STAMP="$(stamp_now)"
 # Single canonical directory for write + archive + retention (M-5).
-OUT_DIR="${BB_SESSION_SUMMARY_DIR:-.claude/session_summaries}"
+OUT_DIR="${BB_SESSION_SUMMARY_DIR:-.omp/session_summaries}"
 mkdir -p "$OUT_DIR"
 OUT="$OUT_DIR/session_${STAMP}.md"
 
@@ -68,7 +68,7 @@ OUT="$OUT_DIR/session_${STAMP}.md"
 
   echo
   echo "## Next steps"
-  echo "- Run \`bash .claude/hooks/bb-hook-pipeline-advance.sh\` to see suggested next agents."
+  echo "- Run \`bash .omp/hooks/bb-hook-pipeline-advance.sh\` to see suggested next agents."
 } > "$OUT"
 
 echo "[session-summarize] wrote $OUT" >&2

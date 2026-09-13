@@ -70,7 +70,7 @@ WARN_PATTERNS=(
   '>[[:space:]]*/etc/'
   '~/\.ssh/'
   '~/\.aws/'
-  '>.*~/\.claude/settings'
+  '>.*~/\.omp/settings'
   'eval[[:space:]]+.*\$\('
 )
 WARN_NAMES=(
@@ -81,7 +81,7 @@ WARN_NAMES=(
   "> /etc/* (system config overwrite)"
   "~/.ssh/ access"
   "~/.aws/ access"
-  "overwrite ~/.claude/settings"
+  "overwrite ~/.omp/settings"
   "eval with command substitution"
 )
 
@@ -99,7 +99,7 @@ STRIPPED_SHORT="$(printf '%s' "$STRIPPED" | head -c 300)"
 # Check BLOCK tier first
 for i in "${!BLOCK_PATTERNS[@]}"; do
   if printf '%s' "$CMD" | grep -Eq "${BLOCK_PATTERNS[$i]}"; then
-    printf "🛑 BASH_CMD_BLOCKED: %s\n    Command: %s\n    This pattern is unconditionally blocked (see ADR-A10).\n    If this is intentional, use a wrapper script under .claude/scripts/.\n" \
+    printf "🛑 BASH_CMD_BLOCKED: %s\n    Command: %s\n    This pattern is unconditionally blocked (see ADR-A10).\n    If this is intentional, use a wrapper script under .omp/scripts/.\n" \
       "${BLOCK_NAMES[$i]}" "$STRIPPED_SHORT" >&2
     exit 2
   fi

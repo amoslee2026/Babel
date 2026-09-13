@@ -26,7 +26,7 @@ arguments:
 统一质量门禁，参数化的单一 skill（取代早期设想的 4 个独立 skill
 `bb-gate-rtl-quality` / `bb-gate-synth-quality` / `bb-gate-test-quality` / `bb-gate-pd-quality`，
 这些独立 skill 从未落地，调用方一律用 `bb-gate <domain>`）。
-所有 domain 的判定字段名严格对齐 `.claude/schemas/*.schema.json`。
+所有 domain 的判定字段名严格对齐 `.omp/schemas/*.schema.json`。
 
 ## 职责
 
@@ -82,7 +82,7 @@ Signoff corner 列表见 [`references/asap7_corner_signoff_list.md`](references/
 ### Phase 2 — Run
 
 ```bash
-uv run python .claude/skills/_gate_common/gate_runner.py \
+uv run python .omp/skills/_gate_common/gate_runner.py \
     <domain> <artifact_path> [--output <output_path>]
 ```
 
@@ -119,9 +119,9 @@ JSON 输出结构：
 
 ## 资源索引
 
-- `.claude/skills/_gate_common/gate_runner.py` — 共享 runner（参数化所有 4 个 gate）
-- `.claude/skills/_gate_common/render_gate_config.py` — 可选配置渲染
-- `.claude/schemas/*.schema.json` — artifact schema（由 `validate-input-schema` hook 在边界校验）
+- `.omp/skills/_gate_common/gate_runner.py` — 共享 runner（参数化所有 4 个 gate）
+- `.omp/skills/_gate_common/render_gate_config.py` — 可选配置渲染
+- `.omp/schemas/*.schema.json` — artifact schema（由 `validate-input-schema` hook 在边界校验）
 - `references/asap7_corner_signoff_list.md` — PD signoff corners
 
 ## 项目级 Coding Style 参考

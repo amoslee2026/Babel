@@ -73,7 +73,7 @@ Upstream: `bba-guru-verification`. Downstream: `bba-guru-pd`.
 Call `bb-invoke-yosys` Phase 1:
 
 ```bash
-python3 .claude/skills/bb-invoke-yosys/scripts/generate_synthesis_config.py \
+python3 .omp/skills/bb-invoke-yosys/scripts/generate_synthesis_config.py \
     --file-list designs/<name>/rtl/file_list.f \
     --sdc designs/<name>/constraints/<name>.sdc \
     --top <top_module> \
@@ -90,7 +90,7 @@ python3 .claude/skills/bb-invoke-yosys/scripts/generate_synthesis_config.py \
 Call `bb-invoke-yosys` Phase 3:
 
 ```bash
-python3 .claude/skills/bb-invoke-yosys/scripts/run_parallel_synthesis.py \
+python3 .omp/skills/bb-invoke-yosys/scripts/run_parallel_synthesis.py \
     --config designs/<name>/synth_parallel/synthesis_config.json \
     --timeout 600
 ```
@@ -168,7 +168,7 @@ Before opening `ready-for-pd`:
 
 - ASAP7 libs: `libs/asap7/`
 - EDA env: `source ~/wrk/eda_opensources/eda_env.sh`
-- Synthesis scripts: `.claude/skills/bb-invoke-yosys/scripts/`
+- Synthesis scripts: `.omp/skills/bb-invoke-yosys/scripts/`
 
 ## Edge Cases
 
@@ -223,4 +223,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.claude/rules/common/coding-style.md`, `.claude/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.
+Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.

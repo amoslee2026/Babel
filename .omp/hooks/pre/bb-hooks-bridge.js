@@ -5,7 +5,7 @@
  * unchanged by translating omp hook events into the Claude hook stdin JSON
  * protocol they expect. Exit code 2 => block; stderr surfaced via logger + UI.
  *
- * Event mapping (from legacy .claude/settings.json):
+ * Event mapping (from legacy .omp/settings.json):
  *   tool_call(bash)       -> bb-hook-commit-quality-gate.sh, bb-hook-validate-bash-cmd.sh
  *   tool_call(write)      -> bb-hook-write-arch-freeze-check.sh
  *   tool_result(write)    -> bb-hook-change-propagate.sh, bb-hook-pipeline-advance.sh

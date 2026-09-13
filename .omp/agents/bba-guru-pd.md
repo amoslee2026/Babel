@@ -187,4 +187,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.claude/rules/common/coding-style.md`, `.claude/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env. Commit before destructive edits. Use `mv` instead of `rm`.
+Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env. Commit before destructive edits. Use `mv` instead of `rm`.

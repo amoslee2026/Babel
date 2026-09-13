@@ -10,6 +10,6 @@ Optional arguments:
 - `--design-name <name>`: filter by design project
 - `--limit N`: limit number of results
 
-See `.claude/skills/bb-list-issues/SKILL.md` for the full contract.
+See `.omp/skills/bb-list-issues/SKILL.md` for the full contract.
 
 On failure: report the error summary from the skill/agent output. Do not retry automatically — let the user decide next steps.

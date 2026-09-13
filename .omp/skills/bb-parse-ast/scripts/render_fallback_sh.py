@@ -19,7 +19,7 @@ if command -v slang &> /dev/null; then
     echo "Using slang..."
     slang --ast-json ${{FILES}} > slang_out.json 2>/dev/null || true
     if [ -s slang_out.json ]; then
-        python3 .claude/skills/bb-parse-ast/scripts/normalize_slang.py slang_out.json > ${{OUTPUT}}
+        python3 .omp/skills/bb-parse-ast/scripts/normalize_slang.py slang_out.json > ${{OUTPUT}}
         echo "slang OK"; exit 0
     fi
 fi
@@ -29,14 +29,14 @@ if command -v verible-verilog-syntax &> /dev/null; then
     echo "Using verible..."
     verible-verilog-syntax --printtree --export_json ${{FILES}} > verible_out.json 2>/dev/null || true
     if [ -s verible_out.json ]; then
-        python3 .claude/skills/bb-parse-ast/scripts/normalize_verible.py verible_out.json > ${{OUTPUT}}
+        python3 .omp/skills/bb-parse-ast/scripts/normalize_verible.py verible_out.json > ${{OUTPUT}}
         echo "verible OK"; exit 0
     fi
 fi
 
 # Regex fallback
 echo "Using regex fallback..."
-cat ${{FILES}} | python3 .claude/skills/bb-parse-ast/scripts/parse_fallback_output.py regex - > ${{OUTPUT}}
+cat ${{FILES}} | python3 .omp/skills/bb-parse-ast/scripts/parse_fallback_output.py regex - > ${{OUTPUT}}
 echo "Regex fallback complete (partial)"
 """
 

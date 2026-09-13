@@ -12,7 +12,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Field names below MUST match the inter-stage JSON schemas in .claude/schemas/.
+# Field names below MUST match the inter-stage JSON schemas in .omp/schemas/.
 # Cross-checked against rtl_artifact / test_report / synth_report / pd_report schemas.
 # Coverage policy (CR-6): functional==100, line==100, branch>=95, toggle>=90.
 GATE_CONFIGS = {

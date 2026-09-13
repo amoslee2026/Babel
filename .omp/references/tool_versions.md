@@ -40,9 +40,9 @@ The `BB_EDA_ENV` environment variable overrides this path (used by
 
 ```bash
 # Run in CI: verify every skill agrees with this file
-for f in .claude/skills/bb-invoke-*/SKILL.md; do
+for f in .omp/skills/bb-invoke-*/SKILL.md; do
   grep -E 'version:|Version' "$f" | grep -v "$(grep -E '^[A-Z].*\| [0-9]' \
-    .claude/references/tool_versions.md | awk '{print $3}' | head -1)"
+    .omp/references/tool_versions.md | awk '{print $3}' | head -1)"
 done
 ```
 

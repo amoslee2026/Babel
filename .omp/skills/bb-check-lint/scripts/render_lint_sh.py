@@ -19,7 +19,7 @@ verilator --lint-only \\
   --sv -Wall -Wno-fatal \\
   --top-module ${{TOP_MODULE}} \\
 {inc_flags}{file_list}  2>&1 | tee ${{LOG_FILE}}
-python3 .claude/skills/bb-check-lint/scripts/parse_lint.py ${{LOG_FILE}} > lint_report.json
+python3 .omp/skills/bb-check-lint/scripts/parse_lint.py ${{LOG_FILE}} > lint_report.json
 echo "Lint check complete. Report: lint_report.json"
 """
 

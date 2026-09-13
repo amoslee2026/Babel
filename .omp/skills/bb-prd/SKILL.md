@@ -80,7 +80,7 @@ update: auto
 
 1. Self-Adaptive 初始化 + 项目上下文收集
    ```bash
-   SCRIPT_DIR=~/.claude/scripts
+   SCRIPT_DIR=~/.omp/scripts
    python3 "$SCRIPT_DIR/adaptive/adaptive_init.py" \
      --skill "bb-prd" \
      --project-dir "{{ PROJECT_DIR }}"
@@ -156,10 +156,10 @@ PRD 是芯片设计流程的第一个正式文档，定义产品目标、功能�
 PROJECT_DIR       = {{ project_dir 参数 或 auto-detect }}
 INPUT_DIR         = {{ input_dir 参数 }}
 OUTPUT_DIR        = {{ PROJECT_DIR }}/prd
-TEMPLATE_DIR      = ~/.claude/skills/bb-prd/templates
-REFERENCE_DIR     = ~/.claude/skills/bb-prd/references
-SCRIPT_DIR        = ~/.claude/scripts
-SKILL_FILE        = ~/.claude/skills/bb-prd/SKILL.md
+TEMPLATE_DIR      = ~/.omp/skills/bb-prd/templates
+REFERENCE_DIR     = ~/.omp/skills/bb-prd/references
+SCRIPT_DIR        = ~/.omp/scripts
+SKILL_FILE        = ~/.omp/skills/bb-prd/SKILL.md
 LOG_DIR           = {{ OUTPUT_DIR }}/.logs
 ```
 

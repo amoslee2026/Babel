@@ -7,6 +7,6 @@ Spawn the bba-architect sub-agent with the user's arguments.
 
 If `$ARGUMENTS` is empty, ask the user for: design name, interface protocol(s), target frequency, clock/reset domains, target PDK (default ASAP7) — then dispatch.
 
-See `.claude/agents/bba-architect.md` for full contract and acceptance criteria.
+See `.omp/agents/bba-architect.md` for full contract and acceptance criteria.
 
 On failure: report the error summary from the skill/agent output. Do not retry automatically — let the user decide next steps.

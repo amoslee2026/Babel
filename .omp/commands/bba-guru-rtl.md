@@ -7,6 +7,6 @@ Spawn the bba-guru-rtl sub-agent with the user's arguments.
 
 Expected `$ARGUMENTS`: a `designs/<name>` path or an issue number with the `ready-for-rtl` label.
 
-See `.claude/agents/bba-guru-rtl.md`.
+See `.omp/agents/bba-guru-rtl.md`.
 
 On failure: report the error summary from the skill/agent output. Do not retry automatically — let the user decide next steps.

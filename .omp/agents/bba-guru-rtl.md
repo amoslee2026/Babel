@@ -163,4 +163,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.claude/rules/common/coding-style.md` and the global Babel CLAUDE.md. Use `mv` to a temp/deleted dir instead of `rm`. Commit before destructive edits.
+Follow `.omp/rules/common/coding-style.md` and the global Babel CLAUDE.md. Use `mv` to a temp/deleted dir instead of `rm`. Commit before destructive edits.
