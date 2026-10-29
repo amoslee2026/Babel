@@ -149,14 +149,24 @@ def main():
                         help='Top module name')
     parser.add_argument('--design-name', required=True,
                         help='Design name')
-    parser.add_argument('--tech-lib', default=DEFAULT_TECH_LIB,
-                        help='ASAP7 Liberty path')
+    parser.add_argument('--tech-lib', default=None,
+                        help='Combinational ASAP7 Liberty path '
+                             '(default: resolve from --lib-root)')
+    parser.add_argument('--seq-lib', default=None,
+                        help='Sequential ASAP7 Liberty path for dfflibmap '
+                             '(default: resolve from --lib-root)')
+    parser.add_argument('--lib-root', default=DEFAULT_LIB_ROOT,
+                        help=f'ASAP7 sc7p5t root (default: {DEFAULT_LIB_ROOT})')
+    parser.add_argument('--corner', default=DEFAULT_CORNER,
+                        help=f'PVT corner (default: {DEFAULT_CORNER})')
+    parser.add_argument('--vt', default=DEFAULT_VT,
+                        help=f'Vt flavor (default: {DEFAULT_VT})')
     parser.add_argument('--output-dir', default=None,
                         help='Output directory for synthesis')
     parser.add_argument('--out', required=True,
                         help='Output config JSON path')
-    parser.add_argument('--abc-options', default='-g AND,OR,NAND,NOR,XOR',
-                        help='ABC optimization options')
+    parser.add_argument('--abc-options', default=DEFAULT_ABC_OPTIONS,
+                        help='ABC options (default: -script "+strash;map")')
     parser.add_argument('--enable-retiming', action='store_true',
                         help='Enable retiming')
     parser.add_argument('--mode', choices=['single', 'hierarchical'],
@@ -167,16 +177,40 @@ def main():
 
     args = parser.parse_args()
 
+    tech_lib = args.tech_lib
+    if not tech_lib:
+        tech_lib, hits = resolve_liberty(args.lib_root, DEFAULT_COMB_FAMILY,
+                                         args.corner, args.vt)
+        if not tech_lib:
+            print(f"ERROR: no combinational liberty for {DEFAULT_COMB_FAMILY}/"
+                  f"{args.vt}/{args.corner} under {args.lib_root}/LIB/NLDM; "
+                  f"pass --tech-lib explicitly", file=sys.stderr)
+            return 2
+        if len(hits) > 1:
+            print(f"WARNING: multiple combinational libs, using {tech_lib}",
+                  file=sys.stderr)
+
+    seq_lib = args.seq_lib
+    if not seq_lib:
+        seq_lib, hits = resolve_liberty(args.lib_root, DEFAULT_SEQ_FAMILY,
+                                        args.corner, args.vt)
+        if not seq_lib:
+            print(f"ERROR: no sequential liberty for {DEFAULT_SEQ_FAMILY}/"
+                  f"{args.vt}/{args.corner} under {args.lib_root}/LIB/NLDM; "
+                  f"pass --seq-lib explicitly", file=sys.stderr)
+            return 2
+
     if args.mode == 'single':
         config = generate_single_module_config(
             file_list=args.file_list,
             sdc=args.sdc,
-            tech_lib=args.tech_lib,
+            tech_lib=tech_lib,
             top_module=args.top,
             design_name=args.design_name,
             output_dir=args.output_dir,
             abc_options=args.abc_options,
-            enable_retiming=args.enable_retiming
+            enable_retiming=args.enable_retiming,
+            seq_lib=seq_lib
         )
     else:
         # Hierarchical mode
@@ -189,12 +223,13 @@ def main():
         config = generate_hierarchical_config(
             file_list=args.file_list,
             sdc_dir=args.sdc if os.path.isdir(args.sdc) else os.path.dirname(args.sdc),
-            tech_lib=args.tech_lib,
+            tech_lib=tech_lib,
             modules=modules,
             design_name=args.design_name,
             output_dir=args.output_dir,
             abc_options=args.abc_options,
-            enable_retiming=args.enable_retiming
+            enable_retiming=args.enable_retiming,
+            seq_lib=seq_lib
         )
 
     # Write config
@@ -203,6 +238,8 @@ def main():
 
     print(f"Config generated: {args.out}")
     print(f"Modules: {len(config['modules'])}")
+    print(f"tech_lib: {tech_lib}")
+    print(f"seq_lib:  {seq_lib}")
 
     return 0
 
