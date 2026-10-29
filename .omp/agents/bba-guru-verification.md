@@ -124,6 +124,7 @@ Before opening `ready-for-synth`:
 
 ## Edge Cases
 
+- **MAS module name ≠ RTL module name** (e.g. `M11_RMSNormUnit` vs `M11_RMSNormRoPE`). `bb-generate-testbench` resolves by the `Mxx` code alias and instantiates the real RTL name; `port_source` must stay `rtl`. If the alias also fails, treat it as a MAS/RTL contract defect — raise `arch-needs-fix` (wrong module identity) instead of falling back to the MAS port table.
 - **RTL sha256 drifted.** Refuse, *Escalate-user Protocol* with `rtl-needs-fix` label and changed-file list.
 - **Coverage axis stuck at 99.x% for ≥ 2 iters.** Switch strategy *before* exhausting max_iter: classify the gap — unreachable (→ `arch-needs-fix`), reachable-but-rare (add constrained random with weighting), reachable-but-broken (→ `rtl-needs-fix`).
 - **Same path fails 3 times.** Stop. Open `rtl-needs-fix` with vcd timestamp + signal list + minimal failing seed.
