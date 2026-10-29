@@ -6,7 +6,7 @@
 
 ## 一、总览
 
-Babel Harness 是一套运行在 omp（oh-my-pi）之上的 AI 原生芯片设计自动化框架，由 **5 个 Agent**、**31 个 Skill** 和 **7 个 Hook 脚本** 组成，覆盖从自然语言设计想法到 GDSII 版图的完整流水线。项目级资产全部位于 `.omp/`。
+Babel Harness 是一套运行在 omp（oh-my-pi）之上的 AI 原生芯片设计自动化框架，由 **5 个 Agent**、**33 个 Skill** 和 **7 个 Hook 脚本** 组成，覆盖从自然语言设计想法到 GDSII 版图的完整流水线。项目级资产全部位于 `.omp/`。
 
 ```
 设计想法
