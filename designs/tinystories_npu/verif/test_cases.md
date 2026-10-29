@@ -1,6 +1,6 @@
 # Test Cases — tinystories_npu
 
-> 136 个 testcase ｜ 生成时间 2026-10-29T19:21:39+08:00
+> 136 个 testcase ｜ 生成时间 2026-10-29T19:22:37+08:00
 
 | TP | Module | Task | Category | Priority | Check | Coverage Bin | Run |
 |----|--------|------|----------|----------|-------|--------------|-----|

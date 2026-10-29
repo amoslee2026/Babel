@@ -21,7 +21,7 @@ uv run --no-project python .omp/skills/bb-generate-testcases/scripts/generate_te
 ```
 
 Outputs `verif/test_registry.json`, `verif/test_cases.md`, `tb/generated/tc_*.sv`, `tb/generated/run_tests.sh`.
-Run one point: `bash designs/<name>/tb/generated/run_tests.sh <module> <TP-ID>`.
+Run one point: `bash designs/<name>/tb/generated/run_tests.sh <module> <TP-ID>`；runner 以 `--coverage` 构建并在 obj 目录内执行，产出 `/tmp/babel-sim/<module>/coverage.dat`（bin 名与 registry 的 `coverage_bin` 对齐，供 `bb-collect-coverage`）。
 
 See `.omp/skills/bb-generate-testcases/SKILL.md` for the full contract.
 On failure: report `lint_errors`; fix the generator rather than editing `tc_*.sv`.

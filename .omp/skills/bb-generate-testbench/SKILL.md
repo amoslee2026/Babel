@@ -35,7 +35,7 @@ user-invocable: true
 | `modules` | list[str] |
 | `file_list` | path |
 | `lint_clean` | bool |
-| `lint_errors` | list[str]（前 20 条 `%Error`） |
+| `lint_errors` | list[str]（前 20 条 `%Error` / `%Warning-PINMISSING`） |
 | `valid` | bool |
 | `error` | string\|null |
 
@@ -78,7 +78,7 @@ uv run --no-project python .omp/skills/bb-generate-testbench/scripts/generate_te
 
 ### Phase 3 — lint
 
-`bash <out_dir>/lint.sh` → `verilator --lint-only -sv --timing -Wno-fatal` 逐模块。任何 `%Error` → `lint_clean=false`，原样返回前 20 条。
+`bash <out_dir>/lint.sh` → 逐模块 `verilator --lint-only -sv --timing -Wno-fatal -Werror-PINMISSING`。任何 `%Error` 或 `PINMISSING`（含 pin 名对不上、漏连）→ `lint_clean=false`，原样返回前 20 条。
 
 ### Phase 4 — 返回
 
