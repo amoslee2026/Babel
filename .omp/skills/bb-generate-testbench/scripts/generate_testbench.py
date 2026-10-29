@@ -224,7 +224,7 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
         L.append(f"    {sig_name(p)} = '0;")
     for p in resets:
         inactive = 1 if reset_active_low(p["name"]) else 0
-        L.append(f"    {p['name']} = 1'b{inactive};")
+        L.append(f"    {sig_name(p)} = 1'b{inactive};")
     L += ["  endtask", ""]
 
     tick = f"@(posedge {primary_clk});" if primary_clk else "#10;"
@@ -259,7 +259,7 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
 
     L += ["  task automatic sb_check(int idx);", "    bit ok = 1'b1;"]
     for o in outputs:
-        L.append(f"    ok &= !$isunknown({o['name']});")
+        L.append(f"    ok &= !$isunknown({sig_name(o)});")
     L += ["    check_tp(idx, ok);", "  endtask", ""]
 
     L += [f"  cg_{module} cg = new();", "", "  initial begin",
@@ -481,6 +481,7 @@ def main() -> int:
         "ports": {m: ports_by_module[m] for m in generated},
         "clocks": {m: clocks_by_module[m] for m in generated},
         "port_source": port_source,
+        "dut_module": dut_module,
         "skipped": skipped,
         "missing_rtl": missing_rtl,
         "tb_files": tb_files,
@@ -495,6 +496,7 @@ def main() -> int:
         "tb_files": tb_files,
         "modules": generated,
         "port_source": port_source,
+        "dut_module": dut_module,
         "skipped": skipped,
         "deferred": [s["module"] for s in skipped],
         "file_list": str(fl_path),
