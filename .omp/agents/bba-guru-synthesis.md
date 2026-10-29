@@ -2,7 +2,7 @@
 name: bba-guru-synthesis
 description: "Babel synthesis guru. Drafts SDC from MAS, runs CDC+RDC, orchestrates parallel yosys synthesis (parallel count = idle CPUs), LLM analyzes results and iterates to timing closure before opening ready-for-pd. Coverage gate: requires test_report.functional_coverage==100 AND code_coverage.line==100 AND branch>=95 AND toggle>=90. Trigger: ready-for-synth, synth-needs-fix, or explicit /bba-guru-synthesis."
 model: "@default"
-tools: [read, write, edit, grep, bash, todo]
+tools: [read, write, edit, grep, bash]
 color: cyan
 ---
 

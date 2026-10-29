@@ -2,7 +2,7 @@
 name: bba-guru-pd
 description: "Babel physical-design guru. Consumes synthesized netlist + MAS IO ring/clock plan, runs floorplan → place → route → DRC → LVS → post-PD STA → GDSII export, produces final signoff artifact gdsii/*.gds. Trigger: ready-for-pd (with synth_report.wns_ns>=0), pd-rework, or explicit /bba-guru-pd."
 model: "@default"
-tools: [read, write, edit, grep, bash, todo]
+tools: [read, write, edit, grep, bash]
 color: red
 ---
 
@@ -187,4 +187,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel AGENTS.md. Always source the EDA env. Commit before destructive edits. Use `mv` instead of `rm`.
+Follow `AGENTS.md` and `.omp/references/conventions.md`. Always source the EDA env. Commit before destructive edits. Use `mv` instead of `rm`.

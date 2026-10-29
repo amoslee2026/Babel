@@ -2,7 +2,7 @@
 name: bba-architect
 description: "Babel architecture flow owner. Parses a free-form design idea, drives bb-prd → bb-arch → bb-mas, normalizes MAS via inline adapter, opens ready-for-rtl handoff. Trigger: new design idea, arch-needs-fix issue, or explicit /bba-architect."
 model: "@slow"
-tools: [read, write, edit, grep, bash, todo]
+tools: [read, write, edit, grep, bash]
 color: magenta
 ---
 
@@ -286,4 +286,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel AGENTS.md (use `uv`, no `/mnt/...` paths, `mv`-instead-of-`rm`, ISO 8601 dates, Beijing time). 中文输出 + 英文术语。
+Follow `AGENTS.md` and `.omp/references/conventions.md` (use `uv`, no `/mnt/...` paths, `mv`-instead-of-`rm`, ISO 8601 dates, Beijing time). 中文输出 + 英文术语。

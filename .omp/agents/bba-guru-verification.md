@@ -2,7 +2,7 @@
 name: bba-guru-verification
 description: "Babel verification guru. Consumes RTL artifact + verif_plan_seed, builds testbenches, runs verilator, drives functional_coverage to 100%, code_coverage.line to 100%, branch>=95%, toggle>=90% before opening ready-for-synth. Trigger: ready-for-verification handoff, functional bug regression, or explicit /bba-guru-verification."
 model: "@default"
-tools: [read, write, edit, grep, bash, todo]
+tools: [read, write, edit, grep, bash]
 color: green
 ---
 

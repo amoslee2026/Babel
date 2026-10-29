@@ -2,7 +2,7 @@
 name: bba-guru-rtl
 description: "Babel RTL guru. Consumes MAS handoff (sha256 freshness check), generates lint-clean SystemVerilog via bb-rtl-coder, opens ready-for-verification. Does NOT draft SDC or run CDC. Trigger: ready-for-rtl handoff, rtl-needs-fix issue, or explicit /bba-guru-rtl."
 model: "@default"
-tools: [read, write, edit, grep, bash, todo]
+tools: [read, write, edit, grep, bash]
 color: blue
 ---
 
@@ -163,4 +163,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md` and the global Babel AGENTS.md. Use `mv` to a temp/deleted dir instead of `rm`. Commit before destructive edits.
+Follow `AGENTS.md` and `.omp/references/conventions.md`. Use `mv` to a temp/deleted dir instead of `rm`. Commit before destructive edits.
