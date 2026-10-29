@@ -276,19 +276,11 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
 
 def gen_cov(module: str, ports: list[dict], tps: list[dict]) -> str:
     n = max(1, len(tps))
-    cov_inputs = [
-        p for p in ports
-        if p["dir"] == "input" and not is_clock(p) and not is_reset(p)
-        and isinstance(p["width"], int) and p["width"] <= 16
-    ]
     L = [HEADER, f"covergroup cg_{module};", "  option.per_instance = 1;",
          "  cp_tp: coverpoint tp_hit {"]
     for i in range(len(tps)):
         L.append(f"    bins tp_{i} = {{{n}'d{1 << i}}};")
-    L.append("  }")
-    for p in cov_inputs:
-        L.append(f"  cp_{p['name']}: coverpoint {sig_name(p)};")
-    L += ["endgroup", ""]
+    L += ["  }", "endgroup", ""]
     return "\n".join(L)
 
 
