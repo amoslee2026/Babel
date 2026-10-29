@@ -46,9 +46,10 @@ tb/generated/
 ├── tb_<Module>.sv     # 时钟/复位、DUT 实例化、drive_defaults/apply_reset/check_tp、run_all() 调用
 ├── cov_<Module>.sv    # covergroup cg_<M>：端口 coverpoint + tp_hit 位图 bins
 ├── tc_<Module>.sv     # 占位 run_all()（由 bb-generate-testcases 覆写）
-├── file_list.f        # 设计 RTL + 上述 TB 文件
-├── lint.sh            # 逐模块 verilator --lint-only
-└── tb_manifest.json   # 文件/模块/TP 映射清单
+├── rtl.f              # 仅设计 RTL（逐模块 lint/编译用）
+├── file_list.f        # rtl.f + 全部 tb_<Module>.sv
+├── lint.sh            # 逐模块 verilator --lint-only（含 PINMISSING 检查）
+└── tb_manifest.json   # 文件/模块/端口/时钟/TP 映射清单
 ```
 
 ## 4-Phase 执行
