@@ -322,7 +322,10 @@ def run_lint(tb_dir: Path, modules: list[str], root: Path) -> tuple[bool, list[s
         except (OSError, subprocess.TimeoutExpired) as exc:
             return False, [f"{m}: lint invocation failed: {exc}"]
         if res.returncode != 0:
-            errs = [ln for ln in (res.stdout + res.stderr).splitlines() if "%Error" in ln]
+            errs = [
+                ln for ln in (res.stdout + res.stderr).splitlines()
+                if "%Error" in ln or "PINMISSING" in ln
+            ]
             errors += (errs or [f"{m}: verilator exit {res.returncode}"])[:20]
     return not errors, errors[:20]
 
