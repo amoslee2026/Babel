@@ -105,11 +105,11 @@ def generate_hierarchical_config(
     modules: list,
     design_name: str,
     output_dir: str,
-    abc_options: str = '-g AND,OR,NAND,NOR,XOR',
-    enable_retiming: bool = False
+    abc_options: str = DEFAULT_ABC_OPTIONS,
+    enable_retiming: bool = False,
+    seq_lib: str = ""
 ) -> dict:
     """Generate config for hierarchical (multi-module) synthesis."""
-    tech_lib = tech_lib or DEFAULT_TECH_LIB
     output_dir = output_dir or f"designs/{design_name}/synth_parallel"
 
     config_modules = []
@@ -123,6 +123,7 @@ def generate_hierarchical_config(
             'file_list': mod['file'] if isinstance(mod['file'], str) else file_list,
             'sdc': sdc_path,
             'tech_lib': tech_lib,
+            'seq_lib': seq_lib,
             'top': mod.get('top', mod['name']),
             'abc_options': abc_options,
             'enable_retiming': enable_retiming
