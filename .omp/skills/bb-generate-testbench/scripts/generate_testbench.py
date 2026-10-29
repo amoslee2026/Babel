@@ -371,8 +371,10 @@ def main() -> int:
     ports_by_module: dict[str, list[dict]] = {}
     clocks_by_module: dict[str, dict[str, float]] = {}
     for mod in wanted:
-        ports = rtl_ports.get(mod) or mas_ports.get(mod) or []
-        port_source[mod] = "rtl" if mod in rtl_ports else ("mas" if mod in mas_ports else "none")
+        rtl_entry = rtl_ports.get(mod) or {}
+        ports = rtl_entry.get("ports") or mas_ports.get(mod) or []
+        params = rtl_entry.get("params") or {}
+        port_source[mod] = "rtl" if rtl_entry else ("mas" if mod in mas_ports else "none")
         if not ports:
             skipped.append({"module": mod, "reason": "no parsable ports in RTL or MAS"})
             continue
