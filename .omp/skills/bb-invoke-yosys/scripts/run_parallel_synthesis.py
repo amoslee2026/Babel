@@ -75,10 +75,11 @@ def prepare_module(module: dict, output_dir: str, stamp: str) -> dict:
         'file_list': module['file_list'],
         'sdc_path': module['sdc'],
         'tech_lib': module['tech_lib'],
+        'seq_lib': module['seq_lib'],
         'top_module': module['top'],
         'design_name': module['name'],
         'stamp': stamp,
-        'abc_options': module.get('abc_options', '-g AND,OR,NAND,NOR,XOR'),
+        'abc_options': module.get('abc_options', render_yosys_tcl.DEFAULT_ABC_OPTIONS),
         'enable_retiming': module.get('enable_retiming', False),
         'netlist_path': netlist_path
     }
