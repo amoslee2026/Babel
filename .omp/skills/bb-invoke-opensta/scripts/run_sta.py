@@ -68,7 +68,7 @@ def run_sta(tcl_path: str, log_path: str, timeout: int, env: dict) -> dict:
     try:
         with open(log_path, 'w') as log_f:
             proc = subprocess.Popen(
-                ['sta', '-exit', tcl_path],
+                [os.environ.get('STA_BIN', 'sta'), '-exit', tcl_path],
                 env=env, stdout=log_f, stderr=subprocess.STDOUT, text=True,
             )
             try:
