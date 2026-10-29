@@ -388,12 +388,19 @@ def main() -> int:
     ports_by_module: dict[str, list[dict]] = {}
     clocks_by_module: dict[str, dict[str, float]] = {}
     for mod in wanted:
-        rtl_entry = rtl_ports.get(mod) or {}
-        ports = rtl_entry.get("ports") or mas_ports.get(mod) or []
+        rtl_name = mod if mod in rtl_ports else rtl_by_code.get(module_code(mod))
+        rtl_entry = rtl_ports.get(rtl_name) or {} if rtl_name else {}
+        ports = rtl_entry.get("ports") or []
         params = rtl_entry.get("params") or {}
-        port_source[mod] = "rtl" if rtl_entry else ("mas" if mod in mas_ports else "none")
+        if not ports and args.allow_mas_ports:
+            ports = mas_ports.get(mod) or []
+            port_source[mod] = "mas"
+        else:
+            port_source[mod] = "rtl" if rtl_entry else "none"
+        if ports and rtl_entry:
+            dut_module[mod] = rtl_name
         if not ports:
-            skipped.append({"module": mod, "reason": "no parsable ports in RTL or MAS"})
+            skipped.append({"module": mod, "reason": "no RTL module (alias by Mxx code failed)"})
             continue
         tps = by_module.get(mod, [])
         if not tps:
@@ -405,7 +412,7 @@ def main() -> int:
         tb = out_dir / f"tb_{mod}.sv"
         cov = out_dir / f"cov_{mod}.sv"
         tc = out_dir / f"tc_{mod}.sv"
-        tb.write_text(gen_tb(mod, ports, clocks, tps, params), encoding="utf-8")
+        tb.write_text(gen_tb(mod, ports, clocks, tps, params, dut_module[mod]), encoding="utf-8")
         cov.write_text(gen_cov(mod, ports, tps), encoding="utf-8")
         if not tc.exists():
             tc.write_text(gen_tc_placeholder(clocks), encoding="utf-8")
