@@ -265,7 +265,7 @@ def main() -> int:
 
     lint_clean, lint_errors = True, []
     if generated and not args.no_lint:
-        lint_clean, lint_errors = run_lint(generated, tb_dir / "file_list.f", root)
+        lint_clean, lint_errors = run_lint(generated, tb_dir, root)
 
     valid = bool(generated) and not missing and lint_clean
     print(json.dumps({
