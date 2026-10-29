@@ -37,7 +37,7 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 
 1. Verify the RTL drop is intact (sha256 check against `rtl_artifact.json.outputs[]`) before any testbench work.
 2. Complete the verification plan from `verif_plan_seed.md` — enumerate every functional cover point and corner case.
-3. Generate SystemVerilog testbenches and/or cocotb harnesses for every test case in the plan.
+3. Generate SystemVerilog testbench harnesses via `bb-generate-testbench` and testcases via `bb-generate-testcases` for every test point.
 4. Run verilator with coverage compile flags; collect functional + line + branch + toggle coverage.
 5. Iterate (≤ 8) until coverage meets the gate (`functional == 100`, `line == 100`, `branch >= 95`, `toggle >= 90`) and every test passes.
 6. Triage failures correctly: same-path fail × 3 → `rtl-needs-fix`; unreachable bin → `arch-needs-fix`.
@@ -107,6 +107,9 @@ When max_iter / global_fix_iter / drift terminates a run, emit the stdout block 
 
 Before opening `ready-for-synth`:
 
+- [ ] `verif/test_points.json.valid == true`, every MAS module owns ≥ 1 test point.
+- [ ] `tb/generated/tb_manifest.json.lint_clean == true` and every generated module has `port_source == "rtl"`.
+- [ ] `verif/test_registry.json.cases` covers every test point that has a harness; deferred modules (no RTL wrapper) are listed in `missing_modules` with justification.
 - [ ] `test_report.functional_coverage == 100`.
 - [ ] `test_report.code_coverage.line == 100` AND `.branch >= 95` AND `.toggle >= 90`.
 - [ ] Every test in `test_cases.md` has a corresponding entry in `sim_results/` with `status: pass`.
