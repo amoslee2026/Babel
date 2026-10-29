@@ -62,13 +62,13 @@ def render_tcl(params: dict) -> str:
 # Phase 2: Check hierarchy
 hierarchy -check -top {top_module}
 
-# Phase 3: Generic synthesis
-synth -top {top_module}
+# Phase 3: Generic synthesis (ABC deferred so dfflibmap runs on generic FFs)
+synth -top {top_module} -noabc
 
-# Phase 4: Technology mapping to ASAP7
-dfflibmap -liberty {tech_lib}
+# Phase 4: Map flip-flops to the sequential library
+dfflibmap -liberty {seq_lib}
 
-# Phase 5: ABC optimization
+# Phase 5: Combinational technology mapping via ABC
 abc -liberty {tech_lib} {abc_options}
 
 # Optional: Retiming
@@ -80,8 +80,9 @@ opt_clean -purge
 # Phase 7: Write netlist
 write_verilog -noattr {netlist_path}
 
-# Phase 8: Statistics
+# Phase 8: Statistics (two calls: one liberty file per stat)
 stat -liberty {tech_lib}
+stat -liberty {seq_lib}
 
 # Exit
 exit 0
