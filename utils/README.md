@@ -3,6 +3,7 @@
 | 脚本 | 用途 | 何时用 |
 |------|------|--------|
 | `run_yosys_asap7_map.sh` | 单模块 RTL → ASAP7 标准单元映射（`synth -noabc` → `dfflibmap` SEQ → `abc -script "+strash;map"` → 两次 `stat`），产出网表 / log / 面积明细 | 快速验证 SYNTH 段、复现 ASAP7 映射结果、排查 ABC 崩溃 |
+| `run_orfs_pd.sh` | 容器内跑 OpenROAD-flow-scripts ASAP7 全流程（synth → floorplan → place → CTS → route → fill → GDS + LEC + timing），产出 `6_final.gds` / WNS / area | PD 段验证、需要真实布局布线结果 |
 
 ## run_yosys_asap7_map.sh
 
