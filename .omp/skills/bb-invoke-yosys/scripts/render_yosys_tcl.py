@@ -156,6 +156,7 @@ def main():
         'file_list': args.file_list,
         'sdc_path': args.sdc_path,
         'tech_lib': args.tech_lib,
+        'seq_lib': args.seq_lib,
         'top_module': args.top,
         'design_name': args.design_name,
         'stamp': stamp,
