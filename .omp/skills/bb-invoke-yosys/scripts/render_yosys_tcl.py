@@ -60,6 +60,9 @@ def render_tcl(params: dict) -> str:
 # Design: {design_name}
 # Top: {top_module}
 
+# Import yosys commands into the Tcl interpreter (required by `yosys -c`)
+yosys -import
+
 # Phase 1: Read RTL sources
 {read_verilog_cmds}
 
