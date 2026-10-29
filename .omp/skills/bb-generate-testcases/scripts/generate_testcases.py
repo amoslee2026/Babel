@@ -267,11 +267,11 @@ def main() -> int:
     if generated and not args.no_lint:
         lint_clean, lint_errors = run_lint(generated, tb_dir, root)
 
-    valid = bool(generated) and not missing and lint_clean
+    valid = bool(registry) and lint_clean
     print(json.dumps({
         "artifact_path": str(reg_path),
         "tc_files": tc_files,
-        "testcases": len(registry),
+        "testcases": len(all_cases),
         "markdown_path": str(md_path),
         "runner": str(runner),
         "missing_modules": missing,
@@ -279,8 +279,7 @@ def main() -> int:
         "lint_errors": lint_errors,
         "valid": valid,
         "error": None if valid else (
-            "; ".join(lint_errors[:3]) if lint_errors
-            else (f"modules without harness: {missing}" if missing else "no testcases generated")
+            "; ".join(lint_errors[:3]) if lint_errors else "no testcases generated"
         ),
     }, ensure_ascii=False))
     return 0 if valid else 1

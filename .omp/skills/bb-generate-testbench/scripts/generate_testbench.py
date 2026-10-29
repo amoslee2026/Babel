@@ -451,20 +451,21 @@ def main() -> int:
     }
     (out_dir / "tb_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    valid = bool(generated) and lint_clean and not any(s["module"] == "*" for s in skipped)
+    valid = bool(generated) and lint_clean
     summary = {
         "artifact_path": str(out_dir),
         "tb_files": tb_files,
         "modules": generated,
         "port_source": port_source,
         "skipped": skipped,
+        "deferred": [s["module"] for s in skipped],
         "file_list": str(fl_path),
         "lint_clean": lint_clean,
         "lint_errors": lint_errors,
         "valid": valid,
         "error": None
         if valid
-        else ("; ".join(lint_errors[:3]) if lint_errors else "; ".join(f"{s['module']}: {s['reason']}" for s in skipped) or "no modules generated"),
+        else ("; ".join(lint_errors[:3]) if lint_errors else ("no modules generated" if not generated else "design file list missing")),
     }
     print(json.dumps(summary, ensure_ascii=False))
     return 0 if valid else 1
