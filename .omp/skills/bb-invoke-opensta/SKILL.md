@@ -51,7 +51,8 @@ user-invocable: true
 
 ```tcl
 # corner=<corner_name>
-read_liberty <tech_lib_for_corner>
+read_liberty <family_lib_1>   # 每个 family 一条：AO/OA/SIMPLE/INVBUF/SEQ
+read_liberty <family_lib_2>
 read_verilog <netlist>
 link_design <top_module>
 read_sdc <sdc_path>
@@ -62,6 +63,9 @@ report_wns
 report_tns
 report_power
 ```
+
+liberty 由 `--lib-root` + corner 名 glob 解析（`LIB/NLDM/asap7sc7p5t_*_<VT>_<CORNER>_nldm_*.lib`），
+不要写死文件名：ASAP7 每个 family 一个文件、日期后缀各不相同。
 
 多 corner 合并到一个 TCL，corner 间用 `puts "=== CORNER <name> ==="`。
 
