@@ -126,8 +126,10 @@ def main():
                         help='Path to file_list.f')
     parser.add_argument('--sdc-path', required=True,
                         help='Path to SDC constraints')
+    parser.add_argument('--seq-lib', required=True,
+                        help='Path to ASAP7 sequential Liberty library (dfflibmap)')
     parser.add_argument('--tech-lib', required=True,
-                        help='Path to ASAP7 Liberty library')
+                        help='Path to ASAP7 combinational Liberty library')
     parser.add_argument('--top', required=True,
                         help='Top module name')
     parser.add_argument('--design-name', required=True,
@@ -136,8 +138,8 @@ def main():
                         help='Output TCL file path')
     parser.add_argument('--stamp', default=None,
                         help='Timestamp suffix')
-    parser.add_argument('--abc-options', default='-g AND,OR,NAND,NOR,XOR',
-                        help='ABC optimization options')
+    parser.add_argument('--abc-options', default=DEFAULT_ABC_OPTIONS,
+                        help='ABC options (default: -script "+strash;map")')
     parser.add_argument('--enable-retiming', action='store_true',
                         help='Enable retiming pass')
 
