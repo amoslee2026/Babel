@@ -39,6 +39,13 @@ def sig_name(p: dict) -> str:
     return p.get("signal") or f"v_{p['name']}"
 
 
+def module_code(name: str) -> str:
+    m = re.match(r"^([A-Za-z]+\d+)", name)
+    if m:
+        return m.group(1)
+    return name.split("_")[0] if "_" in name else "TOP"
+
+
 def sv_type(width) -> str:
     if isinstance(width, int):
         return "logic" if width <= 1 else f"logic [{width - 1}:0]"
@@ -387,6 +394,7 @@ def main() -> int:
     port_source: dict[str, str] = {}
     ports_by_module: dict[str, list[dict]] = {}
     clocks_by_module: dict[str, dict[str, float]] = {}
+    dut_module: dict[str, str] = {}
     for mod in wanted:
         rtl_name = mod if mod in rtl_ports else rtl_by_code.get(module_code(mod))
         rtl_entry = rtl_ports.get(rtl_name) or {} if rtl_name else {}
