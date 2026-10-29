@@ -92,10 +92,10 @@ def gen_task(idx: int, tp: dict, ports: list[dict], clk: str | None) -> list[str
         if wide:
             p = max(wide, key=lambda q: numeric_width(q) or 1)
             L += [
-                f"  {p['name']} = '1;",
+                f"  {p.get('signal', p['name'])} = '1;",
                 wait_line(clk, 4),
                 "  sb_check(idx);",
-                f"  {p['name']} = '0;",
+                f"  {p.get('signal', p['name'])} = '0;",
                 wait_line(clk, 4),
                 "  sb_check(idx);",
             ]
