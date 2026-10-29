@@ -1,0 +1,41 @@
+{
+  "design_name": "tinystories_npu",
+  "generated": "2026-10-29T19:06:57+08:00",
+  "testcases": 3,
+  "missing_modules": [],
+  "cases": [
+    {
+      "id": "TP-M13-001",
+      "module": "M13_ISADecoder",
+      "task": "tc_TP_M13_001",
+      "priority": "HIGH",
+      "category": "functional",
+      "title": "Instruction decode",
+      "coverage_bin": "cg_M13_ISADecoder.cp_tp.tp_0",
+      "stimulus": "Opcode parsing",
+      "check": "scoreboard compares DUT output against the golden model"
+    },
+    {
+      "id": "TP-M13-002",
+      "module": "M13_ISADecoder",
+      "task": "tc_TP_M13_002",
+      "priority": "MEDIUM",
+      "category": "functional",
+      "title": "Operand extraction",
+      "coverage_bin": "cg_M13_ISADecoder.cp_tp.tp_1",
+      "stimulus": "Register/immediate",
+      "check": "scoreboard compares DUT output against the golden model"
+    },
+    {
+      "id": "TP-M13-003",
+      "module": "M13_ISADecoder",
+      "task": "tc_TP_M13_003",
+      "priority": "MEDIUM",
+      "category": "boundary",
+      "title": "Input boundary values",
+      "coverage_bin": "cg_M13_ISADecoder.cp_tp.tp_2",
+      "stimulus": "drive all-0, all-1 and max+1 on isa_cmd_data (32 bit)",
+      "check": "no truncation/overflow; error flags match spec"
+    }
+  ]
+}

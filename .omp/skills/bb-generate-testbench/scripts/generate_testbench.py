@@ -38,7 +38,7 @@ def rel(p: Path, root: Path) -> str:
 def sv_type(width) -> str:
     if isinstance(width, int):
         return "logic" if width <= 1 else f"logic [{width - 1}:0]"
-    return "logic" if str(width).strip() in ("1",) else f"logic [{width}-1:0]"
+    return f"logic [{width}]"
 
 
 def period_ns(freq_mhz: float) -> float:
@@ -139,7 +139,7 @@ def parse_rtl_ports(path: Path) -> dict[str, list[dict]]:
             if pname in RESERVED or not SV_IDENT_RE.match(pname):
                 continue
             ports.append({"name": pname, "dir": last_dir, "width": last_width})
-        found[name] = ports
+        found[name] = {"ports": ports, "params": params}
     return found
 
 
