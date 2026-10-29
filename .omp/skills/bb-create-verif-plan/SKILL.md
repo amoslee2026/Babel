@@ -43,7 +43,7 @@ user-invocable: true
 3. **Functional Test Points**（编号 `FTP-NNN`，与 PRD FR 对应）
 4. **Corner Cases**（边界值 / 溢出 / 复位时序 / CDC crossing）
 5. **Random Constraints**（约束随机策略）
-6. **Test Case List**（FTP → seq 映射，供 `bb-generate-tb` 用）
+6. **Test Case List**（FTP → seq 映射，供 `bb-extract-test-points` 用）
 
 ## 4-Phase 执行
 
@@ -76,13 +76,13 @@ seed = open(verif_plan_seed).read()
 
 ### Phase 4 — return
 
-返回 JSON。`bba-guru-verification` 用此初始化 coverage tracker，调 `bb-generate-tb`。
+返回 JSON。`bba-guru-verification` 用此初始化 coverage tracker，调 `bb-extract-test-points`。
 
 ## 收敛 / 失败
 
 | 状态 | 行动 |
 |------|------|
-| valid=true | 进 `bb-generate-tb` |
+| valid=true | 进 `bb-extract-test-points` |
 | sections 缺失 | 重生成 1 次 |
 | 仍失败 | `error="plan sections incomplete"` |
 

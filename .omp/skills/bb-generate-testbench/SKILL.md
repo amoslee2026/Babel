@@ -1,6 +1,6 @@
 ---
 name: bb-generate-testbench
-description: "按 test_points.json + MAS 端口表生成可编译的 per-module SystemVerilog testbench harness（时钟/复位、DUT 实例化、check/scoreboard 钩子、覆盖率骨架、Verilator lint）。触发场景：(1) 测试点提取完成；(2) 显式 /bb-generate-testbench。"
+description: "按 test_points.json + RTL 端口生成可编译的 per-module SystemVerilog testbench harness（时钟/复位、DUT 实例化、check/scoreboard 钩子、覆盖率骨架、Verilator lint）。触发场景：(1) 测试点提取完成；(2) 显式 /bb-generate-testbench。"
 user-invocable: true
 ---
 
@@ -11,7 +11,7 @@ user-invocable: true
 只为**验证基础设施**负责：每个被测模块一份自包含 SV harness，能被 Verilator 直接 lint/编译；不含具体 testcase 激励（那是 `bb-generate-testcases` 的产物，会覆写 `tc_<module>.sv`）。
 
 - 调用者：`bba-guru-verification`
-- 上游：`bb-extract-test-points`（必需）、MAS（必需，端口来源）
+- 上游：`bb-extract-test-points`（必需）、RTL 源（端口来源）、MAS（可选，仅 `clock_domains` 频率）
 - 下游：`bb-generate-testcases`、`bb-invoke-verilator`
 - 文件所有权：本 skill 拥有 `tb_*.sv` / `cov_*.sv` / `file_list.f` / `lint.sh`；`tc_*.sv` 只是首次占位，归 `bb-generate-testcases` 覆写
 
@@ -44,7 +44,7 @@ user-invocable: true
 ```
 tb/generated/
 ├── tb_<Module>.sv     # 时钟/复位、DUT 实例化、drive_defaults/apply_reset/check_tp、run_all() 调用
-├── cov_<Module>.sv    # covergroup cg_<M>：端口 coverpoint + tp_hit 位图 bins
+├── cov_<Module>.sv    # covergroup cg_<M>：仅 tp_hit 位图 bins（TP 是唯一对账单位）
 ├── tc_<Module>.sv     # 占位 run_all()（由 bb-generate-testcases 覆写）
 ├── rtl.f              # 仅设计 RTL（逐模块 lint/编译用）
 ├── file_list.f        # rtl.f + 全部 tb_<Module>.sv
@@ -69,7 +69,7 @@ uv run --no-project python .omp/skills/bb-generate-testbench/scripts/generate_te
 
 端口映射规则（确定性）：
 
-| MAS port | TB 声明 | 驱动 |
+| RTL port | TB 声明 | 驱动 |
 |----------|---------|------|
 | `dir=input` 且匹配 `clk` | `logic = 0` + `always #(T/2)` | MAS `clock_domains.freq_mhz`，未匹配 100 MHz |
 | `dir=input` 且匹配 `rst` | `logic` | `apply_reset()`：低有效拉 0 两拍后置 1 |

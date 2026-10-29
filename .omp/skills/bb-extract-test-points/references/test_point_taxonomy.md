@@ -16,6 +16,6 @@
 - `LOW`：可观测性、调试接口、冗余路径
 
 ## 命名
-- ID：`TP-<module_code>-<NNN>`，`module_code` 取模块名首段（`M00_SystolicArray` → `M00`；顶层 → `TOP`）
-- coverage bin：`cg_<module_code>.cp_<id_lower_snake>`，与 `bb-generate-testbench` 生成的 covergroup 对齐
+- ID：`TP-<module_code>-<NNN>`，`module_code` 取模块名首段（`M00_SystolicArray` → `M00`；顶层 → `TOP`）；`source_id` 保留来源表原 ID（`M00-T01` / `F-M00-001` / `B-M00-001`，MAS 派生点为 `derived`）
+- coverage bin：由 `bb-generate-testcases` 唯一产出（`cg_<module>.cp_tp.tp_<i>`），extractor 不写 bin 名
 - 去重键：`(module_code, title 小写去标点)`；同键保留首次出现，其余记入 `also_in`

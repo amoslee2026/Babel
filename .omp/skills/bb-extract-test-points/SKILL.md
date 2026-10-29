@@ -55,6 +55,7 @@ user-invocable: true
 ```json
 {
   "id": "TP-M00-003",
+  "source_id": "F-M00-003",
   "module": "M00_SystolicArray",
   "module_code": "M00",
   "title": "FP8 precision (E4M3)",
@@ -63,11 +64,12 @@ user-invocable: true
   "method": "Directed test",
   "stimulus": "drive fp8 operand pair, latch output",
   "check": "scoreboard compares against golden model",
-  "coverage_bin": "cg_M00.cp_tp_m00_003",
   "source": "plan",
   "also_in": ["seed"]
 }
 ```
+
+`coverage_bin` **不由本 skill 产出**：bin 名以 `bb-generate-testcases` 写入 `test_registry.json` 的 `cg_<module>.cp_tp.tp_<i>` 为唯一来源，避免两套命名对不上。
 
 ## 4-Phase 执行
 

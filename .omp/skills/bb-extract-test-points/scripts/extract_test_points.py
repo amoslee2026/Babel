@@ -86,13 +86,14 @@ def parse_seed(path: Path) -> list[dict]:
             continue
         if not in_table or len(cells) < 4:
             continue
-        _, title, priority, method = cells[:4]
+        source_id, title, priority, method = cells[:4]
         if not title:
             continue
         points.append(
             {
                 "module": module,
                 "module_code": module_code(module),
+                "source_id": source_id,
                 "title": title,
                 "priority": priority.upper() or "MEDIUM",
                 "method": method,
@@ -141,6 +142,7 @@ def parse_plan(path: Path) -> list[dict]:
                 {
                     "module": code,
                     "module_code": code,
+                    "source_id": tp_id,
                     "title": feature,
                     "priority": priority.upper() or "MEDIUM",
                     "method": test_case,
@@ -157,6 +159,7 @@ def parse_plan(path: Path) -> list[dict]:
                 {
                     "module": code,
                     "module_code": code,
+                    "source_id": tp_id,
                     "title": branch,
                     "priority": "HIGH",
                     "method": condition,
@@ -270,7 +273,7 @@ def assign_ids(points: list[dict]) -> None:
     for p in points:
         per_mod[p["module_code"]] += 1
         p["id"] = f"TP-{p['module_code']}-{per_mod[p['module_code']]:03d}"
-        p["coverage_bin"] = f"cg_{p['module_code']}.cp_{p['id'].lower().replace('-', '_')}"
+        p.setdefault("source_id", "derived")
         p.setdefault("check", CHECK_BY_CATEGORY.get(p["category"], "observe DUT behavior"))
 
 
