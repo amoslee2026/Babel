@@ -362,6 +362,8 @@ def main() -> int:
     generated: list[str] = []
     skipped: list[dict] = []
     port_source: dict[str, str] = {}
+    ports_by_module: dict[str, list[dict]] = {}
+    clocks_by_module: dict[str, dict[str, float]] = {}
     for mod in wanted:
         ports = rtl_ports.get(mod) or mas_ports.get(mod) or []
         port_source[mod] = "rtl" if mod in rtl_ports else ("mas" if mod in mas_ports else "none")
@@ -424,6 +426,8 @@ def main() -> int:
         "generated": datetime.now(CST).isoformat(timespec="seconds"),
         "out_dir": str(out_dir),
         "modules": generated,
+        "ports": {m: ports_by_module[m] for m in generated},
+        "clocks": {m: clocks_by_module[m] for m in generated},
         "port_source": port_source,
         "skipped": skipped,
         "missing_rtl": missing_rtl,
