@@ -392,7 +392,7 @@ def main() -> int:
         ]
     else:
         skipped.append({"module": "*", "reason": f"design file list missing: {design_fl}"})
-    fl_lines += tb_files
+    fl_lines += fl_tb_files
     fl_path = out_dir / "file_list.f"
     fl_path.write_text("\n".join(fl_lines) + "\n", encoding="utf-8")
 
