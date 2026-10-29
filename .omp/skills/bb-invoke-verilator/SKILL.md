@@ -24,6 +24,7 @@ user-invocable: true
 | design_name | string | true | — | 路径 `designs/<name>/sim_results/` |
 | sim_time | string | false | `--time-resolution-unit 1ns` | 时间单位 |
 | seed | int | false | `1` | `+rand_seed=<seed>` |
+| plusargs | list[str] | false | `[]` | 透传 `+ARG`，如 `+TC=TP-M13-001`（配合 `bb-generate-testcases` 单点定位） |
 | enable_vcd | bool | false | `true` | 是否 `--trace --trace-structs` |
 | stamp | string | false | `<auto YYYYMMDD-HHMMSS>` | 后缀 |
 
