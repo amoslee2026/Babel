@@ -49,16 +49,20 @@ user-invocable: true
 | `valid` | bool |
 | `error` | string\|null |
 
+`coverage_bin` 由本 skill 唯一产出（`cg_<module>.cp_tp.tp_<i>`，与 harness 的 covergroup 对齐）；`check_kind` 固定 `non_x_only`——`sb_check` 只判输出无 X/Z，**不代表 golden model 功能通过**，上层汇总必须按 `check_kind` 分级，不得把 heuristic case 全绿当成功能签收。
+
 `test_registry.json` 单条：
 
 ```json
 {
   "id": "TP-M00-003",
+  "source_id": "F-M00-003",
   "module": "M00_SystolicArray",
   "task": "tc_TP_M00_003",
   "priority": "HIGH",
   "category": "functional",
   "coverage_bin": "cg_M00_SystolicArray.cp_tp.tp_2",
+  "check_kind": "non_x_only",
   "stimulus": "randomize narrow inputs + 8 cycles",
   "check": "scoreboard compares DUT output against the golden model"
 }
@@ -68,7 +72,7 @@ user-invocable: true
 
 ### Phase 1 — 前置校验
 
-`test_points.json.valid == true`；`tb_manifest.json` 存在且 `modules` 覆盖 TP 的模块（缺模块 → `skipped`，`valid=false`）。
+`test_points.json.valid == true`；`tb_manifest.json` 存在且 `modules` 覆盖 TP 的模块；缺 harness 的模块记入 `missing_modules`（顶层 wrapper 缺失等设计级缺口不阻塞其他模块）。
 
 ### Phase 2 — 生成
 
