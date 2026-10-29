@@ -55,7 +55,7 @@ tb/generated/
 
 ### Phase 1 — 前置校验
 
-`test_points.json.valid == true`；MAS 含同名模块且 `interface.ports` 非空。模块不在 MAS 中 → 记入 `skipped`，不猜端口。
+`test_points.json.valid == true`；端口以 **RTL 源为准**（`file_list.f` 或 `rtl_artifact.json` 列出的文件），MAS 只提供时钟频率。MAS 与 RTL 模块名不一致时按 `Mxx` code 做 alias（如 `M11_RMSNormUnit` → `M11_RMSNormRoPE`），TB 文件仍用测试点里的模块名、DUT 实例用 RTL 真名。RTL 解析不到端口的模块记入 `skipped`（top wrapper 缺失属设计级缺口）；MAS 端口回退仅 `--allow-mas-ports` 显式开启，且不计入 signoff。
 
 ### Phase 2 — 生成
 
