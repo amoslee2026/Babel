@@ -89,7 +89,6 @@ stat -liberty {tech_lib}
 stat -liberty {seq_lib}
 
 # Exit
-exit 0
 """
 
     # Build read_verilog commands (validate each file path before embedding)
