@@ -149,12 +149,14 @@ python3 scripts/run_parallel_synthesis.py \
 ## 命令行用法
 
 ```bash
-# Step 1: Generate config
+# Step 1: Generate config (liberty auto-resolved from --lib-root)
 python3 scripts/generate_synthesis_config.py \
     --file-list designs/uart16550/rtl/file_list.f \
     --sdc designs/uart16550/constraints/uart16550.sdc \
     --top uart16550 \
     --design-name uart16550 \
+    --lib-root libs/asap7/asap7sc7p5t_28 \
+    --corner SS --vt RVT \
     --out designs/uart16550/synth_parallel/synthesis_config.json
 
 # Step 2: Run parallel synthesis
