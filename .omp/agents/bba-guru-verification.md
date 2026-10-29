@@ -185,4 +185,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/testing.md` (80%+ is the *floor*; verification target here is 100%), `.omp/rules/common/coding-style.md`, and the global Babel AGENTS.md.
+Follow `AGENTS.md` and `.omp/references/conventions.md` (80%+ is the *floor*; verification target here is 100%).

@@ -223,4 +223,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel AGENTS.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.
+Follow `AGENTS.md` and `.omp/references/conventions.md`. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.
