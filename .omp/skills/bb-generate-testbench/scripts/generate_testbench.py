@@ -25,6 +25,13 @@ RESERVED = {
 }
 
 
+def rel(p: Path, root: Path) -> str:
+    try:
+        return str(p.relative_to(root))
+    except ValueError:
+        return str(p)
+
+
 def sv_type(width: int) -> str:
     return "logic" if int(width) <= 1 else f"logic [{int(width) - 1}:0]"
 
@@ -211,7 +218,7 @@ def run_lint(tb_dir: Path, modules: list[str], top_root: Path) -> tuple[bool, li
     for m in modules:
         cmd = [
             "verilator", "--lint-only", "-sv", "--timing", "-Wno-fatal",
-            f"--top-module=tb_{m}", "-f", str(tb_dir / "file_list.f"),
+            "--top-module", f"tb_{m}", "-f", str(tb_dir / "file_list.f"),
         ]
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=str(top_root))
@@ -273,10 +280,10 @@ def main() -> int:
         if not tc.exists():
             tc.write_text(gen_tc_placeholder(mod, clocks), encoding="utf-8")
         generated.append(mod)
-        tb_files += [str(tb.relative_to(root)), str(cov.relative_to(root)), str(tc.relative_to(root))]
+        tb_files += [rel(tb, root), rel(cov, root), rel(tc, root)]
 
     design_fl = Path(args.file_list) if args.file_list else Path("designs") / args.design_name / "file_list.f"
-    fl_lines = [HEADER.strip()]
+    fl_lines = [HEADER.strip(), f"+incdir+{out_dir.resolve()}"]
     if design_fl.is_file():
         fl_lines += [ln.strip() for ln in design_fl.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.strip().startswith("//")]
     else:
@@ -294,7 +301,7 @@ def main() -> int:
                 'cd "$(git rev-parse --show-toplevel)"',
                 "fail=0",
                 f'for m in {" ".join(generated)}; do',
-                f'  verilator --lint-only -sv --timing -Wno-fatal --top-module "tb_$m" -f {fl_path.relative_to(root)} \\',
+                f'  verilator --lint-only -sv --timing -Wno-fatal --top-module "tb_$m" -f {rel(fl_path, root)} \\',
                 '    && echo "[lint] $m OK" || { echo "[lint] $m FAILED"; fail=1; }',
                 "done",
                 "exit $fail",
