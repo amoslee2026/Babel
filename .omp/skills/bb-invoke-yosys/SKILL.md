@@ -80,13 +80,13 @@ python3 scripts/generate_synthesis_config.py \
 
 1. `read_verilog -sv` 逐行展开 `file_list.f`
 2. `hierarchy -check -top <top_module>` 检查顶层
-3. `synth -top <top_module>` 通用综合
-4. `dfflibmap -liberty <tech_lib>` DFF 映射
-5. `abc -liberty <tech_lib> <abc_options>` 技术映射
+3. `synth -top <top_module> -noabc` 通用综合（ABC 延后，让 dfflibmap 看到通用 FF）
+4. `dfflibmap -liberty <seq_lib>` DFF 映射（SEQ 库）
+5. `abc -liberty <tech_lib> <abc_options>` 组合技术映射（SIMPLE 库，默认 `-script "+strash;map"`）
 6. 可选：`abc -liberty <tech_lib> -script +retime` （若 enable_retiming）
 7. `opt_clean -purge`
 8. `write_verilog -noattr <netlist>`
-9. `stat -liberty <tech_lib>` 输出统计
+9. `stat -liberty <tech_lib>` + `stat -liberty <seq_lib>` 输出统计（每次 stat 只能吃一个 liberty，面积按两次结果相加）
 
 **并行准备**: 所有模块的TCL脚本同时生成，不阻塞。
 
