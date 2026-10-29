@@ -55,13 +55,19 @@ never share a file. Verified layout (`The-OpenROAD-Project/asap7sc7p5t_28`, r28)
 
 ## Default Selection
 
-For synthesis, use:
-- Corner: TT (Typical-Typical)
-- Track: 7.5T (balanced density/timing)
+For synthesis (`generate_synthesis_config.py` defaults):
+- Corner: SS (slow) — pessimistic for area/timing signoff of first run
+- Track: 7.5T (`asap7sc7p5t_28`)
 - Vt: RVT (regular)
-- Drive: AO (average)
+- Combinational family: SIMPLE (or AO/OA/INVBUF)
+- Sequential family: SEQ
 
-Full path:
+```bash
+# resolve liberty automatically
+python3 scripts/generate_synthesis_config.py ... \
+    --lib-root libs/asap7/asap7sc7p5t_28 --corner SS --vt RVT
 ```
-libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_TT_nldm_201020.lib
-```
+
+ABC mapping: the stock supergate script SIGSEGVs (status 8B) on ASAP7 liberty;
+use `-script "+strash;map"` (default). Verified result on M13_ISADecoder:
+729 cells, 37.748 µm² comb + 53.071 µm² seq = 90.82 µm².
