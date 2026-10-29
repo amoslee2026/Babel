@@ -362,6 +362,7 @@ def main() -> int:
         if cm:
             rtl_by_code.setdefault(cm.group(1), rname)
 
+    mas_ports = {
         m.get("name"): [
             {"name": str(p.get("name")), "dir": p.get("dir", "input"), "width": max(1, int(p.get("width", 1) or 1))}
             for p in ((m.get("interface") or {}).get("ports") or [])
