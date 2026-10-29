@@ -386,7 +386,7 @@ def main() -> int:
         tb = out_dir / f"tb_{mod}.sv"
         cov = out_dir / f"cov_{mod}.sv"
         tc = out_dir / f"tc_{mod}.sv"
-        tb.write_text(gen_tb(mod, ports, clocks, tps), encoding="utf-8")
+        tb.write_text(gen_tb(mod, ports, clocks, tps, params), encoding="utf-8")
         cov.write_text(gen_cov(mod, ports, tps), encoding="utf-8")
         if not tc.exists():
             tc.write_text(gen_tc_placeholder(clocks), encoding="utf-8")
