@@ -253,7 +253,7 @@ def main() -> int:
                 "for m in $MODULES; do",
                 '  obj=/tmp/babel-sim/$m',
                 '  mkdir -p "$obj"',
-                '  verilator --binary -j 0 -sv --timing -Wno-fatal --top-module "tb_$m" \\',
+                '  verilator --binary -j 0 -sv --timing -Wno-fatal --coverage --top-module "tb_$m" \\',
                 '    -f "$GEN/rtl.f" "$GEN/tb_$m.sv" --Mdir "$obj" -o "sim_$m" --quiet || { echo "[build] $m FAILED"; rc=1; continue; }',
                 '  if [[ -n "$TC" ]]; then',
                 '    "$obj/sim_$m" +TC="$TC" || rc=1',
