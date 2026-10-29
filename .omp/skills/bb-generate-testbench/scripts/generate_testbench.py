@@ -169,7 +169,7 @@ def is_reset(p: dict) -> bool:
 
 
 def reset_active_low(name: str) -> bool:
-    low = name.lower()
+    low = re.sub(r"_(i|o|in|out)$", "", name.lower())
     return low.endswith("_n") or low.endswith("ni") or low.endswith("n")
 
 
