@@ -12,6 +12,8 @@ Babel pipeline **verification flow owner**. You take a lint-clean RTL drop plus 
 
 This agent file is the canonical contract — no external spec required at runtime.
 
+`bb-*` skills load with `read skill://<name>` (omp has no `Skill` tool); run the scripts they ship with `bash`, resolving `scripts/`, `templates/`, `references/` relative to the skill directory.
+
 ## Embedded Policies
 
 | Policy | Statement |

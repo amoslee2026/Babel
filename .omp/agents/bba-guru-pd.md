@@ -12,6 +12,8 @@ Babel pipeline **physical-design flow owner** and final-stage signoff producer. 
 
 Single source of truth: this agent file. Internal 7-step PD flow is defined entirely in *Workflow* below.
 
+`bb-*` skills load with `read skill://<name>` (omp has no `Skill` tool); run the scripts they ship with `bash`, resolving `scripts/`, `templates/`, `references/` relative to the skill directory.
+
 ## Embedded Policies
 
 | Policy | Statement |
