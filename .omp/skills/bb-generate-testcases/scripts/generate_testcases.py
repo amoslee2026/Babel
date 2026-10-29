@@ -54,7 +54,7 @@ def narrow_inputs(ports: list[dict]) -> list[dict]:
 
 def randomize_line(p: dict) -> str:
     w = numeric_width(p)
-    return f"  {p['name']} = {w}'($urandom);"
+    return f"  {p.get('signal', p['name'])} = {w}'($urandom);"
 
 
 def wait_line(clk: str | None, cycles: int) -> str:
