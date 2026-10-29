@@ -151,7 +151,9 @@
 | `/bb-check-cdc` | 运行 CDC 检查，报告跨时钟域处理问题 |
 | `/bb-create-sdc` | 根据 MAS 时序约束自动生成 SDC 文件 |
 | `/bb-create-floorplan` | 根据综合面积估算生成 Floorplan 脚本 |
-| `/bb-generate-tb` | 根据验证计划生成 Testbench |
+| `/bb-extract-test-points` | 从验证计划与 MAS 提取结构化测试点 |
+| `/bb-generate-testbench` | 按测试点与 RTL 端口生成 Testbench harness |
+| `/bb-generate-testcases` | 按测试点生成可执行 testcase 与 registry |
 | `/bb-create-verif-plan` | 根据 MAS 生成验证计划文档 |
 | `/bb-collect-coverage` | 采集并分析覆盖率数据 |
 | `/bb-gate-rtl-quality` | RTL 质量门控检查 |

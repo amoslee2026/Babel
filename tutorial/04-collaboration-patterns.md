@@ -64,7 +64,9 @@ graph TD
 - `/bb-gate-pd-quality`：物理设计质量门控（DRC、LVS 检查）
 
 **设计辅助类**：
-- `/bb-generate-tb`：生成 Testbench 框架
+- `/bb-generate-testbench`：生成 Testbench harness
+- `/bb-generate-testcases`：按测试点生成可执行 testcase
+- `/bb-extract-test-points`：从验证计划提取结构化测试点
 - `/bb-create-sdc`：生成 SDC 时序约束文件
 - `/bb-create-floorplan`：生成 Floorplan 配置
 - `/bb-create-verif-plan`：生成验证计划
