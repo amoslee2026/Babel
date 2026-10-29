@@ -34,13 +34,18 @@ def resolve_corner_libs(corner: str, lib_root: str = DEFAULT_LIB_ROOT):
     return hits
 
 
-def render_corner_block(corner: str, liberty_path: str, netlist: str,
+def render_corner_block(corner: str, liberty_paths, netlist: str,
                         top_module: str, sdc_path: str,
                         spef_path: str | None = None) -> str:
-    """Render TCL block for a single PVT corner."""
+    """Render TCL block for a single PVT corner.
+
+    liberty_paths is a list: ASAP7 keeps combinational and sequential cells in
+    different files, and OpenSTA needs all of them loaded before link_design."""
+    if isinstance(liberty_paths, str):
+        liberty_paths = [liberty_paths]
     lines = [
         f'puts "=== CORNER {corner} ==="',
-        f'read_liberty {liberty_path}',
+    ] + [f'read_liberty {lib}' for lib in liberty_paths if lib] + [
         f'read_verilog {netlist}',
         f'link_design {top_module}',
         f'read_sdc {sdc_path}',
@@ -70,11 +75,13 @@ def render_sta_tcl(params: dict) -> str:
 
     blocks = []
     for corner in params['corners']:
-        lib_path = params.get('liberty_map', {}).get(corner, CORNER_LIB_MAP.get(corner, ''))
-        if not lib_path:
-            lib_path = params.get('tech_lib', '')
+        lib_paths = params.get('liberty_map', {}).get(corner)
+        if not lib_paths:
+            lib_paths = resolve_corner_libs(corner, params.get('lib_root', DEFAULT_LIB_ROOT))
+        if not lib_paths:
+            lib_paths = [params.get('tech_lib', '')]
         block = render_corner_block(
-            corner, lib_path, params['netlist'],
+            corner, lib_paths, params['netlist'],
             params['top_module'], params['sdc_path'],
             params.get('spef'),
         )
@@ -95,6 +102,9 @@ def main() -> int:
     parser.add_argument('--spef', default=None, help='SPEF path (post-PD)')
     parser.add_argument('--tech-lib', default=None,
                         help='Single Liberty path (overrides corner map)')
+    parser.add_argument('--lib-root', default=DEFAULT_LIB_ROOT,
+                        help=f'ASAP7 sc7p5t root for glob resolution '
+                             f'(default: {DEFAULT_LIB_ROOT})')
     parser.add_argument('--liberty-map', default=None,
                         help='JSON string mapping corners to liberty paths')
     parser.add_argument('--out', required=True, help='Output TCL file path')
@@ -111,6 +121,7 @@ def main() -> int:
         'corners': [c.strip() for c in args.corners.split(',')],
         'spef': args.spef,
         'tech_lib': args.tech_lib,
+        'lib_root': args.lib_root,
         'liberty_map': liberty_map,
     }
 

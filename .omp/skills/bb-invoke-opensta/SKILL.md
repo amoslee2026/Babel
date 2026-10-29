@@ -20,7 +20,8 @@ user-invocable: true
 |-----|------|----------|------|------|
 | netlist | path | true | — | 综合后 `netlist.v` 或 PD 后 `routed.def` |
 | sdc_path | path | true | — | `constraints/*.sdc` |
-| tech_lib | path | true | — | ASAP7 Liberty（corner ↔ Liberty 一一对应） |
+| tech_lib | path | false | 按 corner glob 解析 | ASAP7 Liberty；一个 corner 对应多个 family 文件（AO/OA/SIMPLE/INVBUF/SEQ），渲染时逐个 `read_liberty` |
+| lib_root | path | false | `libs/asap7/asap7sc7p5t_28` | ASAP7 sc7p5t 根目录，用于按 corner glob 解析 liberty |
 | top_module | string | true | — | 顶层名 |
 | design_name | string | true | — | 路径 `designs/<name>/[synth\|pd]/` |
 | spef | path | false | — | SPEF（PD 模式必须） |
