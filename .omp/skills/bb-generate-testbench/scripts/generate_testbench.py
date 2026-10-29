@@ -216,7 +216,7 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
     L.append("")
 
     conns = ", ".join(f".{p['name']}({sig_name(p)})" for p in ports)
-    L += [f"  {module} dut (", "    " + conns, "  );", ""]
+    L += [f"  {dut_module or module} dut (", "    " + conns, "  );", ""]
     L += [f'  `include "cov_{module}.sv"', f'  `include "tc_{module}.sv"', ""]
 
     L.append("  task automatic drive_defaults();")
@@ -336,6 +336,8 @@ def main() -> int:
     ap.add_argument("--file-list", default=None, help="design file_list.f (RTL paths + incdirs)")
     ap.add_argument("--rtl-artifact", default=None, help="rtl_artifact.json as RTL path source")
     ap.add_argument("--modules")
+    ap.add_argument("--allow-mas-ports", action="store_true",
+                    help="fallback to MAS port table when RTL parsing fails (off by default: MAS/RTL drift is treated as an error)")
     ap.add_argument("--no-lint", action="store_true")
     args = ap.parse_args()
 
