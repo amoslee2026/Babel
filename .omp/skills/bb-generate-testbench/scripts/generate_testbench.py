@@ -185,7 +185,7 @@ def clock_plan(mas: dict, ports: list[dict]) -> dict[str, float]:
     return clocks
 
 
-def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[dict], params: dict | None = None) -> str:
+def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[dict], params: dict | None = None, dut_module: str | None = None) -> str:
     n_tp = len(tps)
     tp_bits = max(1, n_tp)
     inputs = [p for p in ports if p["dir"] == "input" and not is_clock(p) and not is_reset(p)]
