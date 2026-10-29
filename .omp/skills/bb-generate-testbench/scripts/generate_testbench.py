@@ -99,7 +99,13 @@ def parse_rtl_ports(path: Path) -> dict[str, list[dict]]:
             start = pos + pm.end() - 1
             end = _matching_paren(text, start)
             for decl in _split_top(text[start + 1:end]):
-                dm = re.search(r"\bparameter\s+(?:integer\s+)?([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)", decl)
+                dm = re.search(
+                    r"(?:parameter|localparam)\s+(?:integer\s+|int\s+|logic\s+\[[^\]]*\]\s+)?([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)",
+                    decl,
+                )
+                if not dm:
+                    # `#(parameter A = 1, B = 2)` — later chunks carry no keyword
+                    dm = re.match(r"\s*([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)", decl)
                 if dm:
                     val = _eval_expr(dm.group(2), params)
                     if val is not None:
