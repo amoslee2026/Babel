@@ -3,7 +3,6 @@
 | 脚本 | 用途 | 何时用 |
 |------|------|--------|
 | `run_yosys_asap7_map.sh` | 单模块 RTL → ASAP7 标准单元映射（`synth -noabc` → `dfflibmap` SEQ → `abc -script "+strash;map"` → 两次 `stat`），产出网表 / log / 面积明细 | 快速验证 SYNTH 段、复现 ASAP7 映射结果、排查 ABC 崩溃 |
-| `check_babel_install.sh` | 校验 `.omp` agents/skills/commands 是否被 omp 正确加载 | 迁移或改动 `.omp/` 结构后 |
 
 ## run_yosys_asap7_map.sh
 
