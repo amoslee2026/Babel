@@ -88,7 +88,11 @@ def gen_task(idx: int, tp: dict, ports: list[dict], clk: str | None) -> list[str
             L.append(randomize_line(p))
         L += [wait_line(clk, 8), "  sb_check(idx);"]
     elif cat == "boundary":
-        wide = [p for p in narrow_inputs(ports)]
+        wide = [
+            p for p in ports
+            if p["dir"] == "input" and not is_clock(p) and not is_reset(p)
+            and numeric_width(p) is not None
+        ]
         if wide:
             p = max(wide, key=lambda q: numeric_width(q) or 1)
             L += [
@@ -186,12 +190,14 @@ def main() -> int:
         for i, tp in enumerate(tps):
             registry.append({
                 "id": tp["id"],
+                "source_id": tp.get("source_id", "derived"),
                 "module": mod,
                 "task": task_name(tp["id"]),
                 "priority": tp.get("priority", "MEDIUM"),
                 "category": tp.get("category", "functional"),
                 "title": tp.get("title", ""),
                 "coverage_bin": f"cg_{mod}.cp_tp.tp_{i}",
+                "check_kind": "non_x_only",
                 "stimulus": tp.get("stimulus", ""),
                 "check": tp.get("check", ""),
             })
