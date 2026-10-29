@@ -165,7 +165,7 @@ def is_clock(p: dict) -> bool:
 
 
 def is_reset(p: dict) -> bool:
-    return p["dir"] == "input" and bool(re.match(r"^rst", p["name"], re.I))
+    return p["dir"] == "input" and bool(re.search(r"(^|_)rst", p["name"], re.I))
 
 
 def reset_active_low(name: str) -> bool:
@@ -321,7 +321,7 @@ def run_lint(tb_dir: Path, modules: list[str], root: Path) -> tuple[bool, list[s
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(root))
         except (OSError, subprocess.TimeoutExpired) as exc:
             return False, [f"{m}: lint invocation failed: {exc}"]
-        if res.returncode != 0:
+        if res.returncode != 0 or "PINMISSING" in (res.stdout + res.stderr):
             errs = [
                 ln for ln in (res.stdout + res.stderr).splitlines()
                 if "%Error" in ln or "PINMISSING" in ln
