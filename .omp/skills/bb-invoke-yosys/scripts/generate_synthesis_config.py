@@ -15,7 +15,31 @@ import sys
 from pathlib import Path
 
 
-DEFAULT_TECH_LIB = "libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_TT_nldm_201020.lib"
+DEFAULT_LIB_ROOT = "libs/asap7/asap7sc7p5t_28"
+DEFAULT_CORNER = "SS"
+DEFAULT_VT = "RVT"
+DEFAULT_COMB_FAMILY = "SIMPLE"
+DEFAULT_SEQ_FAMILY = "SEQ"
+# Default ABC script: the stock supergate script (&nf) SIGSEGVs (status 8B) on
+# ASAP7 NLDM liberty; `map` on a single combinational lib is the verified path.
+DEFAULT_ABC_OPTIONS = '-script "+strash;map"'
+
+
+def resolve_liberty(lib_root: str, family: str, corner: str, vt: str):
+    """Locate one ASAP7 NLDM liberty by family/corner/Vt under <root>/LIB/NLDM.
+
+    The published trees differ in directory depth and date suffix
+    (…_211120.lib / …_220123.lib), so match by glob instead of pinning a filename.
+    Returns (path, candidates)."""
+    import glob
+    pattern = os.path.join(lib_root, "LIB", "NLDM",
+                           f"asap7sc7p5t_{family}_{vt}_{corner}_nldm_*.lib")
+    hits = sorted(glob.glob(pattern))
+    if not hits:
+        pattern = os.path.join(lib_root, "**",
+                               f"asap7sc7p5t_{family}_{vt}_{corner}_nldm_*.lib")
+        hits = sorted(glob.glob(pattern, recursive=True))
+    return (hits[0] if hits else None), hits
 
 
 def find_rtl_modules(file_list_path: str) -> list:
