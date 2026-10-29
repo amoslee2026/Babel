@@ -11,12 +11,27 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Default ASAP7 corner-to-Liberty mapping
-CORNER_LIB_MAP = {
-    'ss_0p63v_m40c': 'libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_SS_nldm_201020.lib',
-    'tt_0p77v_25c':  'libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_TT_nldm_201020.lib',
-    'ff_0p88v_125c': 'libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_FF_nldm_201020.lib',
+# Default ASAP7 corner-to-Liberty mapping (glob patterns, resolved at render time).
+# ASAP7 splits cells per family (AO/OA/SIMPLE/INVBUF/SEQ) and ships one liberty
+# per corner; date suffixes vary (211120/220122/220123), so never pin filenames.
+DEFAULT_LIB_ROOT = 'libs/asap7/asap7sc7p5t_28'
+CORNER_LIB_GLOB = {
+    'ss_0p63v_m40c': ('LIB/NLDM', 'asap7sc7p5t_*_RVT_SS_nldm_*.lib'),
+    'tt_0p77v_25c':  ('LIB/NLDM', 'asap7sc7p5t_*_RVT_TT_nldm_*.lib'),
+    'ff_0p88v_125c': ('LIB/NLDM', 'asap7sc7p5t_*_RVT_FF_nldm_*.lib'),
 }
+
+
+def resolve_corner_libs(corner: str, lib_root: str = DEFAULT_LIB_ROOT):
+    """Return every liberty file for one corner (one per cell family)."""
+    import glob
+    import os
+    subdir, pattern = CORNER_LIB_GLOB[corner]
+    hits = sorted(glob.glob(os.path.join(lib_root, subdir, pattern)))
+    if not hits:
+        hits = sorted(glob.glob(os.path.join(lib_root, '**', pattern),
+                                 recursive=True))
+    return hits
 
 
 def render_corner_block(corner: str, liberty_path: str, netlist: str,
