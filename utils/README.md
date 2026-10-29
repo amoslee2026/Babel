@@ -40,3 +40,17 @@ stock ABC 脚本（supergate `&nf`）在 ASAP7 liberty 上 SIGSEGV（status 8B�
 Magic / Netgen / QRouter。因此 PD 段（place/route/DRC/LVS）仍不可跑。
 
 STA 版本门禁已放宽为 ≥2.5 并支持 `STA_BIN` 覆盖；`eda_env.sh` 不存在时回退当前环境（要求 `sta` 在 PATH）。
+
+## run_orfs_pd.sh（PD 段，实测可用）
+
+```bash
+# 目录布局：config.mk 与 RTL/SDC 同层，路径按 /work 引用
+#   /tmp/babel-orfs/M13/{config.mk, constraint.sdc, M13_ISADecoder.sv}
+utils/run_orfs_pd.sh /tmp/babel-orfs/M13/config.mk
+```
+
+产物：`results/6_final.gds`、`reports/6_finish.rpt`（WNS/TNS）、`logs/6_report.log`（area）。
+镜像 `docker.io/openroad/orfs:latest`（4.4 GB，podman rootless 已拉取），内含 OpenROAD + yosys + KLayout。
+
+实测 M13（asap7, 3.0 ns 时钟, 40% utilization）：全流程 79 s，
+`6_final.gds` 1.8 MB，area 164 µm²，`wns max -214.59`（功能性打通，时序未收敛，属 RTL/SDC 迭代项）。
