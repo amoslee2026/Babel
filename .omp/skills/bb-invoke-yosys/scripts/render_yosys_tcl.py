@@ -99,10 +99,10 @@ exit 0
                     read_cmds.append(f"read_verilog -sv {line}")
     read_verilog_block = "\n".join(read_cmds)
 
-    # Retiming option
+    # Retiming option (rendered with the same liberty as the ABC mapping step)
     retime_cmd = ""
     if params.get('enable_retiming', False):
-        retime_cmd = "abc -liberty {tech_lib} -script +retime"
+        retime_cmd = f"abc -liberty {params['tech_lib']} -script +retime"
 
     # Substitute template
     return tcl_template.format(
@@ -111,7 +111,8 @@ exit 0
         top_module=params['top_module'],
         read_verilog_cmds=read_verilog_block,
         tech_lib=params['tech_lib'],
-        abc_options=params.get('abc_options', '-g AND,OR,NAND,NOR,XOR'),
+        seq_lib=params['seq_lib'],
+        abc_options=params.get('abc_options', DEFAULT_ABC_OPTIONS),
         retime_cmd=retime_cmd,
         netlist_path=params['netlist_path']
     )
