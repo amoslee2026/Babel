@@ -78,7 +78,7 @@ user-invocable: true
 ### Phase 2 — 提取
 
 ```bash
-python3 .omp/skills/bb-extract-test-points/scripts/extract_test_points.py \
+uv run --no-project python .omp/skills/bb-extract-test-points/scripts/extract_test_points.py \
   --design-name <name> \
   --seed  designs/<name>/mas/verif_plan_seed.md \
   --plan  designs/<name>/verif/verification_plan.md \
