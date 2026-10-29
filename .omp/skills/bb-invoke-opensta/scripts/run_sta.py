@@ -13,19 +13,24 @@ import sys
 import time
 from pathlib import Path
 
-EDA_ENV_PATH = "~/wrk/eda_opensources/eda_env.sh"
-STA_VERSION_REQUIRED = "2.5"
+EDA_ENV_PATH = os.environ.get("BB_EDA_ENV", "~/wrk/eda_opensources/eda_env.sh")
+STA_VERSION_MIN = (2, 5)
 DEFAULT_TIMEOUT = 900
 
 
 def source_eda_env() -> tuple[dict | None, str | None]:
-    """Source EDA environment and return env dict."""
+    """Source EDA environment and return env dict.
+
+    Falls back to the current environment when the env script is absent but a
+    `sta` binary is already on PATH (e.g. a user-mode build under /tmp)."""
     env = os.environ.copy()
     result = subprocess.run(
         ['bash', '-c', f'source {EDA_ENV_PATH} && env'],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
+        if shutil.which('sta'):
+            return env, None
         return None, 'EDA_ENV_FAILED'
     for line in result.stdout.split('\n'):
         if '=' in line:
@@ -35,15 +40,19 @@ def source_eda_env() -> tuple[dict | None, str | None]:
 
 
 def validate_sta_version(env: dict) -> tuple[bool, str | None]:
-    """Check OpenSTA version."""
+    """Check OpenSTA version is at least 2.5."""
     try:
         result = subprocess.run(
-            ['sta', '-version'], env=env,
+            [os.environ.get('STA_BIN', 'sta'), '-version'], env=env,
             capture_output=True, text=True, timeout=10,
         )
-        output = result.stdout + result.stderr
-        if STA_VERSION_REQUIRED not in output:
-            return False, f"VERSION_MISMATCH: got '{output.strip()}', need '{STA_VERSION_REQUIRED}'"
+        output = (result.stdout + result.stderr).strip()
+        match = re.search(r'(\d+)\.(\d+)', output)
+        if not match:
+            return False, f'VERSION_UNPARSED: {output!r}'
+        found = (int(match.group(1)), int(match.group(2)))
+        if found < STA_VERSION_MIN:
+            return False, f"VERSION_MISMATCH: got '{output}', need >= {STA_VERSION_MIN[0]}.{STA_VERSION_MIN[1]}"
         return True, None
     except FileNotFoundError:
         return False, 'STA_NOT_FOUND'
