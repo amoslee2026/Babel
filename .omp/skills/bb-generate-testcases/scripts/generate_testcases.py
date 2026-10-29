@@ -199,24 +199,32 @@ def main() -> int:
     verif_dir = Path("designs") / args.design_name / "verif"
     verif_dir.mkdir(parents=True, exist_ok=True)
     reg_path = verif_dir / "test_registry.json"
+    prev_cases: list[dict] = []
+    if reg_path.is_file():
+        try:
+            prev_cases = json.loads(reg_path.read_text(encoding="utf-8")).get("cases", [])
+        except json.JSONDecodeError:
+            prev_cases = []
+    kept = [c for c in prev_cases if c.get("module") not in set(generated)]
+    all_cases = sorted(kept + registry, key=lambda c: c["id"])
     reg_doc = {
         "design_name": args.design_name,
         "generated": datetime.now(CST).isoformat(timespec="seconds"),
-        "testcases": len(registry),
+        "testcases": len(all_cases),
         "missing_modules": missing,
-        "cases": registry,
+        "cases": all_cases,
     }
     reg_path.write_text(json.dumps(reg_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     md_lines = [
         f"# Test Cases — {args.design_name}",
         "",
-        f"> {len(registry)} 个 testcase ｜ 生成时间 {reg_doc['generated']}",
+        f"> {len(all_cases)} 个 testcase ｜ 生成时间 {reg_doc['generated']}",
         "",
         "| TP | Module | Task | Category | Priority | Coverage Bin | Run |",
         "|----|--------|------|----------|----------|--------------|-----|",
     ]
-    for c in registry:
+    for c in all_cases:
         md_lines.append(
             f"| {c['id']} | {c['module']} | `{c['task']}` | {c['category']} | {c['priority']} | "
             f"`{c['coverage_bin']}` | `run_tests.sh {c['module']} {c['id']}` |"
