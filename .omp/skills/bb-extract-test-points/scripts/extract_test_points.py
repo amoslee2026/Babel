@@ -357,6 +357,8 @@ def main() -> int:
         modules, derived, _ = parse_mas(Path(args.mas))
         points += derived
         sources["mas"] = args.mas
+    else:
+        sources_missing.append("mas")
 
     code_to_name = {
         module_code(m["name"]): m["name"] for m in modules if m.get("name")
@@ -364,8 +366,6 @@ def main() -> int:
     for p in points:
         p["module"] = code_to_name.get(p["module"], p["module"])
         p["module_code"] = module_code(p["module"])
-    else:
-        sources_missing.append("mas")
 
     points = dedupe(points)
     module_order = [m["name"] for m in modules if m.get("name")]
