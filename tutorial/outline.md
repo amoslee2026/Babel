@@ -19,7 +19,7 @@ tutorial/
   Part I: 范式与准备
   ai-native-paradigm.md        ← AI 原生芯片设计范式
   prerequisites.md             ← 前置知识与环境准备
-  ai-research-learn.md         ← 用 Claude Code 学习/研究/搜索任何问题
+  ai-research-learn.md         ← 用 omp 学习/研究/搜索任何问题
   collaboration-patterns.md    ← 人机协作模式
 
   Part II: 规范驱动设计（Spec-Driven）
@@ -34,7 +34,7 @@ tutorial/
   ai-physical-design.md        ← Agent 驱动的物理设计
 
   Part IV: 工具链与实战
-  eda-toolchain-setup.md       ← 用 Claude Code 搭建 EDA 工具链
+  eda-toolchain-setup.md       ← 用 omp 搭建 EDA 工具链
   hands-on-npu.md              ← 实战：NPU 全流程走读
   ai-debugging.md              ← 与 AI 协同调试
 
@@ -91,7 +91,7 @@ flowchart TB
   - 开源 EDA 工具链：降低芯片设计的准入门槛
 - 1.3 Babel 项目结构速览
   - 目录结构与文件组织
-  - 关键文件说明（CLAUDE.md、spec/、rtl/、designs/）
+  - 关键文件说明（AGENTS.md、spec/、rtl/、designs/）
   - Issue 追踪系统（bb-create-issue / bb-list-issues）
 - 1.4 角色转变：从"工程师"到"架构师 + 审查者"
   - 你需要做什么：写清楚规范、审查 Agent 输出、做关键决策
@@ -129,7 +129,7 @@ flowchart TB
   - 矩阵运算与脉动阵列
   - Transformer 架构与推理瓶颈
 - 2.4 与 AI Agent 协作的基本能力
-  - Claude Code 安装与配置
+  - omp 安装与配置
   - 自然语言描述设计意图（Prompt Engineering for IC）
   - 如何审查 Agent 生成的 RTL / 脚本 / 报告
   - 如何给 Agent 有效的反馈（迭代收敛的关键）
@@ -140,13 +140,13 @@ flowchart TB
 
 ---
 
-### 第 3 章：用 Claude Code 学习/研究/搜索任何问题 (`ai-research-learn.md`)
+### 第 3 章：用 omp 学习/研究/搜索任何问题 (`ai-research-learn.md`)
 
 > **本章核心**：AI 原生不只是"用 AI 干活"，更是"用 AI 学习"——建立随时可调用的专家导师
 
 - 3.1 AI 辅助学习的范式转变
   - 从"查文档 + 搜索引擎"到"对话式学习"
-  - Claude Code 作为 24/7 可用的专家导师
+  - omp 作为 24/7 可用的专家导师
   - 学习 ≠ 记忆，而是建立知识连接
 - 3.2 五种学习模式
 
@@ -253,7 +253,7 @@ graph LR
   - 逻辑验证：检查推理过程是否合理
   - 边界验证：问 AI "什么情况下这个答案会失效？"
 - 3.5 构建个人知识库
-  - 让 Claude Code 帮你整理学习笔记
+  - 让 omp 帮你整理学习笔记
   - 建立术语表（中英对照 + 解释）
   - 收集常用 Prompt 模板
   - 记录踩坑经验（让 AI 帮你分析根因）
@@ -339,7 +339,7 @@ graph TD
   - 功耗与面积约束
   - 接口需求
   - 支持的算子/工作负载
-- 5.3 用 Claude Code 辅助编写 PRD
+- 5.3 用 omp 辅助编写 PRD
   - 让 Agent 分析竞品 NPU 的参数
   - 让 Agent 生成 PRD 草稿
   - 人审查并修改关键决策
@@ -628,9 +628,9 @@ flowchart TD
 
 ## Part IV：工具链与实战
 
-### 第 12 章：用 Claude Code 搭建 EDA 工具链 (`eda-toolchain-setup.md`)
+### 第 12 章：用 omp 搭建 EDA 工具链 (`eda-toolchain-setup.md`)
 
-> **本章核心**：全程使用 Claude Code 安装、编译、配置、验证开源 EDA 工具链
+> **本章核心**：全程使用 omp 安装、编译、配置、验证开源 EDA 工具链
 
 - 12.1 工具链总览
   - 七大工具及其在 Babel 流程中的角色
@@ -645,21 +645,21 @@ flowchart TD
 | QRouter | 1.4 | 布线 | `/bb-invoke-qrouter` |
 | KLayout | 0.30.8 | GDSII 查看 | `/bb-invoke-klayout` |
 
-- 12.2 使用 Claude Code 安装工具链
+- 12.2 使用 omp 安装工具链
   - 让 Agent 分析系统环境（OS、编译器、已有工具）
   - 让 Agent 规划安装顺序（依赖关系排序）
-  - 通过 Claude Code 执行依赖安装
-  - 通过 Claude Code 编译各 EDA 工具
+  - 通过 omp 执行依赖安装
+  - 通过 omp 编译各 EDA 工具
   - 并行编译加速策略
-- 12.3 使用 Claude Code 配置环境
+- 12.3 使用 omp 配置环境
   - 让 Agent 自动生成 eda_env.sh
   - 环境变量验证与调试
   - PATH / LD_LIBRARY_PATH 配置
-- 12.4 通过 Claude Code 验证安装
+- 12.4 通过 omp 验证安装
   - 让 Agent 运行各工具的 smoke test
   - 版本检查与兼容性验证
   - 自动排查安装问题
-- 12.5 各工具快速上手（通过 Claude Code 调用）
+- 12.5 各工具快速上手（通过 omp 调用）
   - Yosys：让 Agent 综合一个简单计数器
   - Verilator：让 Agent 仿真一个简单 testbench
   - OpenSTA：让 Agent 做一次时序分析
@@ -767,7 +767,7 @@ flowchart TD
   - 脉动阵列原始论文（Kung 1982）
   - Transformer 硬件加速综述
 - 16.4 AI Coding Agent 资源
-  - Claude Code 文档
+  - omp 文档
   - Agentic Coding 方法论
 - 16.5 Babel 项目内部文档索引
   - spec/、doc/、wiki/ 目录结构
@@ -818,7 +818,7 @@ flowchart TD
 2. **角色转变**：教读者从"执行者"转变为"架构师 + 审查者"
 3. **Spec-Driven**：规范文档是唯一真相源，Agent 从 spec 生成一切
 4. **面向 EE 毕业生**：假设读者有数字电路基础，无需从零讲起
-5. **开源工具链**：全部使用开源 EDA 工具，通过 Claude Code 管理
+5. **开源工具链**：全部使用开源 EDA 工具，通过 omp 管理
 6. **实战导向**：以 NPU 设计为主线，展示完整的人机协作过程
 
 ---

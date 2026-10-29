@@ -1,8 +1,8 @@
-# 第 12 章：用 Claude Code 搭建开源 EDA 工具链
+# 第 12 章：用 omp 搭建开源 EDA 工具链
 
-> **本章核心**：工具链安装、配置、验证全部通过 Claude Code 完成，展示 AI 原生工作流。
+> **本章核心**：工具链安装、配置、验证全部通过 omp 完成，展示 AI 原生工作流。
 >
-> **前置条件**：已安装 Claude Code（参见第 2 章），具备 Linux 命令行基础。
+> **前置条件**：已安装 omp（参见第 2 章），具备 Linux 命令行基础。
 >
 > **预计耗时**：约 60 分钟（含编译等待时间）。
 
@@ -60,13 +60,13 @@ flowchart TD
 
 ---
 
-## 12.2 使用 Claude Code 安装工具链
+## 12.2 使用 omp 安装工具链
 
-传统方式下，手动编译安装 7 个 EDA 工具需要反复查阅文档、解决依赖冲突、调整编译参数，整个过程容易出错且耗时。使用 Claude Code，只需给出目标，Agent 会自动完成环境检测、依赖分析、源码编译、安装验证的全流程。
+传统方式下，手动编译安装 7 个 EDA 工具需要反复查阅文档、解决依赖冲突、调整编译参数，整个过程容易出错且耗时。使用 omp，只需给出目标，Agent 会自动完成环境检测、依赖分析、源码编译、安装验证的全流程。
 
 ### Agent 安装工作流
 
-Claude Code 执行安装时遵循以下步骤：
+omp 执行安装时遵循以下步骤：
 
 1. **分析环境**：检测操作系统版本、已安装的编译工具链（GCC、Make、CMake）、磁盘空间是否充足
 2. **规划安装顺序**：根据工具间依赖关系排序（例如 Magic 依赖 X11 开发库，OpenSTA 依赖 Tcl/SWIG）
@@ -76,13 +76,13 @@ Claude Code 执行安装时遵循以下步骤：
 
 ### 示例：安装 Yosys
 
-在 Claude Code 中输入：
+在 omp 中输入：
 
 ```
 请安装 Yosys 0.35 到 ~/wrk/eda_opensources/install/yosys
 ```
 
-Claude Code 的执行过程：
+omp 的执行过程：
 
 ```bash
 # 1. 检测环境
@@ -118,7 +118,7 @@ make install PREFIX=$HOME/wrk/eda_opensources/install/yosys
 请安装 Magic 8.3.641
 ```
 
-Claude Code 会特别注意 X11 依赖：
+omp 会特别注意 X11 依赖：
 
 ```bash
 # 安装 X11 开发库
@@ -137,7 +137,7 @@ make install
 
 ### 并行编译技巧
 
-对于大型工具（Yosys、Verilator），编译时间可能较长。Claude Code 会自动使用并行编译：
+对于大型工具（Yosys、Verilator），编译时间可能较长。omp 会自动使用并行编译：
 
 ```bash
 # 查看 CPU 核心数
@@ -155,13 +155,13 @@ make -j6
 
 ---
 
-## 12.3 使用 Claude Code 配置环境
+## 12.3 使用 omp 配置环境
 
-7 个工具安装完成后，需要统一配置环境变量。Claude Code 会自动生成 `eda_env.sh` 脚本。
+7 个工具安装完成后，需要统一配置环境变量。omp 会自动生成 `eda_env.sh` 脚本。
 
 ### 环境配置脚本
 
-让 Claude Code 生成配置：
+让 omp 生成配置：
 
 ```
 请为已安装的 7 个 EDA 工具生成环境配置脚本 ~/wrk/eda_opensources/eda_env.sh
@@ -245,9 +245,9 @@ fi
 
 ---
 
-## 12.4 通过 Claude Code 验证安装
+## 12.4 通过 omp 验证安装
 
-安装和配置完成后，让 Claude Code 执行全面的 smoke test，确认每个工具可正常运行。
+安装和配置完成后，让 omp 执行全面的 smoke test，确认每个工具可正常运行。
 
 ### Smoke Test
 
@@ -255,7 +255,7 @@ fi
 请验证所有 EDA 工具的安装状态，生成验证报告
 ```
 
-Claude Code 依次执行以下检查：
+omp 依次执行以下检查：
 
 ```bash
 # 1. Yosys 版本检查
@@ -315,7 +315,7 @@ verilator --lint-only /tmp/smoke_counter.v
 
 ### 验证报告
 
-Claude Code 汇总结果，生成如下表格：
+omp 汇总结果，生成如下表格：
 
 | 工具 | 状态 | 版本 | 安装路径 |
 |------|------|------|----------|
@@ -327,7 +327,7 @@ Claude Code 汇总结果，生成如下表格：
 | KLayout | 通过 | 0.30.8 | `~/wrk/.../install/klayout` |
 | Verilator | 通过 | 5.012 | `~/wrk/.../install/verilator` |
 
-如果某个工具验证失败，Claude Code 会定位原因（PATH 未生效、依赖库缺失、编译不完整等）并给出修复建议。
+如果某个工具验证失败，omp 会定位原因（PATH 未生效、依赖库缺失、编译不完整等）并给出修复建议。
 
 ---
 
@@ -524,14 +524,14 @@ klayout -b -r drc_script.drc counter.gds
 | `error while loading shared libraries` | LD_LIBRARY_PATH 缺失 | 运行 `ldd <binary>` 检查依赖库，补充到 `eda_env.sh` |
 | Yosys 综合报 `can't open liberty file` | 工艺库路径错误 | 检查 `ASAP7_ROOT` 环境变量和 .lib 文件路径 |
 
-### 使用 Claude Code 诊断问题
+### 使用 omp 诊断问题
 
-遇到问题时，直接描述错误现象，Claude Code 会自动诊断并修复：
+遇到问题时，直接描述错误现象，omp 会自动诊断并修复：
 
 ```
 用户：Magic 启动报错 "cannot open display"
 
-Claude Code 诊断流程：
+omp 诊断流程：
 1. 检查 DISPLAY 环境变量 → echo $DISPLAY
 2. 检查 X11 服务是否运行 → xdpyinfo
 3. 检查 libx11-dev 是否安装 → dpkg -l | grep libx11-dev
@@ -540,7 +540,7 @@ Claude Code 诊断流程：
 
 **SSH 远程环境下的特殊处理**：
 
-在无图形界面的服务器上（如 CI/CD 环境），Magic 和 KLayout 的 GUI 功能无法使用。Claude Code 会建议使用无头模式：
+在无图形界面的服务器上（如 CI/CD 环境），Magic 和 KLayout 的 GUI 功能无法使用。omp 会建议使用无头模式：
 
 ```bash
 # Magic 无头模式执行 DRC
@@ -563,10 +563,10 @@ klayout -b -r drc_check.lydrc counter.gds
 
 1. **统一安装目录**：所有 EDA 工具安装到 `~/wrk/eda_opensources/install/`，通过 `eda_env.sh` 集中管理 PATH 和 LD_LIBRARY_PATH，避免与系统工具冲突。
 
-2. **Claude Code 自动化安装**：Agent 自动完成环境检测、依赖分析、源码编译、安装验证全流程，显著降低手动编译 EDA 工具的复杂度。
+2. **omp 自动化安装**：Agent 自动完成环境检测、依赖分析、源码编译、安装验证全流程，显著降低手动编译 EDA 工具的复杂度。
 
-3. **Smoke Test 验证**：安装后通过版本检查和功能测试确认每个工具可用，Claude Code 自动生成结构化的验证报告，快速定位失败项。
+3. **Smoke Test 验证**：安装后通过版本检查和功能测试确认每个工具可用，omp 自动生成结构化的验证报告，快速定位失败项。
 
 4. **工具链串联**：Yosys（综合）→ OpenSTA（时序分析）；Verilator（RTL 仿真，独立分支）；Magic/Netgen/QRouter（Physical Design）→ KLayout（版图查看），覆盖从 RTL 到 GDSII 的完整设计流程。
 
-5. **问题快速定位**：遇到安装问题时，直接描述错误现象交给 Claude Code 诊断，Agent 会检查环境变量、依赖库、编译日志，给出针对性修复方案。
+5. **问题快速定位**：遇到安装问题时，直接描述错误现象交给 omp 诊断，Agent 会检查环境变量、依赖库、编译日志，给出针对性修复方案。

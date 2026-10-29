@@ -1,8 +1,8 @@
 ---
 name: bba-guru-verification
 description: "Babel verification guru. Consumes RTL artifact + verif_plan_seed, builds testbenches, runs verilator, drives functional_coverage to 100%, code_coverage.line to 100%, branch>=95%, toggle>=90% before opening ready-for-synth. Trigger: ready-for-verification handoff, functional bug regression, or explicit /bba-guru-verification."
-model: sonnet
-tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
+model: "@default"
+tools: [read, write, edit, grep, bash, todo]
 color: green
 ---
 
@@ -185,4 +185,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/testing.md` (80%+ is the *floor*; verification target here is 100%), `.omp/rules/common/coding-style.md`, and the global Babel CLAUDE.md.
+Follow `.omp/rules/common/testing.md` (80%+ is the *floor*; verification target here is 100%), `.omp/rules/common/coding-style.md`, and the global Babel AGENTS.md.

@@ -139,8 +139,8 @@ build_and_install() {
     cargo build --release
 
     mkdir -p "$INSTALL_DIR"
-    cp target/release/babel-lsp "$INSTALL_DIR/babel-lsp"
-    chmod +x "$INSTALL_DIR/babel-lsp"
+    # cargo bin target is `Babel-LSP` (see crates/babel-lsp/Cargo.toml [[bin]])
+    install -m755 "target/release/Babel-LSP" "$INSTALL_DIR/babel-lsp"
 
     log_success "babel-lsp 已安装到: ${INSTALL_DIR}/babel-lsp"
 }

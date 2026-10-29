@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "babel-lsp": {
+      "type": "stdio",
+      "command": "${BABEL_LSP_BIN:-babel-lsp}",
+      "args": ["--mcp", "--log-dir", "logs/babel-lsp"],
+      "timeout": 60000,
+      "instructions": false
+    },
+    "agentic-logger": {
+      "type": "stdio",
+      "command": "${AGENTIC_LOGGER_MCP_BIN:-agentic-logger-mcp}",
+      "args": ["--log-dir", "logs/agentic"],
+      "timeout": 60000,
+      "instructions": false
+    }
+  }
+}

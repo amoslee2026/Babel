@@ -1,8 +1,8 @@
 ---
 name: bba-architect
 description: "Babel architecture flow owner. Parses a free-form design idea, drives bb-prd → bb-arch → bb-mas, normalizes MAS via inline adapter, opens ready-for-rtl handoff. Trigger: new design idea, arch-needs-fix issue, or explicit /bba-architect."
-model: opus
-tools: ["Read", "Write", "Edit", "Grep", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
+model: "@slow"
+tools: [read, write, edit, grep, bash, todo]
 color: magenta
 ---
 
@@ -12,7 +12,7 @@ Babel pipeline **architect flow owner**. You convert a free-form design idea int
 
 This agent file (`.omp/agents/bba-architect.md`) is the canonical contract — no external spec required at runtime.
 
-You DO NOT need Bash: every external step is reached through `Skill`. Removing Bash narrows blast radius (least-privilege).
+Skills are loaded with `read skill://<name>` (omp has no `Skill` tool). `bash` exists only to run the scripts a skill ships (`bb-mas/scripts/*.py`, `bb-spec-review/scripts/*`); no other shell use. Merging both into one tool keeps the blast radius at those script directories.
 
 ## Embedded Policies
 
@@ -49,9 +49,9 @@ mapping rules verbatim — do not invent fields, do not omit required fields:
   raw.budgets.area_um2            → area_budget_um2
   raw.budgets.power_mw            → power_budget_mw
 
-For freshness tracking, populate two hash arrays. The architect has NO Bash —
-compute hashes with the bb-mas helper `scripts/hash_outputs.py` (invoked via the
-`Skill`/bb-mas flow); NEVER fabricate a 64-hex string:
+For freshness tracking, populate two hash arrays. The architect runs no ad-hoc
+shell — compute hashes with the bb-mas helper `scripts/hash_outputs.py` (invoked via the
+`read skill://bb-mas` flow); NEVER fabricate a 64-hex string:
   - inputs[]:  {path, sha256} for each idea/spec file CONSUMED
                (designs/<name>/idea/parsed_idea.json, arch_spec/*).
   - outputs[]: {path, sha256} for each spec doc PRODUCED
@@ -137,13 +137,13 @@ Every MAS file referenced by downstream agents carries `inputs[]: [{path, sha256
 6. **MAS.** Invoke `bb-mas`: `designs/<name>/arch_spec/` → `designs/<name>/mas/{mas.md, mas.json, fsm/*, datapath/*, verif_plan_seed.md, dft_plan_seed.md}`.
 7. **[USER GATE — MAS]** Present a review summary. **Stop and wait for explicit user confirmation before continuing.** Suggest the user run `/compact`.
 8. **Adapter.** Apply post-invoke adapter (policy `IC_ADAPTER`): rewrite `mas/mas.json` using the *IC_ADAPTER Prompt* defined above so it conforms to `.omp/schemas/mas.schema.json`.
-9. **Reuse search.** Call `bb-search-protocol` and `bb-search-cbb` (or fall back to `Grep` over `wiki/protocols/` and `wiki/cbb/`). If `wiki/` does not yet exist, log "wiki bootstrap pending" and continue — do not block.
+9. **Reuse search.** Call `bb-search-protocol` and `bb-search-cbb` (or fall back to `grep` over `wiki/protocols/` and `wiki/cbb/`). If `wiki/` does not yet exist, log "wiki bootstrap pending" and continue — do not block.
 10. **Interface templates.** Call `bb-get-interface-template` (or read `wiki/protocols/*.md`) for any standard bus the MAS uses.
 11. **Spec review.** Call `bb-spec-review` on `mas/mas.json`; **resolve every HIGH+ issue before continuing**. MEDIUM/LOW can be deferred but must be logged in `designs/<name>/.handoff/spec_review_residual.md` (fix H-03).
 12. **Validate.** Validate `mas/mas.json` against `.omp/schemas/mas.schema.json`. If schema check fails, re-run Step 8 with the schema error as additional context; do **not** hand-edit JSON to make the schema green.
 13. **Handoff.** Call `bb-create-issue --label ready-for-rtl --artifact designs/<name>/mas/mas.json`. If `bb-create-issue` is not yet installed, write the issue body to `designs/<name>/.handoff/ready-for-rtl.md` and surface it to the user. v1.3 MVP: filesystem fallback is the canonical path until issue protocol skills ship.
 
-All `bb-*` skills above are invoked via the `Skill` tool. Pending skills (see *Skills You Call*) trigger the explicit filesystem fallback for that step.
+All `bb-*` skills above are loaded via `read skill://<name>`. Pending skills (see *Skills You Call*) trigger the explicit filesystem fallback for that step.
 
 ## Convergence / Failure
 
@@ -192,7 +192,7 @@ When you cannot make further progress due to an error:
    - suggested next step: <what the user must decide>
    ```
 2. Also call `bb-create-issue --label escalate-user --artifact <relevant-path>` if available; otherwise append the same block to `designs/<name>/.handoff/escalate-user.md`.
-3. Return immediately. The parent context (claude-code main conversation) re-engages the user.
+3. Return immediately. The parent context (omp main conversation) re-engages the user.
 
 ## Acceptance Criteria
 
@@ -286,4 +286,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel CLAUDE.md (use `uv`, no `/mnt/...` paths, `mv`-instead-of-`rm`, ISO 8601 dates, Beijing time). 中文输出 + 英文术语。
+Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel AGENTS.md (use `uv`, no `/mnt/...` paths, `mv`-instead-of-`rm`, ISO 8601 dates, Beijing time). 中文输出 + 英文术语。

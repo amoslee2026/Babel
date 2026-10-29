@@ -6,7 +6,7 @@
 
 ## 一、总览
 
-Babel Harness 是一套运行在 Claude Code 之上的 AI 原生芯片设计自动化框架，由 **5 个 Agent**、**34 个 Skill** 和 **10 个 Hook** 组成，覆盖从自然语言设计想法到 GDSII 版图的完整流水线。
+Babel Harness 是一套运行在 omp（oh-my-pi）之上的 AI 原生芯片设计自动化框架，由 **5 个 Agent**、**31 个 Skill** 和 **7 个 Hook 脚本** 组成，覆盖从自然语言设计想法到 GDSII 版图的完整流水线。项目级资产全部位于 `.omp/`。
 
 ```
 设计想法
@@ -171,18 +171,17 @@ Skills 是 Agent 调用的原子工具，分为 8 大类。
 
 Hooks 在工具调用前后静默运行，分为警告（非阻断）和阻断两类。
 
-| Hook | 类型 | 阻断性 | 触发条件 | 作用 |
-|------|------|--------|---------|------|
-| `validate-bash-cmd.sh` | PreToolUse/Bash | 警告 | 任何 bash 命令 | 检测 `rm -rf`/`sudo`/`chmod 777` 等危险模式 |
-| `write-arch-freeze-check.sh` | PreToolUse/Write | 警告 | 写 `designs/*/rtl/*` 或 `mas/*` | MAS 已冻结时（存在 ready-for-rtl handoff）发出警告 |
-| `instantiate-cbb-search.sh` | PreToolUse/Write | 警告 | 写入含 sync-fifo/2ff-sync/clock-gate 的代码 | 提示先调用 `bb-search-cbb` 获取标准接口 |
-| `validate-wiki.sh` | PreToolUse/Read | 警告 | 读取 `wiki/**` 文件 | 校验 frontmatter content_hash，检测内容篡改 |
-| `commit-quality-gate.sh` | PreToolUse/Bash | **阻断** | `git commit` | RTL/综合文件变更时，要求对应 `quality_gate_*.json` pass=true |
-| `validate-input-schema.sh` | Agent 启动 | **阻断** | Agent 启动时 | 验证上游 artifact JSON schema，失败则创建 needs-fix handoff |
-| `change-propagate.sh` | PostToolUse/Write | 通知 | 写 `mas.json`/`rtl_artifact.json`/`test_report.json` | 标记下游 artifact 为 stale，提醒重新生成 |
-| `create-fix-issue.sh` | PostToolUse | 通知 | Agent 输出 `valid=false` 且含特定错误关键字 | 自动创建 `<upstream>-needs-fix` handoff |
-| `pipeline-advance.sh` | PostToolUse/Write | 通知 | 写 `.handoff/<label>.md` | 打印下一阶段对应的 slash command |
-| `session-summarize.sh` | SessionEnd | 通知 | 会话结束 | 生成本次涉及 design 和 handoff 的摘要到 `.claude/session_summaries/` |
+| Hook | omp 事件 | 阻断性 | 触发条件 | 作用 |
+|------|----------|--------|---------|------|
+| `bb-hook-validate-bash-cmd.sh` | `tool_call`(bash) | 警告 | 任何 bash 命令 | 检测 `rm -rf`/`sudo`/`chmod 777` 等危险模式 |
+| `bb-hook-commit-quality-gate.sh` | `tool_call`(bash) | **阻断** | `git commit` | RTL/综合文件变更时，要求对应 `quality_gate_*.json` pass=true |
+| `bb-hook-write-arch-freeze-check.sh` | `tool_call`(write) | 警告 | 写 `designs/*/rtl/*` 或 `mas/*` | MAS 已冻结时（存在 ready-for-rtl handoff）发出警告 |
+| `bb-hook-validate-input-schema.sh` | `before_agent_start` | 警告降级 | Agent 启动时 | 验证上游 artifact JSON schema；omp 无法取消已启动的 turn，故降级为阻断式告警 |
+| `bb-hook-change-propagate.sh` | `tool_result`(write) | 通知 | 写 `mas.json`/`rtl_artifact.json`/`test_report.json` | 标记下游 artifact 为 stale，提醒重新生成 |
+| `bb-hook-pipeline-advance.sh` | `tool_result`(write) | 通知 | 写 `.handoff/<label>.md` | 打印下一阶段对应的 slash command |
+| `bb-hook-session-summarize.sh` | `session_shutdown` | 通知 | 会话结束 | 生成本次涉及 design 和 handoff 的摘要到 `.omp/session_summaries/` |
+
+入口为 `.omp/hooks/pre/bb-hooks-bridge.js`（omp extension 形态）：把 omp 事件翻译成旧 hook stdin JSON 后调用上述脚本，脚本本身不改。
 
 ---
 

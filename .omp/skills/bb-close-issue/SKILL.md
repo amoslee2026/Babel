@@ -1,6 +1,6 @@
 ---
 name: bb-close-issue
-description: "Babel internal issue protocol — close a handoff after downstream agent picked it up or user signed off. Moves designs/<name>/.handoff/<label>.md to .handoff/closed/ (using mv per CLAUDE.md), appends to handoff_log.jsonl."
+description: "Babel internal issue protocol — close a handoff after downstream agent picked it up or user signed off. Moves designs/<name>/.handoff/<label>.md to .handoff/closed/ (using mv per AGENTS.md), appends to handoff_log.jsonl."
 ---
 
 # bb-close-issue

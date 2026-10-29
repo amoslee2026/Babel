@@ -179,13 +179,16 @@ obj_dir/
 abc.history
 0
 
-# ---> Claude Code session artifacts
-.claude/scheduled_tasks.json
-.claude/scheduled_tasks.lock
-.claude/session_summaries/
-.claude/settings.local.json
-# Allow .claude/hooks/lib/ (shared hook helpers) despite the repo-level `lib/` rule
-!.claude/hooks/lib/
+# ---> omp session artifacts
+.omp/session_summaries/
+.omp/.adaptive/
+logs/
+.babel/
+# Allow .omp/hooks/scripts/lib/ (shared hook helpers) despite the repo-level `lib/` rule
+!.omp/hooks/scripts/lib/
+
+# ---> Parallel worktrees
+wt/
 
 # ---> Review and adaptive directories (at any level)
 .review/

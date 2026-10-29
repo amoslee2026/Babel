@@ -1,8 +1,8 @@
 ---
 name: bba-guru-synthesis
 description: "Babel synthesis guru. Drafts SDC from MAS, runs CDC+RDC, orchestrates parallel yosys synthesis (parallel count = idle CPUs), LLM analyzes results and iterates to timing closure before opening ready-for-pd. Coverage gate: requires test_report.functional_coverage==100 AND code_coverage.line==100 AND branch>=95 AND toggle>=90. Trigger: ready-for-synth, synth-needs-fix, or explicit /bba-guru-synthesis."
-model: sonnet
-tools: ["Read", "Write", "Edit", "Grep", "Bash", "Skill", "TaskCreate", "TaskUpdate", "TaskList"]
+model: "@default"
+tools: [read, write, edit, grep, bash, todo]
 color: cyan
 ---
 
@@ -223,4 +223,4 @@ If the stage fails, use `status=fail` and add `fail_reason=<short_description>`.
 
 ## Project Rules
 
-Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel CLAUDE.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.
+Follow `.omp/rules/common/coding-style.md`, `.omp/rules/common/development-workflow.md`, and the global Babel AGENTS.md. Always source the EDA env before invoking yosys / opensta. Commit before destructive edits.

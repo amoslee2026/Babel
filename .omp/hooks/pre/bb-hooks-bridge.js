@@ -5,10 +5,10 @@
  * unchanged by translating omp hook events into the Claude hook stdin JSON
  * protocol they expect. Exit code 2 => block; stderr surfaced via logger + UI.
  *
- * Event mapping (from legacy .omp/settings.json):
+ * Event mapping (from the legacy Claude Code settings.json):
  *   tool_call(bash)       -> bb-hook-commit-quality-gate.sh, bb-hook-validate-bash-cmd.sh
- *   tool_call(write)      -> bb-hook-write-arch-freeze-check.sh
- *   tool_result(write)    -> bb-hook-change-propagate.sh, bb-hook-pipeline-advance.sh
+ *   tool_call(write|edit)  -> bb-hook-write-arch-freeze-check.sh
+ *   tool_result(write|edit)-> bb-hook-change-propagate.sh, bb-hook-pipeline-advance.sh
  *   before_agent_start    -> bb-hook-validate-input-schema.sh (prompt schema gate;
  *                            omp cannot reject a started turn, so exit 2 degrades
  *                            to a blocking-style warning via UI/logger)
@@ -28,11 +28,20 @@ const SCRIPTS = [
 ];
 
 export default function (pi) {
+	// Resolve the repo root from this file (<root>/.omp/hooks/pre/bb-hooks-bridge.js)
+	// so hooks work regardless of the process cwd.
+	const HOOK_DIR = path.dirname(new URL(import.meta.url).pathname);
+	const PROJECT_ROOT = path.resolve(HOOK_DIR, "..", "..", "..");
+	const SCRIPT_DIR = path.join(PROJECT_ROOT, ".omp", "hooks", "scripts");
+	const isWriteTool = (name) => name === "write" || name === "edit";
+
 	const runScript = (name, payload) => {
-		const script = path.join(".omp", "hooks", "scripts", name);
+		const script = path.join(SCRIPT_DIR, name);
 		const r = spawnSync("bash", [script], {
 			input: JSON.stringify(payload),
 			encoding: "utf8",
+			cwd: PROJECT_ROOT,
+			env: { ...process.env, CLAUDE_PROJECT_DIR: PROJECT_ROOT },
 			timeout: 30_000,
 		});
 		return { code: r.status, stderr: (r.stderr || "").trim() };
@@ -70,7 +79,7 @@ export default function (pi) {
 				ctx,
 			);
 		}
-		if (toolName === "write") {
+		if (isWriteTool(toolName)) {
 			return gate(
 				[SCRIPTS[2]],
 				{ tool_name: "Write", tool_input: asClaudeToolInput(input) },
@@ -81,7 +90,7 @@ export default function (pi) {
 	});
 
 	pi.on("tool_result", async (event, ctx) => {
-		if (event.toolName !== "write" || event.isError) return;
+		if (!isWriteTool(event.toolName) || event.isError) return;
 		gate(
 			SCRIPTS.slice(3, 5),
 			{ tool_name: "Write", tool_input: asClaudeToolInput(event.input ?? {}) },

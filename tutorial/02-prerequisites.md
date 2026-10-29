@@ -1,6 +1,6 @@
 # 第 2 章：前置知识与环境准备
 
-> **本章核心**：补齐"与 AI 协作"的技能树——不仅需要传统的数字电路和 Verilog 基础，还需要 AI 硬件加速知识和 Claude Code 协作能力。
+> **本章核心**：补齐"与 AI 协作"的技能树——不仅需要传统的数字电路和 Verilog 基础，还需要 AI 硬件加速知识和 omp 协作能力。
 
 ## 2.1 数字电路基础回顾
 
@@ -172,22 +172,20 @@ TinyStories 是一个约 15M 参数的 Transformer 语言模型。Transformer �
 
 AI 原生设计流程要求你掌握与 AI Agent 协作的能力。这不是传统的"使用软件工具"，而是一种新的人机交互范式。
 
-### Claude Code 安装与配置
+### omp 安装与配置
 
-Claude Code 是 Anthropic 提供的 CLI 工具，是 Babel 项目的核心协作界面。安装步骤：
+omp 是 oh-my-pi 提供的终端 AI Coding Agent，是 Babel 项目的核心协作界面。安装与启动：
 
 ```bash
-# 安装 Claude Code（需要 Node.js >= 18）
-npm install -g @anthropic-ai/claude-code
-
+# 安装 omp（安装方式见 omp 官方文档；本机路径 ~/.local/bin/omp）
 # 进入 Babel 项目目录
 cd ~/wrk/Babel
 
-# 启动 Claude Code
-claude
+# 启动 omp
+omp
 ```
 
-Claude Code 启动后会自动读取项目目录下的 `CLAUDE.md` 文件，获取项目上下文信息。这就是为什么 Babel 项目的 `CLAUDE.md` 中包含了详细的目录结构、工具链信息和可用 Skill 列表。
+omp 启动后会自动读取项目根目录的 `AGENTS.md`（并兼容 `CLAUDE.md`），获取目录结构、工具链配置和 `bb-*` Skill 列表，同时加载 `.omp/` 下的 agents / skills / commands / hooks / MCP。
 
 ### 自然语言描述设计意图（Prompt Engineering for IC）
 
@@ -284,8 +282,8 @@ yosys --version       # 应输出 Yosys 0.35
 verilator --version   # 应输出版本信息
 sta -version          # 应输出 OpenSTA 版本
 
-# 启动 Claude Code
-claude
+# 启动 omp
+omp
 ```
 
 ### 验证环境完整性
@@ -301,8 +299,8 @@ ls spec/PRD/PRD.md     # PRD 文档
 ls spec/ARCH/          # 架构文档（chip_overview.md, block_diagram.md 等）
 ls spec/MAS/           # 微架构文档（module_tree.md, plan.md 等）
 
-# 检查 Claude Code 能识别 Skill
-# 在 Claude Code 中输入：/bb-invoke-yosys --help
+# 检查 omp 能识别 Skill
+# 在 omp 中输入：/bb-invoke-yosys --help
 ```
 
 如果以上检查全部通过，你的开发环境已经准备就绪，可以开始后续章节的实践了。
@@ -317,4 +315,4 @@ ls spec/MAS/           # 微架构文档（module_tree.md, plan.md 等）
 
 4. **审查能力比编码能力更重要**：在 AI 原生模式下，你的核心价值不在于能多快写出代码，而在于能多准确地判断 Agent 输出的质量。
 
-5. **环境准备是一切的前提**：Linux、Git、Claude Code、开源 EDA 工具链——确保你的开发环境完整可用，才能顺利进入后续章节的实践环节。
+5. **环境准备是一切的前提**：Linux、Git、omp、开源 EDA 工具链——确保你的开发环境完整可用，才能顺利进入后续章节的实践环节。

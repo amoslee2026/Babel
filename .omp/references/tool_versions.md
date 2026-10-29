@@ -1,7 +1,7 @@
 # Babel EDA Tool Versions — Single Source of Truth
 
 This file is the **canonical version reference** for the Babel EDA toolchain.
-Both `CLAUDE.md` (top-level) and `skills/bb-invoke-*/SKILL.md` (tool-specific)
+Both `AGENTS.md` (top-level) and `skills/bb-invoke-*/SKILL.md` (tool-specific)
 must stay in sync with the versions listed here. If they drift, file a bug
 against this file, not the other one.
 
@@ -52,5 +52,5 @@ When upgrading a tool:
 1. Install the new version in `~/wrk/eda_opensources/`.
 2. Update this file.
 3. Update the matching `bb-invoke-*/SKILL.md` version check.
-4. Update `CLAUDE.md` EDA Toolchain table.
+4. Update `AGENTS.md` EDA Toolchain table.
 5. Run the drift-detection snippet above.

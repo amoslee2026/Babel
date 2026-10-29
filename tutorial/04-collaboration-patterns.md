@@ -79,7 +79,7 @@ graph TD
 
 ### 如何调用 Agent
 
-在 Claude Code 中，调用 Agent 或 Skill 的方式非常简单——直接输入对应的斜杠命令：
+在 omp 中，调用 Agent 或 Skill 的方式非常简单——直接输入对应的斜杠命令：
 
 ```
 # 启动架构设计流程

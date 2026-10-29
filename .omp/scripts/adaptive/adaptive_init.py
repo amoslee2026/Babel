@@ -38,7 +38,7 @@ def main() -> int:
         # Warning only, not blocking
 
     # Initialize adaptive state directory
-    state_dir = project_dir / ".claude" / ".adaptive" / skill
+    state_dir = project_dir / ".omp" / ".adaptive" / skill
     state_dir.mkdir(parents=True, exist_ok=True)
 
     state_file = state_dir / "state.json"

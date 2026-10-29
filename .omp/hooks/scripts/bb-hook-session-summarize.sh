@@ -68,7 +68,7 @@ OUT="$OUT_DIR/session_${STAMP}.md"
 
   echo
   echo "## Next steps"
-  echo "- Run \`bash .omp/hooks/bb-hook-pipeline-advance.sh\` to see suggested next agents."
+  echo "- Run \`bash .omp/hooks/scripts/bb-hook-pipeline-advance.sh\` to see suggested next agents."
 } > "$OUT"
 
 echo "[session-summarize] wrote $OUT" >&2

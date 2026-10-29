@@ -1,6 +1,6 @@
 ---
 description: List Babel handoff issues by label. Direct invocation of bb-list-issues.
-argument-hint: [--label <label>] [--design-name <name>] [--limit N]
+argument-hint: "[--label <label>] [--design-name <name>] [--limit N]"
 ---
 
 Run the `bb-list-issues` skill.

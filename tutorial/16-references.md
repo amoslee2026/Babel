@@ -115,12 +115,13 @@ Babel 项目依赖以下 7 个开源 EDA 工具完成从 RTL 到 GDSII 的完整
 
 ## 16.4 AI Coding Agent 资源
 
-### Claude Code 文档
+### omp 与 Claude Code 文档
 
 | 资源 | 链接 | 说明 |
 |------|------|------|
-| Claude Code 官方文档 | [docs.anthropic.com/claude-code](https://docs.anthropic.com/claude-code) | 安装、配置、使用指南 |
-| Claude Code 最佳实践 | [docs.anthropic.com (best-practices)](https://docs.anthropic.com/claude/docs/claude-code-best-practices) | 高效与 AI Agent 协作的方法 |
+| omp 官方文档 | 本机 `omp://` 内置文档（`read omp://`） | 配置、agents/skills/hooks、MCP |
+| Claude Code 官方文档 | [docs.anthropic.com/claude-code](https://docs.anthropic.com/claude-code) | 对照参考：安装、配置、使用指南 |
+| Claude Code 最佳实践 | [docs.anthropic.com (best-practices)](https://docs.anthropic.com/claude/docs/claude-code-best-practices) | 对照参考：高效与 AI Agent 协作的方法 |
 | Prompt Engineering 指南 | [docs.anthropic.com (prompt-engineering)](https://docs.anthropic.com/claude/docs/prompt-engineering) | 提升 Agent 输出质量的 prompt 设计技巧 |
 
 ### Agentic Coding 方法论
@@ -149,7 +150,7 @@ Babel 项目依赖以下 7 个开源 EDA 工具完成从 RTL 到 GDSII 的完整
 | 文件/目录 | 说明 |
 |----------|------|
 | `README.md` | 项目概述、安装指南、快速开始 |
-| `CLAUDE.md` | Claude Code 的项目级指令配置 |
+| `AGENTS.md` | omp 的项目级指令配置（Claude Code 兼容读取 `CLAUDE.md`） |
 | `CONTRIBUTING.md` | 代码规范、PR 流程、review 标准 |
 
 ### 规范文档（spec/）

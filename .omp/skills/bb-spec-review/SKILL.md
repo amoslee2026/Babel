@@ -53,7 +53,7 @@ prompt = render_spec_review_prompt(role, focus, prd, arch, mas)
 
 ### Phase 2 — run_review
 
-`claude --print "<prompt>" > <artifact_path>` 或 agent 内部生成。15 min timeout（文档可能很长）。
+`omp -p "<prompt>" > <artifact_path>` 或 agent 内部生成。15 min timeout（文档可能很长）。
 
 ### Phase 3 — parse_spec_review
 

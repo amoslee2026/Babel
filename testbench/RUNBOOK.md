@@ -480,22 +480,22 @@ testbench/runs/
 
 ### 6.2 Token 和成本记录
 
-Claude Code 的 token 使用可以通过以下方式获取：
+omp 的 token 使用记录在 session jsonl（`~/.omp/agent/sessions/<cwd-slug>/<ts>_<id>.jsonl`）的 `model_usage` 条目中：
 
 ```bash
-# Claude Code 会话结束后，查看 usage 信息
-# 方法 1：从 Claude Code 的 session log 中提取
-cat ~/.claude/projects/*/sessions/*/usage.json 2>/dev/null
+# 单次会话的每次模型调用用量
+jq -c 'select(.type=="model_usage") | {model, usage}' ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
 
-# 方法 2：通过 API 查询（如果使用 API 直接调用）
-# 方法 3：手动记录 Claude Code 显示的 token 用量
+# 汇总 input/output
+jq -s '[.[]|select(.type=="model_usage")|.usage] | {input:(map(.input)|add), output:(map(.output)|add)}' \
+  ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
 ```
 
 ### 6.3 Tool Call 计数
 
 ```bash
-# 从 Claude Code session transcript 中统计 tool calls
-grep -c '"tool_use"' ~/.claude/projects/*/sessions/*/transcript.jsonl 2>/dev/null
+# 从 omp session transcript 中统计 tool calls
+rg -c '"type":"toolCall"' ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
 ```
 
 ---

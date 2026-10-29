@@ -11,7 +11,7 @@
 ```
 project/
 ├── README.md                    # 项目说明
-├── CLAUDE.md                    # Claude Code 项目指导 (可选)
+├── AGENTS.md                    # omp 项目指导 (可选)
 ├── ifp/                         # IFP 配置目录
 │   ├── default.yaml             # 主配置文件
 │   ├── api.yaml                 # API 扩展配置

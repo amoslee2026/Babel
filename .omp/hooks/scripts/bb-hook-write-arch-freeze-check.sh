@@ -15,7 +15,7 @@ elif command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 
   cd "$(git rev-parse --show-toplevel)"
 fi
 
-# Read tool_input JSON from stdin (claude-code hook protocol).
+# Read tool_input JSON from stdin (Claude-compatible hook protocol).
 INPUT="$(cat 2>/dev/null || true)"
 TARGET="$(printf '%s' "$INPUT" | python3 -c \
   'import sys,json; d=json.load(sys.stdin); print(d.get("tool_input",{}).get("file_path",""))' 2>/dev/null || true)"

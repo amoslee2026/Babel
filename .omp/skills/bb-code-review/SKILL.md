@@ -74,7 +74,7 @@ prompt = render_prompt(
 
 ### Phase 2 — run_review
 
-`claude --print "<prompt>" > <artifact_path>` 或 agent 内部生成。
+`omp -p "<prompt>" > <artifact_path>` 或 agent 内部生成。
 
 ### Phase 3 — parse_review
 

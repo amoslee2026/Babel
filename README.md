@@ -14,7 +14,7 @@ https://github.com/amoslee2026/Babel
 
 | Part | 章节 | 主题 |
 |------|------|------|
-| I. 范式与准备 | 01-04 | AI 原生范式、前置知识、用 Claude Code 学习、人机协作模式 |
+| I. 范式与准备 | 01-04 | AI 原生范式、前置知识、用 omp 学习、人机协作模式 |
 | II. 规范驱动设计 | 05-07 | PRD、架构设计、微架构规范 (MAS) |
 | III. AI 实现流程 | 08-11 | RTL 生成、验证闭环、逻辑综合、物理设计 |
 | IV-V. 工具与实战 | 12-16 | EDA 工具链、NPU 实战走读、调试、术语表、延伸阅读 |
@@ -80,7 +80,7 @@ Babel 采用 5-agent 流水线架构，每个 agent 专注于特定设计阶段�
 
 **启动新设计**：
 ```bash
-# 在 Claude Code 中描述设计需求
+# 在 omp 中描述设计需求
 /bba-architect
 # 例如: "设计一个 AI 推理处理器 主频1Ghz，能运行主流大模型，使用 ASAP7 PDK"
 ```
@@ -268,8 +268,8 @@ Agent 间通过 labeled issue 协作：
 ### 快速开始示例
 
 ```bash
-# 1. 启动 Claude Code
-claude-code
+# 1. 启动 omp（在仓库根目录）
+omp
 
 # 2. 描述设计需求
 > 设计一个简化版 UART 控制器，支持 9600 baud，目标频率 50MHz，使用 ASAP7

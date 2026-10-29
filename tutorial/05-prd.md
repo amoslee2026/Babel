@@ -103,14 +103,14 @@ Die-to-Die 互连需求（REQ-D2D 系列）定义了带宽（>= 10 GB/s 双向�
 
 ---
 
-## 5.3 用 Claude Code 辅助编写 PRD
+## 5.3 用 omp 辅助编写 PRD
 
 在 Babel 的 AI 原生流程中，PRD 的编写是一个**人机协作迭代**的过程。以下是典型的工作流：
 
 ```mermaid
 sequenceDiagram
     participant Human as 工程师
-    participant Agent as Claude Code
+    participant Agent as omp
     participant PRD as PRD 文档
 
     Human->>Agent: 描述产品构想：边缘端 NPU，<br/>加速 TinyStories 推理
@@ -283,7 +283,7 @@ Babel PRD 中的 REQ-COST-001（BOM 成本目标 TBD）是唯一不符合 SMART 
 
 ### 5.5.5 让 Agent 审查 PRD
 
-可以让 Claude Code 作为审查者对 PRD 进行全面检查：
+可以让 omp 作为审查者对 PRD 进行全面检查：
 
 ```
 请审查 spec/PRD/PRD.md，检查以下方面：

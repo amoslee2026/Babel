@@ -172,18 +172,18 @@ Babel/
 │   └── protocols/           # 协议文档
 │
 ├── libs/                    # 技术库（ASAP7 7nm PDK）
-├── .claude/                 # Claude Code 配置
+├── .omp/                    # omp 配置
 │   └── skills/              # 自定义 Skills（bb-* 系列命令）
 │
-├── CLAUDE.md                # 项目级 AI 协作规则
+├── AGENTS.md                # 项目级 AI 协作规则
 └── tutorial/                # 本教程
 ```
 
 **关键文件说明**：
 
-- **`CLAUDE.md`**：项目级的 AI 协作配置文件。Claude Code 启动时会自动读取这个文件，了解项目的目录结构、工具链配置、可用 Skill 等信息。它是 Agent 理解项目上下文的入口。
+- **`AGENTS.md`**：项目级的 AI 协作配置文件。omp 启动时会自动读取这个文件，了解项目的目录结构、工具链配置、可用 Skill 等信息。它是 Agent 理解项目上下文的入口。
 - **`spec/`**：规范文档目录。这是整个设计流程的"宪法"，所有 Agent 的输出都源于这里的定义。
-- **`.claude/skills/`**：自定义 Skill 定义目录。Babel 定义了数十个专用 Skill（如 `bb-invoke-yosys`、`bb-check-lint` 等），它们是 Agent 执行具体任务的标准化接口。
+- **`.omp/skills/`**：自定义 Skill 定义目录（每个 Skill 一个子目录，入口 `SKILL.md`）。Babel 定义了数十个专用 Skill（如 `bb-invoke-yosys`、`bb-check-lint` 等），它们是 Agent 执行具体任务的标准化接口。
 - **`spec/MAS/plan.md`**：MAS 实现计划，定义了模块的实现顺序（叶子优先）和并行矩阵，指导 Agent 按正确的依赖顺序生成 RTL。
 
 ## 1.4 角色转变：从"工程师"到"架构师 + 审查者"
