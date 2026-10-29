@@ -31,7 +31,7 @@ def source_eda_env() -> tuple[dict | None, str | None]:
         capture_output=True, text=True,
     )
     if result.returncode != 0:
-        if shutil.which('sta'):
+        if shutil.which(os.environ.get('STA_BIN', 'sta')):
             return env, None
         return None, 'EDA_ENV_FAILED'
     for line in result.stdout.split('\n'):
