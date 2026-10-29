@@ -358,6 +358,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tb_files: list[str] = []
+    fl_tb_files: list[str] = []
     generated: list[str] = []
     skipped: list[dict] = []
     port_source: dict[str, str] = {}
@@ -381,6 +382,7 @@ def main() -> int:
             tc.write_text(gen_tc_placeholder(clocks), encoding="utf-8")
         generated.append(mod)
         tb_files += [rel(tb, root), rel(cov, root), rel(tc, root)]
+        fl_tb_files.append(rel(tb, root))
 
     fl_lines = [HEADER.strip(), f"+incdir+{out_dir.resolve()}"]
     if design_fl.is_file():
