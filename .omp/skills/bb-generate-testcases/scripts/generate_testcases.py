@@ -128,11 +128,12 @@ def gen_tc_file(module: str, tps: list[dict], ports: list[dict], clocks: dict) -
     return "\n".join(L)
 
 
-def run_lint(modules: list[str], fl: Path, root: Path) -> tuple[bool, list[str]]:
+def run_lint(modules: list[str], tb_dir: Path, root: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
     for m in modules:
         cmd = ["verilator", "--lint-only", "-sv", "--timing", "-Wno-fatal",
-               "--top-module", f"tb_{m}", "-f", str(fl)]
+               "--top-module", f"tb_{m}", "-f", str(tb_dir / "rtl.f"),
+               str(tb_dir / f"tb_{m}.sv")]
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(root))
         except (OSError, subprocess.TimeoutExpired) as exc:
@@ -233,8 +234,7 @@ def main() -> int:
                 f'GEN="{rel(tb_dir, root)}"',
                 'MOD="${1:-}"',
                 'TC="${2:-}"',
-                f'MODULES="{" ".join(generated)}"',
-                '[[ -n "$MOD" ]] && MODULES="$MOD"',
+                'if [[ -z "$MOD" ]]; then MODULES=' + '"' + " ".join(generated) + '"' + '; else MODULES="$MOD"; fi',
                 "rc=0",
                 "for m in $MODULES; do",
                 '  obj=/tmp/babel-sim/$m',
