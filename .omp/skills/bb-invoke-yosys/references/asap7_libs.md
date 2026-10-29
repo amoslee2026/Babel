@@ -28,9 +28,18 @@ Path: `libs/asap7/` or `libs/ASAP7-Synopsys-Enablement/`
 
 ## Recommended for Synthesis
 
+ASAP7 publishes one liberty per cell family; combinational and sequential cells
+never share a file. Verified layout (`The-OpenROAD-Project/asap7sc7p5t_28`, r28):
+
 ```
-libs/asap7/asap7sc7p5t_28/lib/asap7sc7p5t_AO_RVT_TT_nldm_201020.lib
+<root>/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_SS_nldm_211120.lib   # comb → abc
+<root>/LIB/NLDM/asap7sc7p5t_SEQ_RVT_SS_nldm_220123.lib      # DFF → dfflibmap
 ```
+
+`<root>` = `libs/asap7/asap7sc7p5t_28`. Date suffixes vary by family
+(`211120` / `220122` / `220123`), so resolve with a glob
+(`*_{FAMILY}_{VT}_{CORNER}_nldm_*.lib`) instead of pinning a filename. The older
+`libs/asap7/asap7sc7p5t_28/lib/*_201020.lib` path does not exist upstream.
 
 ## Drive Strengths
 
