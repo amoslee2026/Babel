@@ -8,6 +8,8 @@ Phase 2 of bb-invoke-opensta: runs TCL script, returns JSON status.
 import argparse
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import time
