@@ -174,7 +174,7 @@ def clock_plan(mas: dict, ports: list[dict]) -> dict[str, float]:
             freq = domains.get(p["name"])
             if freq is None and len(domains) == 1:
                 freq = next(iter(domains.values()))
-            clocks[p["name"]] = freq or 100.0
+            clocks[sig_name(p)] = freq or 100.0
     return clocks
 
 
@@ -201,20 +201,20 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
     for cname, freq in clocks.items():
         L.append(f"  logic {cname} = 1'b0;   // {freq:.3f} MHz")
     for p in inputs + outputs + inouts + resets:
-        L.append(f"  {sv_type(p['width'])} {p['name']};")
+        L.append(f"  {sv_type(p['width'])} {sig_name(p)};")
     L.append("")
     for cname, freq in clocks.items():
         half = period_ns(freq) / 2.0
         L.append(f"  always #{half:.3f} {cname} = ~{cname};")
     L.append("")
 
-    conns = ", ".join(f".{p['name']}({p['name']})" for p in ports)
+    conns = ", ".join(f".{p['name']}({sig_name(p)})" for p in ports)
     L += [f"  {module} dut (", "    " + conns, "  );", ""]
     L += [f'  `include "cov_{module}.sv"', f'  `include "tc_{module}.sv"', ""]
 
     L.append("  task automatic drive_defaults();")
     for p in inputs:
-        L.append(f"    {p['name']} = '0;")
+        L.append(f"    {sig_name(p)} = '0;")
     for p in resets:
         inactive = 1 if reset_active_low(p["name"]) else 0
         L.append(f"    {p['name']} = 1'b{inactive};")
@@ -225,11 +225,11 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
     L.append("    drive_defaults();")
     for r in resets:
         active = 0 if reset_active_low(r["name"]) else 1
-        L.append(f"    {r['name']} = 1'b{active};")
+        L.append(f"    {sig_name(r)} = 1'b{active};")
     L.append(f"    repeat (2) {tick}")
     for r in resets:
         inactive = 1 if reset_active_low(r["name"]) else 0
-        L.append(f"    {r['name']} = 1'b{inactive};")
+        L.append(f"    {sig_name(r)} = 1'b{inactive};")
     L.append(f"    {tick}")
     L += ["  endtask", ""]
 
@@ -280,7 +280,7 @@ def gen_cov(module: str, ports: list[dict], tps: list[dict]) -> str:
         L.append(f"    bins tp_{i} = {{{n}'d{1 << i}}};")
     L.append("  }")
     for p in cov_inputs:
-        L.append(f"  cp_{p['name']}: coverpoint {p['name']};")
+        L.append(f"  cp_{p['name']}: coverpoint {sig_name(p)};")
     L += ["endgroup", ""]
     return "\n".join(L)
 
@@ -356,7 +356,12 @@ def main() -> int:
             continue
         rtl_ports.update(parse_rtl_ports(path))
 
-    mas_ports = {
+    rtl_by_code: dict[str, str] = {}
+    for rname in rtl_ports:
+        cm = re.match(r"^([A-Za-z]+\d+)", rname)
+        if cm:
+            rtl_by_code.setdefault(cm.group(1), rname)
+
         m.get("name"): [
             {"name": str(p.get("name")), "dir": p.get("dir", "input"), "width": max(1, int(p.get("width", 1) or 1))}
             for p in ((m.get("interface") or {}).get("ports") or [])
@@ -393,6 +398,8 @@ def main() -> int:
         if not tps:
             skipped.append({"module": mod, "reason": "no test points"})
             continue
+        for p in ports:
+            p.setdefault("signal", f"v_{p['name']}")
         clocks = clock_plan(mas, ports)
         tb = out_dir / f"tb_{mod}.sv"
         cov = out_dir / f"cov_{mod}.sv"
