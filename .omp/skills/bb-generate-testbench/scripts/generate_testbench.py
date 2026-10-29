@@ -297,7 +297,8 @@ def run_lint(tb_dir: Path, modules: list[str], root: Path) -> tuple[bool, list[s
     for m in modules:
         cmd = [
             "verilator", "--lint-only", "-sv", "--timing", "-Wno-fatal",
-            "--top-module", f"tb_{m}", "-f", str(tb_dir / "file_list.f"),
+            "--top-module", f"tb_{m}", "-f", str(tb_dir / "rtl.f"),
+            str(tb_dir / f"tb_{m}.sv"),
         ]
         try:
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(root))
