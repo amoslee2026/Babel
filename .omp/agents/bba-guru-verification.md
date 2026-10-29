@@ -78,17 +78,17 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 4. **Generate testbench harnesses.** Call `bb-generate-testbench` → `tb/generated/tb_<module>.sv` + `cov_<module>.sv` + `rtl.f` + `lint.sh`. Ports MUST come from RTL (`port_source == "rtl"`); MAS/RTL module-name drift is resolved by the `Mxx` code alias. Any `%Error` or `PINMISSING` blocks progression.
 5. **Generate testcases.** Call `bb-generate-testcases` → `tb/generated/tc_<module>.sv` + `verif/test_registry.json` + `verif/test_cases.md` + `tb/generated/run_tests.sh`. Registry MUST cover every test point that owns a harness (design-level points such as CDC on a missing top wrapper are listed under `missing_modules`).
 6. **Simulate.** Call `bb-invoke-verilator` with coverage flags per test point; use `+TC=<TP-ID>` (or `run_tests.sh <module> <TP-ID>`) so failures attribute to a single point. Capture `*.log` / `*.vcd` under `sim_results/`. Bash fallback: `source ~/wrk/eda_opensources/eda_env.sh && verilator --coverage --trace -f designs/<name>/tb/generated/rtl.f designs/<name>/tb/generated/tb_<module>.sv`.
-5. **Collect coverage.** Call `bb-collect-coverage` → `coverage.json` with `functional`, `line`, `branch`, `toggle` percentages and per-bin breakdown.
-6. **SVA @verifies 校验（若适用）.** 扫描 RTL 中的 `assert property`；若设计使用 SVA 且 MAS 提供 REQ_ID，为每个 SVA 标注 `@verifies REQ-M##-F##`，未标注者列入 `test_report.traceability`。无 SVA 或 MAS 未提供 REQ_ID 时跳过（不阻塞）。
-7. **Optimization loop.** If the coverage gate is not met (`functional_coverage < 100`, `code_coverage.line < 100`, `code_coverage.branch < 95`, or `code_coverage.toggle < 90`), or any sim failed → iterate. Levers, in order of preference:
+7. **Collect coverage.** Call `bb-collect-coverage` → `coverage.json` with `functional`, `line`, `branch`, `toggle` percentages and per-bin breakdown.
+8. **SVA @verifies 校验（若适用）.** 扫描 RTL 中的 `assert property`；若设计使用 SVA 且 MAS 提供 REQ_ID，为每个 SVA 标注 `@verifies REQ-M##-F##`，未标注者列入 `test_report.traceability`。无 SVA 或 MAS 未提供 REQ_ID 时跳过（不阻塞）。
+9. **Optimization loop.** If the coverage gate is not met (`functional_coverage < 100`, `code_coverage.line < 100`, `code_coverage.branch < 95`, or `code_coverage.toggle < 90`), or any sim failed → iterate. Levers, in order of preference:
    - add seeds / increase random iterations
    - add constrained-random corner cases
    - tweak constraints to hit unreached bins
    - widen the test_cases.md
    - `max_iter = 8`.
-8. **Functional bug triage.** If the same path fails > 3 times, stop iterating and raise `bb-create-issue --label rtl-needs-fix` with a minimal failing waveform reference (vcd timestamp + signal list).
-9. **Unreachable bin triage.** If coverage is stuck on a specific bin that the design genuinely cannot hit, raise `arch-needs-fix` instead — do not waive blindly.
-10. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`. **Traceability CSV（可选）**：若 `scripts/babel_traceability.py` 存在，执行 `uv run scripts/babel_traceability.py test` 生成 `traceability/requirements_matrix.test.csv`；脚本缺失时跳过（不阻塞）。然后 `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
+10. **Functional bug triage.** If the same path fails > 3 times, stop iterating and raise `bb-create-issue --label rtl-needs-fix` with a minimal failing waveform reference (vcd timestamp + signal list).
+11. **Unreachable bin triage.** If coverage is stuck on a specific bin that the design genuinely cannot hit, raise `arch-needs-fix` instead — do not waive blindly.
+12. **Handoff.** Write `test_report.json` (fields per schema above), validate against `schemas/test_report.schema.json`. **Traceability CSV（可选）**：若 `scripts/babel_traceability.py` 存在，执行 `uv run scripts/babel_traceability.py test` 生成 `traceability/requirements_matrix.test.csv`；脚本缺失时跳过（不阻塞）。然后 `bb-create-issue --label ready-for-synth`. Fallback: `designs/<name>/.handoff/ready-for-synth.md`.
 
 ## Convergence / Failure
 
