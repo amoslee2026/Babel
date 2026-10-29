@@ -26,10 +26,10 @@ Pipeline: `idea → PRD → ARCH → MAS → RTL → VERIF → SYNTH → PD → 
 ## Git Remotes
 | Remote | URL | 用途 |
 |--------|-----|------|
-| origin | gitlink.org.cn/amoslee2011/Babel.git | 主仓库（需 gitlink 凭据，本机未配置） |
-| github | github.com/amoslee2026/Babel.git | 镜像（凭据走 `git-credential-gh-account.sh`，需代理） |
+| github | github.com/amoslee2026/Babel.git | 主仓库 / 交付目标（凭据走 `git-credential-gh-account.sh`，走代理） |
+| origin | gitlink.org.cn/amoslee2011/Babel.git | 历史镜像（需 gitlink 凭据，本机未配置；非交付目标） |
 
-两个 remote 分别推送：`git push github master`、`git push origin master`；`.git/config` 没有 `pushInsteadOf`，推一个不会同步另一个。
+交付一律 `git push github master`。两个 remote 相互独立：`.git/config` 没有 `pushInsteadOf`，推一个不会同步另一个。
 
 ## Directory
 ```
