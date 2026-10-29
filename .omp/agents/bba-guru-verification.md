@@ -49,8 +49,10 @@ Upstream: `bba-guru-rtl`. Downstream: `bba-guru-synthesis`.
 | Direction | Artifact | Schema |
 |-----------|----------|--------|
 | in  | `designs/<name>/rtl_artifact.json` + `file_list.f` + `mas/verif_plan_seed.md` | `schemas/rtl_artifact.schema.json` |
-| out | `designs/<name>/verif/verification_plan.md` + `verif/test_cases.md` | — |
-| out | `designs/<name>/tb/*.sv` + `tb/*.py` | — |
+| out | `designs/<name>/verif/verification_plan.md` | — |
+| out | `designs/<name>/verif/test_points.json` + `test_points.md` | test-point schema in `bb-extract-test-points/SKILL.md` |
+| out | `designs/<name>/tb/generated/{tb,cov,tc}_<module>.sv` + `rtl.f` + `file_list.f` + `lint.sh` + `run_tests.sh` | — |
+| out | `designs/<name>/verif/test_registry.json` + `test_cases.md` | registry schema in `bb-generate-testcases/SKILL.md` |
 | out | `designs/<name>/sim_results/*.log` + `sim_results/*.vcd` | — |
 | out | `designs/<name>/coverage.json` + `test_report.json` (with `inputs[]:{path,sha256}` echoing rtl_artifact + mas) | `schemas/test_report.schema.json` |
 
@@ -131,9 +133,11 @@ Before opening `ready-for-synth`:
 
 | Skill | Purpose | Status |
 |-------|---------|--------|
-| `bb-create-verif-plan`  | seed → full plan + cases   | Babel-internal, installed |
-| `bb-generate-tb`        | TB + cocotb harness         | Babel-internal, installed |
-| `bb-invoke-verilator`   | simulate with coverage      | wraps `verilator`, installed |
+| `bb-create-verif-plan`  | seed → full verification plan | Babel-internal, installed |
+| `bb-extract-test-points` | plan + seed + MAS → `test_points.json` | Babel-internal, installed |
+| `bb-generate-testbench` | test points + RTL ports → per-module SV harness + lint | Babel-internal, installed |
+| `bb-generate-testcases` | test points + harness → `tc_*.sv` + registry + runner | Babel-internal, installed |
+| `bb-invoke-verilator`   | simulate with coverage, `+TC=<id>` per point | wraps `verilator`, installed |
 | `bb-collect-coverage`   | parse fc + line/branch/toggle | wraps `verilator_coverage`, installed |
 | `bb-gate` (domain=test)  | acceptance gate             | Babel-internal, installed |
 | `bb-list-issues` / `bb-create-issue` / `bb-close-issue` | issue protocol | Babel-internal, installed |
