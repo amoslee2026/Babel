@@ -52,7 +52,9 @@ fi
 resolve_lib() {  # <family>
   local family="$1" hits
   hits=$(compgen -G "$LIB_ROOT/LIB/NLDM/asap7sc7p5t_${family}_${VT}_${CORNER}_nldm_*.lib" || true)
-  [[ -n "$hits" ]] || hits=$(compgen -G "$LIB_ROOT/**/asap7sc7p5t_${family}_${VT}_${CORNER}_nldm_*.lib" || true)
+  if [[ -z "$hits" ]]; then
+    hits=$(find "$LIB_ROOT" -name "asap7sc7p5t_${family}_${VT}_${CORNER}_nldm_*.lib" -type f 2>/dev/null | sort | head -1 || true)
+  fi
   [[ -n "$hits" ]] || { echo "no ${family}/${VT}/${CORNER} liberty under $LIB_ROOT" >&2; return 1; }
   printf '%s\n' $hits | sort | head -1
 }
