@@ -1,6 +1,6 @@
 {
   "design_name": "tinystories_npu",
-  "generated": "2026-10-29T19:10:28+08:00",
+  "generated": "2026-10-29T19:13:41+08:00",
   "testcases": 136,
   "missing_modules": [
     "NPU_top"
