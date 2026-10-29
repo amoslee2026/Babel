@@ -480,22 +480,26 @@ testbench/runs/
 
 ### 6.2 Token 和成本记录
 
-omp 的 token 使用记录在 session jsonl（`~/.omp/agent/sessions/<cwd-slug>/<ts>_<id>.jsonl`）的 `model_usage` 条目中：
+omp 的 token 用量与成本记录在 assistant 消息的 `message.usage`（session jsonl：`~/.omp/agent/sessions/<cwd-slug>/<ts>_<id>.jsonl`）。`model_usage` 条目只记对话外的调用（标题生成等），不能当总量：
 
 ```bash
-# 单次会话的每次模型调用用量
-jq -c 'select(.type=="model_usage") | {model, usage}' ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
+# 总量与成本
+jq -s '[.[]|select(.type=="message" and .message.role=="assistant")|.message.usage]
+       | {input:(map(.input)|add), output:(map(.output)|add), cost:(map(.cost.total)|add)}' \
+  ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
 
-# 汇总 input/output
-jq -s '[.[]|select(.type=="model_usage")|.usage] | {input:(map(.input)|add), output:(map(.output)|add)}' \
+# 每次调用明细
+jq -c 'select(.type=="message" and .message.role=="assistant") | {model:.message.model, usage:.message.usage}' \
   ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
 ```
 
 ### 6.3 Tool Call 计数
 
 ```bash
-# 从 omp session transcript 中统计 tool calls
-rg -c '"type":"toolCall"' ~/.omp/agent/sessions/-wrk-Babel/*.jsonl
+# 按工具名统计 tool calls
+jq -r 'select(.type=="message" and .message.role=="assistant")
+       | .message.content[]? | select(.type=="toolCall") | .name' \
+  ~/.omp/agent/sessions/-wrk-Babel/*.jsonl | sort | uniq -c | sort -nr
 ```
 
 ---

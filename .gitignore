@@ -182,6 +182,10 @@ abc.history
 # ---> omp session artifacts
 .omp/session_summaries/
 .omp/.adaptive/
+.omp/advisor-ledger/
+.omp/scheduled_tasks.json
+.omp/scheduled_tasks.lock
+.omp/settings.local.json
 logs/
 .babel/
 # Allow .omp/hooks/scripts/lib/ (shared hook helpers) despite the repo-level `lib/` rule
