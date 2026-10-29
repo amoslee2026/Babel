@@ -396,17 +396,19 @@ def main() -> int:
         tb_files += [rel(tb, root), rel(cov, root), rel(tc, root)]
         fl_tb_files.append(rel(tb, root))
 
-    fl_lines = [HEADER.strip(), f"+incdir+{out_dir.resolve()}"]
+    rtl_lines = [HEADER.strip(), f"+incdir+{out_dir.resolve()}"]
     if design_fl.is_file():
-        fl_lines += [
+        rtl_lines += [
             ln.strip() for ln in design_fl.read_text(encoding="utf-8").splitlines()
             if ln.strip() and not ln.strip().startswith("//")
         ]
     else:
         skipped.append({"module": "*", "reason": f"design file list missing: {design_fl}"})
-    fl_lines += fl_tb_files
+    rtl_path = out_dir / "rtl.f"
+    rtl_path.write_text("\n".join(rtl_lines) + "\n", encoding="utf-8")
+
     fl_path = out_dir / "file_list.f"
-    fl_path.write_text("\n".join(fl_lines) + "\n", encoding="utf-8")
+    fl_path.write_text("\n".join(rtl_lines + fl_tb_files) + "\n", encoding="utf-8")
 
     lint_sh = out_dir / "lint.sh"
     lint_sh.write_text(
@@ -415,9 +417,10 @@ def main() -> int:
                 "#!/usr/bin/env bash",
                 "set -uo pipefail",
                 'cd "$(git rev-parse --show-toplevel)"',
+                f'GEN="{rel(out_dir, root)}"',
                 "fail=0",
                 f'for m in {" ".join(generated)}; do',
-                f'  if verilator --lint-only -sv --timing -Wno-fatal --top-module "tb_$m" -f {rel(fl_path, root)}; then echo "[lint] $m OK"; else echo "[lint] $m FAILED"; fail=1; fi',
+                '  if verilator --lint-only -sv --timing -Wno-fatal --top-module "tb_$m" -f "$GEN/rtl.f" "$GEN/tb_$m.sv"; then echo "[lint] $m OK"; else echo "[lint] $m FAILED"; fail=1; fi',
                 "done",
                 "exit $fail",
                 "",
