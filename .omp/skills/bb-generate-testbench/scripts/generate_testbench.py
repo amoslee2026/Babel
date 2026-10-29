@@ -168,7 +168,7 @@ def clock_plan(mas: dict, ports: list[dict]) -> dict[str, float]:
     return clocks
 
 
-def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[dict]) -> str:
+def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[dict], params: dict | None = None) -> str:
     n_tp = len(tps)
     tp_bits = max(1, n_tp)
     inputs = [p for p in ports if p["dir"] == "input" and not is_clock(p) and not is_reset(p)]
@@ -180,6 +180,12 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[d
     L = [HEADER, "`timescale 1ns/1ps", "", f"module tb_{module};",
          "  int checks = 0;", "  int errors = 0;",
          f"  logic [{tp_bits - 1}:0] tp_hit = '0;", ""]
+
+    if params:
+        L.append("  // module parameters (from RTL header), needed for width expressions")
+        for k, v in params.items():
+            L.append(f"  localparam {k} = {v};")
+        L.append("")
 
     L.append("  // ---- clocks / resets / DUT signals (RTL ports) ----")
     for cname, freq in clocks.items():
