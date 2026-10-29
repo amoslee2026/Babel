@@ -70,7 +70,6 @@ LOG="$OUT_DIR/${TOP}.log"
 NETLIST="$OUT_DIR/${TOP}_mapped.v"
 
 {
-  echo "read_verilog -sv"
   if [[ -n "$FILE_LIST" ]]; then
     while IFS= read -r line; do
       line="${line%%#*}"; line="$(printf '%s' "$line" | tr -d '[:space:]')"
