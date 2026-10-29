@@ -12,7 +12,7 @@ user-invocable: true
 读 `verif_plan_seed.md` + MAS（接口/FSM/clock_domains），输出 `verification_plan.md`，含 6 个必备 section。
 
 - 调用者：`bba-guru-verification`
-- 下游：`bb-generate-tb`
+- 下游：`bb-extract-test-points`（本 skill 只产出计划文档，测试点 JSON 由下游提取）
 - 禁止使用：Task / Agent / Skill
 
 ## Input Args

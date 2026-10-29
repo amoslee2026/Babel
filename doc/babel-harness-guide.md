@@ -130,8 +130,10 @@ Skills 是 Agent 调用的原子工具，分为 8 大类。
 
 | Skill | 职责 | 调用方 |
 |-------|------|--------|
-| `bb-create-verif-plan` | 将 `verif_plan_seed.md` 扩展为完整验证计划（6 个必备 section） | `bb-guru-verification` |
-| `bb-generate-tb` | 生成 SV UVM 或 cocotb TB + per-FTP sequence + covergroup | `bb-guru-verification` |
+| `bb-create-verif-plan` | 将 `verif_plan_seed.md` 扩展为完整验证计划文档 | `bb-guru-verification` |
+| `bb-extract-test-points` | seed + plan + MAS → `verif/test_points.json` + `test_points.md`（ID/模块/类别/优先级/激励/检查） | `bb-guru-verification` |
+| `bb-generate-testbench` | test points + RTL 端口 → per-module `tb_<M>.sv` + `cov_<M>.sv` + `rtl.f` + `lint.sh`（Verilator lint 门禁） | `bb-guru-verification` |
+| `bb-generate-testcases` | test points + harness → `tc_<M>.sv` + `test_registry.json` + `run_tests.sh`（`+TC=<id>` 单点执行） | `bb-guru-verification` |
 | `bb-collect-coverage` | 解析 coverage.dat + sim log，输出 line/branch/toggle/functional 数值 | `bb-guru-verification` |
 | `bb-check-lint` | verible-verilog-lint，零 error 才通过，不允许 waive | `bb-guru-rtl` |
 | `bb-check-cdc` | 对比 MAS clock_domains，检查跨域信号是否经 2ff-sync 保护 | `bb-guru-synthesis` |
@@ -204,7 +206,9 @@ bb-guru-rtl
 
 bb-guru-verification
   ├─ uses: bb-create-verif-plan
-  ├─ uses: bb-generate-tb
+  ├─ uses: bb-extract-test-points
+  ├─ uses: bb-generate-testbench
+  ├─ uses: bb-generate-testcases
   ├─ uses: bb-invoke-verilator → bb-collect-coverage
   ├─ uses: bb-gate-test-quality
   └─ emits: ready-for-synth ───────────────────────────► bb-guru-synthesis

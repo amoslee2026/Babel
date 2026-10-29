@@ -115,8 +115,10 @@ Babel 采用 5-agent 流水线架构，每个 agent 专注于特定设计阶段�
 | | `/bb-code-review` | RTL 代码审查 |
 | **流程生成** | `/bb-rtl-coder` | MAS → SV 代码生成 |
 | | `/bb-create-sdc` | MAS → SDC 约束 |
-| | `/bb-generate-tb` | 测试平台生成 |
 | | `/bb-create-verif-plan` | 验证计划 |
+| | `/bb-extract-test-points` | 测试点提取（JSON） |
+| | `/bb-generate-testbench` | Testbench harness 生成 |
+| | `/bb-generate-testcases` | 可执行 testcase 生成 |
 | | `/bb-create-floorplan` | Floorplan TCL |
 | **质量门控** | `/bb-gate-rtl-quality` | RTL 交付检查 |
 | | `/bb-gate-test-quality` | 验证交付检查 |
