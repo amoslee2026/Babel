@@ -111,6 +111,10 @@ python3 scripts/run_parallel_synthesis.py \
 3. 以 600s 超时执行 `yosys -c <tcl_path> > <log_path> 2>&1`
 4. 把退出码追加到 log 末尾：`exit:<rc>`
 
+**TCL 模式要求**：渲染出的脚本首行必须含 `yosys -import`，否则 `yosys -c` 报
+`invalid command name "read_verilog"`；脚本末尾不得写 `exit 0`（yosys 无 `exit` 命令，
+会以 `ERROR: No such command: exit` 退出非零）。两条都已固化在 `render_yosys_tcl.py` 模板中。
+
 ### Phase 4 — parse_results
 
 `run_parallel_synthesis.py` 内部调用 `scripts/parse_qor.py`，从 log 提取：
