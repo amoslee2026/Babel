@@ -18,6 +18,10 @@ _SLUG = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 _SV_ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 _PATH = re.compile(r"^[A-Za-z0-9_/.,+\-]+$")
 
+# Stock ABC supergate script (&nf) SIGSEGVs (status 8B) on ASAP7 NLDM liberty;
+# `map` against a single combinational lib is the verified mapping path.
+DEFAULT_ABC_OPTIONS = '-script "+strash;map"'
+
 
 def _require_slug(v: str, field: str) -> str:
     if not _SLUG.fullmatch(str(v)):
