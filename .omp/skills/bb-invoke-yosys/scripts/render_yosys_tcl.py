@@ -48,6 +48,7 @@ def render_tcl(params: dict) -> str:
     _require_slug(params['design_name'], "design_name")
     _require_sv_id(params['top_module'], "top_module")
     _require_path(params['tech_lib'], "tech_lib")
+    _require_path(params['seq_lib'], "seq_lib")
     _require_path(params['netlist_path'], "netlist_path")
     tcl_template = """
 # Yosys ASAP7 Synthesis Script
