@@ -451,7 +451,7 @@ def main() -> int:
                 f'GEN="{rel(out_dir, root)}"',
                 "fail=0",
                 f'for m in {" ".join(generated)}; do',
-                '  if verilator --lint-only -sv --timing -Wno-fatal --top-module "tb_$m" -f "$GEN/rtl.f" "$GEN/tb_$m.sv"; then echo "[lint] $m OK"; else echo "[lint] $m FAILED"; fail=1; fi',
+                '  if verilator --lint-only -sv --timing -Wno-fatal -Werror-PINMISSING --top-module "tb_$m" -f "$GEN/rtl.f" "$GEN/tb_$m.sv"; then echo "[lint] $m OK"; else echo "[lint] $m FAILED"; fail=1; fi',
                 "done",
                 "exit $fail",
                 "",
