@@ -26,10 +26,14 @@ user-invocable: true
 |-----|------|----------|------|------|
 | file_list | path | true | — | `file_list.f`，每行一个 RTL 源文件路径 |
 | sdc_path | path | true | — | `constraints/<name>.sdc`（yosys 仅做时序参考） |
-| tech_lib | path | false | `libs/asap7/.../asap7sc7p5t.lib` | ASAP7 Liberty（脚本 `--tech-lib` 有默认值，可省略） |
+| tech_lib | path | false | glob `LIB/NLDM/*_SIMPLE_<VT>_<corner>_nldm_*.lib` | 组合 Liberty（ABC 映射用）；缺省按 `--lib-root/--corner/--vt` 解析 |
+| seq_lib | path | false | glob `LIB/NLDM/*_SEQ_<VT>_<corner>_nldm_*.lib` | 时序 Liberty（`dfflibmap` 用）；ASAP7 无单一 lib 同时含 DFF 与组合门 |
+| lib_root | path | false | `libs/asap7/asap7sc7p5t_28` | ASAP7 sc7p5t 根目录（用于 glob 解析 lib） |
+| corner | enum | false | `SS` | `TT` / `SS` / `FF` |
+| vt | enum | false | `RVT` | `RVT` / `LVT` |
 | top_module | string | true | — | 顶层模块名 |
 | design_name | string | true | — | 用于路径 `designs/<name>/synth_parallel/` |
-| abc_options | string | false | `-g AND,OR,NAND,NOR,XOR` | ABC 优化参数 |
+| abc_options | string | false | `-script "+strash;map"` | ABC 优化参数；默认脚本 `&nf` 在 ASAP7 liberty 上 SIGSEGV |
 | mapping_effort | enum | false | `medium` | `low` / `medium` / `high` |
 | enable_retiming | bool | false | `false` | 是否启用 retiming pass |
 | mode | enum | false | `single` | `single`（单模块）/ `hierarchical`（分层多模块） |
