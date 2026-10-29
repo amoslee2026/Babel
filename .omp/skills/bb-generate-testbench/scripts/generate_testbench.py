@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Generate per-module SystemVerilog testbench harnesses from MAS + test points.
+"""Generate per-module SystemVerilog testbench harnesses.
+
+Ports come from RTL source (authoritative for elaboration); MAS supplies clock
+frequencies and is the fallback when a module has no parsable RTL header.
 
 Owns: tb_<M>.sv, cov_<M>.sv, file_list.f, lint.sh, tb_manifest.json
 Placeholder only (overwritten by bb-generate-testcases): tc_<M>.sv
@@ -32,61 +35,145 @@ def rel(p: Path, root: Path) -> str:
         return str(p)
 
 
-def sv_type(width: int) -> str:
-    return "logic" if int(width) <= 1 else f"logic [{int(width) - 1}:0]"
+def sv_type(width) -> str:
+    if isinstance(width, int):
+        return "logic" if width <= 1 else f"logic [{width - 1}:0]"
+    return "logic" if str(width).strip() in ("1",) else f"logic [{width}-1:0]"
 
 
 def period_ns(freq_mhz: float) -> float:
     return 1000.0 / float(freq_mhz) if freq_mhz else 10.0
 
 
-def collect_module_ports(mas: dict) -> dict[str, dict]:
-    out: dict[str, dict] = {}
-    for mod in mas.get("modules") or []:
-        name = mod.get("name")
-        ports = ((mod.get("interface") or {}).get("ports")) or []
-        if not name or not ports:
-            continue
-        norm = []
-        for p in ports:
-            pname = str(p.get("name", ""))
-            if not SV_IDENT_RE.match(pname) or pname in RESERVED:
-                continue
-            norm.append(
-                {
-                    "name": pname,
-                    "dir": p.get("dir", "input"),
-                    "width": max(1, int(p.get("width", 1) or 1)),
-                }
-            )
-        out[name] = {"ports": norm, "fsm_ref": mod.get("fsm_ref")}
+def _split_top(text: str, sep: str = ",") -> list[str]:
+    out, depth, cur = [], 0, []
+    for ch in text:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+        if ch == sep and depth == 0:
+            out.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+    if "".join(cur).strip():
+        out.append("".join(cur))
     return out
 
 
-def clock_plan(mas: dict, ports: list[dict]) -> dict[str, float]:
-    domains = {d.get("name"): float(d.get("freq_mhz") or 0) for d in mas.get("clock_domains") or []}
-    clocks: dict[str, float] = {}
-    for p in ports:
-        if p["dir"] == "input" and re.search(r"clk|clock", p["name"], re.I):
-            clocks[p["name"]] = domains.get(p["name"], 100.0) or 100.0
-    if not clocks and any(p["dir"] == "input" for p in ports):
-        clocks["clk"] = 100.0
-    return clocks
+def _eval_expr(expr: str, params: dict[str, int]) -> int | None:
+    e = re.sub(r"\b([A-Za-z_]\w*)\b", lambda m: str(params[m.group(1)]) if m.group(1) in params else "?", expr)
+    if "?" in e or not re.fullmatch(r"[0-9+\-*/() ]+", e):
+        return None
+    try:
+        return int(eval(e, {"__builtins__": {}}, {}))  # arithmetic only, sanitized above
+    except Exception:
+        return None
 
 
-def reset_ports(ports: list[dict]) -> list[dict]:
-    return [p for p in ports if p["dir"] == "input" and re.match(r"^rst", p["name"], re.I)]
+def _matching_paren(text: str, start: int) -> int:
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                return i
+    return len(text) - 1
+
+
+def parse_rtl_ports(path: Path) -> dict[str, list[dict]]:
+    text = re.sub(r"//[^\n]*", "", path.read_text(encoding="utf-8", errors="replace"))
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    found: dict[str, list[dict]] = {}
+
+    for m in re.finditer(r"\bmodule\s+([A-Za-z_]\w*)\b", text):
+        name = m.group(1)
+        pos = m.end()
+        params: dict[str, int] = {}
+
+        pm = re.match(r"\s*#\s*\(", text[pos:])
+        if pm:
+            start = pos + pm.end() - 1
+            end = _matching_paren(text, start)
+            for decl in _split_top(text[start + 1:end]):
+                dm = re.search(r"\bparameter\s+(?:integer\s+)?([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)", decl)
+                if dm:
+                    val = _eval_expr(dm.group(2), params)
+                    if val is not None:
+                        params[dm.group(1)] = val
+            pos = end + 1
+
+        pm2 = re.match(r"\s*\(", text[pos:])
+        if not pm2:
+            continue
+        start = pos + pm2.end() - 1
+        end = _matching_paren(text, start)
+        body = text[start + 1:end]
+
+        ports: list[dict] = []
+        last_dir = None
+        last_width: int | str = 1
+        for chunk in _split_top(body):
+            c = chunk.strip()
+            if not c:
+                continue
+            dm = re.search(r"\b(input|output|inout)\b", c)
+            if dm:
+                last_dir = dm.group(1)
+                wm = re.search(r"\[([^\]]+)\]", c)
+                if wm:
+                    msb = wm.group(1).rsplit(":", 1)[0].strip()
+                    val = _eval_expr(msb, params)
+                    last_width = (val + 1) if val is not None else wm.group(1).strip()
+                else:
+                    last_width = 1
+            if last_dir is None:
+                continue
+            names = re.findall(r"[A-Za-z_]\w*", c)
+            if not names:
+                continue
+            pname = names[-1]
+            if pname in RESERVED or not SV_IDENT_RE.match(pname):
+                continue
+            ports.append({"name": pname, "dir": last_dir, "width": last_width})
+        found[name] = ports
+    return found
 
 
 def is_clock(p: dict) -> bool:
     return bool(re.search(r"clk|clock", p["name"], re.I))
 
 
-def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], resets: list[dict], tps: list[dict]) -> str:
+def is_reset(p: dict) -> bool:
+    return p["dir"] == "input" and bool(re.match(r"^rst", p["name"], re.I))
+
+
+def reset_active_low(name: str) -> bool:
+    low = name.lower()
+    return low.endswith("_n") or low.endswith("ni") or low.endswith("n")
+
+
+def clock_plan(mas: dict, ports: list[dict]) -> dict[str, float]:
+    domains = {d.get("name"): float(d.get("freq_mhz") or 0) for d in mas.get("clock_domains") or []}
+    clocks: dict[str, float] = {}
+    for p in ports:
+        if p["dir"] == "input" and is_clock(p):
+            freq = domains.get(p["name"])
+            if freq is None and len(domains) == 1:
+                freq = next(iter(domains.values()))
+            clocks[p["name"]] = freq or 100.0
+    return clocks
+
+
+def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], tps: list[dict]) -> str:
     n_tp = len(tps)
     tp_bits = max(1, n_tp)
-    inputs = [p for p in ports if p["dir"] == "input" and not is_clock(p)]
+    inputs = [p for p in ports if p["dir"] == "input" and not is_clock(p) and not is_reset(p)]
     outputs = [p for p in ports if p["dir"] == "output"]
+    resets = [p for p in ports if is_reset(p)]
     inouts = [p for p in ports if p["dir"] == "inout"]
     primary_clk = next(iter(clocks), None)
 
@@ -94,10 +181,10 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], resets: lis
          "  int checks = 0;", "  int errors = 0;",
          f"  logic [{tp_bits - 1}:0] tp_hit = '0;", ""]
 
-    L.append("  // ---- clocks / resets / DUT signals (MAS-derived) ----")
+    L.append("  // ---- clocks / resets / DUT signals (RTL ports) ----")
     for cname, freq in clocks.items():
         L.append(f"  logic {cname} = 1'b0;   // {freq:.3f} MHz")
-    for p in inputs + outputs + inouts:
+    for p in inputs + outputs + inouts + resets:
         L.append(f"  {sv_type(p['width'])} {p['name']};")
     L.append("")
     for cname, freq in clocks.items():
@@ -106,76 +193,61 @@ def gen_tb(module: str, ports: list[dict], clocks: dict[str, float], resets: lis
     L.append("")
 
     conns = ", ".join(f".{p['name']}({p['name']})" for p in ports)
-    L.append(f"  {module} dut (")
-    L.append("    " + conns)
-    L.append("  );")
-    L.append("")
-    L.append(f'  `include "cov_{module}.sv"')
-    L.append(f'  `include "tc_{module}.sv"')
-    L.append("")
+    L += [f"  {module} dut (", "    " + conns, "  );", ""]
+    L += [f'  `include "cov_{module}.sv"', f'  `include "tc_{module}.sv"', ""]
 
     L.append("  task automatic drive_defaults();")
     for p in inputs:
         L.append(f"    {p['name']} = '0;")
-    L.append("  endtask")
-    L.append("")
+    for p in resets:
+        inactive = 1 if reset_active_low(p["name"]) else 0
+        L.append(f"    {p['name']} = 1'b{inactive};")
+    L += ["  endtask", ""]
 
     tick = f"@(posedge {primary_clk});" if primary_clk else "#10;"
     L.append("  task automatic apply_reset();")
     L.append("    drive_defaults();")
     for r in resets:
-        active_low = r["name"].lower().endswith("_n")
-        L.append(f"    {r['name']} = 1'b{0 if active_low else 1};")
+        active = 0 if reset_active_low(r["name"]) else 1
+        L.append(f"    {r['name']} = 1'b{active};")
     L.append(f"    repeat (2) {tick}")
     for r in resets:
-        active_low = r["name"].lower().endswith("_n")
-        L.append(f"    {r['name']} = 1'b{1 if active_low else 0};")
+        inactive = 1 if reset_active_low(r["name"]) else 0
+        L.append(f"    {r['name']} = 1'b{inactive};")
     L.append(f"    {tick}")
-    L.append("  endtask")
-    L.append("")
+    L += ["  endtask", ""]
 
     L.append("  function automatic string tp_id(int idx);")
     L.append("    case (idx)")
     for i, tp in enumerate(tps):
         L.append(f'      {i}: return "{tp["id"]}";')
     L.append('      default: return "TP-UNKNOWN";')
-    L.append("    endcase")
-    L.append("  endfunction")
-    L.append("")
+    L += ["    endcase", "  endfunction", ""]
 
-    L.append("  task automatic mark_tp(int idx);")
-    L.append(f"    if (idx >= 0 && idx < {tp_bits}) tp_hit[idx] = 1'b1;")
-    L.append("  endtask")
-    L.append("")
+    L += ["  task automatic mark_tp(int idx);",
+          f"    if (idx >= 0 && idx < {tp_bits}) tp_hit[idx] = 1'b1;",
+          "  endtask", ""]
 
-    L.append("  task automatic check_tp(int idx, bit ok);")
-    L.append("    checks++;")
-    L.append('    if (!ok) begin errors++; $display("[FAIL] %s", tp_id(idx)); end')
-    L.append("    mark_tp(idx);")
-    L.append("  endtask")
-    L.append("")
+    L += ["  task automatic check_tp(int idx, bit ok);",
+          "    checks++;",
+          '    if (!ok) begin errors++; $display("[FAIL] %s", tp_id(idx)); end',
+          "    mark_tp(idx);",
+          "  endtask", ""]
 
-    L.append("  task automatic sb_check(int idx);")
-    L.append("    bit ok = 1'b1;")
+    L += ["  task automatic sb_check(int idx);", "    bit ok = 1'b1;"]
     for o in outputs:
         L.append(f"    ok &= !$isunknown({o['name']});")
-    if not outputs:
-        L.append("    ok &= 1'b1;")
-    L.append("    check_tp(idx, ok);")
-    L.append("  endtask")
-    L.append("")
+    L += ["    check_tp(idx, ok);", "  endtask", ""]
 
-    L.append(f"  cg_{module} cg = new();")
-    L.append("")
-    L.append("  initial begin")
-    L.append(f'    $display("[TB] {module}: %0d test point(s)", {n_tp});')
-    L.append("    apply_reset();")
-    L.append("    run_all();")
-    L.append('    $display("[TB] checks=%0d errors=%0d tp_hit=%b", checks, errors, tp_hit);')
-    L.append('    if (errors != 0) $fatal(1, "TB FAILED");')
-    L.append("    $finish;")
-    L.append("  end")
-    L.append("endmodule")
+    L += [f"  cg_{module} cg = new();", "", "  initial begin",
+          f'    $display("[TB] {module}: %0d test point(s)", {n_tp});',
+          "    apply_reset();",
+          "    run_all();",
+          '    $display("[TB] checks=%0d errors=%0d tp_hit=%b", checks, errors, tp_hit);',
+          '    if (errors != 0) $fatal(1, "TB FAILED");',
+          "    $finish;",
+          "  end",
+          "endmodule"]
     return "\n".join(L) + "\n"
 
 
@@ -183,20 +255,21 @@ def gen_cov(module: str, ports: list[dict], tps: list[dict]) -> str:
     n = max(1, len(tps))
     cov_inputs = [
         p for p in ports
-        if p["dir"] == "input" and not is_clock(p) and p["width"] <= 16
+        if p["dir"] == "input" and not is_clock(p) and not is_reset(p)
+        and isinstance(p["width"], int) and p["width"] <= 16
     ]
     L = [HEADER, f"covergroup cg_{module};", "  option.per_instance = 1;",
-         f"  cp_tp: coverpoint tp_hit {{"]
+         "  cp_tp: coverpoint tp_hit {"]
     for i in range(len(tps)):
         L.append(f"    bins tp_{i} = {{{n}'d{1 << i}}};")
     L.append("  }")
     for p in cov_inputs:
         L.append(f"  cp_{p['name']}: coverpoint {p['name']};")
-    L.append("endgroup")
-    return "\n".join(L) + "\n"
+    L += ["endgroup", ""]
+    return "\n".join(L)
 
 
-def gen_tc_placeholder(module: str, clocks: dict[str, float]) -> str:
+def gen_tc_placeholder(clocks: dict[str, float]) -> str:
     primary_clk = next(iter(clocks), None)
     tick = f"@(posedge {primary_clk});" if primary_clk else "#10;"
     return "\n".join(
@@ -213,7 +286,7 @@ def gen_tc_placeholder(module: str, clocks: dict[str, float]) -> str:
     )
 
 
-def run_lint(tb_dir: Path, modules: list[str], top_root: Path) -> tuple[bool, list[str]]:
+def run_lint(tb_dir: Path, modules: list[str], root: Path) -> tuple[bool, list[str]]:
     errors: list[str] = []
     for m in modules:
         cmd = [
@@ -221,7 +294,7 @@ def run_lint(tb_dir: Path, modules: list[str], top_root: Path) -> tuple[bool, li
             "--top-module", f"tb_{m}", "-f", str(tb_dir / "file_list.f"),
         ]
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=str(top_root))
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=str(root))
         except (OSError, subprocess.TimeoutExpired) as exc:
             return False, [f"{m}: lint invocation failed: {exc}"]
         if res.returncode != 0:
@@ -236,7 +309,8 @@ def main() -> int:
     ap.add_argument("--mas", required=True)
     ap.add_argument("--test-points", required=True)
     ap.add_argument("--out-dir", required=True)
-    ap.add_argument("--file-list", default=None, help="design file_list.f to include RTL")
+    ap.add_argument("--file-list", default=None, help="design file_list.f (RTL paths + incdirs)")
+    ap.add_argument("--rtl-artifact", default=None, help="rtl_artifact.json as RTL path source")
     ap.add_argument("--modules")
     ap.add_argument("--no-lint", action="store_true")
     args = ap.parse_args()
@@ -244,7 +318,36 @@ def main() -> int:
     root = Path.cwd()
     mas = json.loads(Path(args.mas).read_text(encoding="utf-8"))
     tp_doc = json.loads(Path(args.test_points).read_text(encoding="utf-8"))
-    module_ports = collect_module_ports(mas)
+
+    design_fl = Path(args.file_list) if args.file_list else Path("designs") / args.design_name / "file_list.f"
+    rtl_files: list[Path] = []
+    if design_fl.is_file():
+        for line in design_fl.read_text(encoding="utf-8").splitlines():
+            s = line.strip()
+            if s and not s.startswith(("//", "+", "-", "#")):
+                rtl_files.append(Path(s))
+    elif args.rtl_artifact and Path(args.rtl_artifact).is_file():
+        art = json.loads(Path(args.rtl_artifact).read_text(encoding="utf-8"))
+        rtl_files = [Path(p) for p in art.get("rtl_files", [])]
+
+    rtl_ports: dict[str, list[dict]] = {}
+    missing_rtl: list[str] = []
+    for f in rtl_files:
+        path = f if f.is_absolute() else root / f
+        if not path.is_file():
+            missing_rtl.append(str(f))
+            continue
+        rtl_ports.update(parse_rtl_ports(path))
+
+    mas_ports = {
+        m.get("name"): [
+            {"name": str(p.get("name")), "dir": p.get("dir", "input"), "width": max(1, int(p.get("width", 1) or 1))}
+            for p in ((m.get("interface") or {}).get("ports") or [])
+            if SV_IDENT_RE.match(str(p.get("name", "")))
+        ]
+        for m in mas.get("modules") or []
+        if m.get("name")
+    }
 
     by_module: dict[str, list[dict]] = {}
     for tp in tp_doc.get("points", []):
@@ -257,35 +360,34 @@ def main() -> int:
     tb_files: list[str] = []
     generated: list[str] = []
     skipped: list[dict] = []
+    port_source: dict[str, str] = {}
     for mod in wanted:
-        if mod not in module_ports:
-            skipped.append({"module": mod, "reason": "not in MAS or empty interface"})
+        ports = rtl_ports.get(mod) or mas_ports.get(mod) or []
+        port_source[mod] = "rtl" if mod in rtl_ports else ("mas" if mod in mas_ports else "none")
+        if not ports:
+            skipped.append({"module": mod, "reason": "no parsable ports in RTL or MAS"})
             continue
-        ports = module_ports[mod]["ports"]
-        clocks = clock_plan(mas, ports)
-        if clocks and not any(p["name"] in clocks for p in ports):
-            # synthesized clock must be inserted into port list for the DUT connection
-            ports = ports + [{"name": next(iter(clocks)), "dir": "input", "width": 1}]
-        resets = reset_ports(ports)
         tps = by_module.get(mod, [])
         if not tps:
             skipped.append({"module": mod, "reason": "no test points"})
             continue
-
+        clocks = clock_plan(mas, ports)
         tb = out_dir / f"tb_{mod}.sv"
         cov = out_dir / f"cov_{mod}.sv"
         tc = out_dir / f"tc_{mod}.sv"
-        tb.write_text(gen_tb(mod, ports, clocks, resets, tps), encoding="utf-8")
+        tb.write_text(gen_tb(mod, ports, clocks, tps), encoding="utf-8")
         cov.write_text(gen_cov(mod, ports, tps), encoding="utf-8")
         if not tc.exists():
-            tc.write_text(gen_tc_placeholder(mod, clocks), encoding="utf-8")
+            tc.write_text(gen_tc_placeholder(clocks), encoding="utf-8")
         generated.append(mod)
         tb_files += [rel(tb, root), rel(cov, root), rel(tc, root)]
 
-    design_fl = Path(args.file_list) if args.file_list else Path("designs") / args.design_name / "file_list.f"
     fl_lines = [HEADER.strip(), f"+incdir+{out_dir.resolve()}"]
     if design_fl.is_file():
-        fl_lines += [ln.strip() for ln in design_fl.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.strip().startswith("//")]
+        fl_lines += [
+            ln.strip() for ln in design_fl.read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.strip().startswith("//")
+        ]
     else:
         skipped.append({"module": "*", "reason": f"design file list missing: {design_fl}"})
     fl_lines += tb_files
@@ -320,18 +422,21 @@ def main() -> int:
         "generated": datetime.now(CST).isoformat(timespec="seconds"),
         "out_dir": str(out_dir),
         "modules": generated,
+        "port_source": port_source,
         "skipped": skipped,
+        "missing_rtl": missing_rtl,
         "tb_files": tb_files,
         "file_list": str(fl_path),
         "lint_clean": lint_clean,
     }
     (out_dir / "tb_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    valid = bool(generated) and lint_clean and not skipped
+    valid = bool(generated) and lint_clean and not any(s["module"] == "*" for s in skipped)
     summary = {
         "artifact_path": str(out_dir),
         "tb_files": tb_files,
         "modules": generated,
+        "port_source": port_source,
         "skipped": skipped,
         "file_list": str(fl_path),
         "lint_clean": lint_clean,
