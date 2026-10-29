@@ -227,13 +227,13 @@ def main() -> int:
         "",
         f"> {len(all_cases)} 个 testcase ｜ 生成时间 {reg_doc['generated']}",
         "",
-        "| TP | Module | Task | Category | Priority | Coverage Bin | Run |",
-        "|----|--------|------|----------|----------|--------------|-----|",
+        "| TP | Module | Task | Category | Priority | Check | Coverage Bin | Run |",
+        "|----|--------|------|----------|----------|-------|--------------|-----|",
     ]
     for c in all_cases:
         md_lines.append(
             f"| {c['id']} | {c['module']} | `{c['task']}` | {c['category']} | {c['priority']} | "
-            f"`{c['coverage_bin']}` | `run_tests.sh {c['module']} {c['id']}` |"
+            f"{c.get('check_kind', 'non_x_only')} | `{c['coverage_bin']}` | `run_tests.sh {c['module']} {c['id']}` |"
         )
     md_path = verif_dir / "test_cases.md"
     md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
@@ -260,6 +260,7 @@ def main() -> int:
                 "  else",
                 '    "$obj/sim_$m" || rc=1',
                 "  fi",
+                '  [[ -f "$obj/coverage.dat" ]] && echo "[coverage] $obj/coverage.dat"',
                 "done",
                 "exit $rc",
                 "",
