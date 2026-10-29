@@ -35,6 +35,10 @@ def rel(p: Path, root: Path) -> str:
         return str(p)
 
 
+def sig_name(p: dict) -> str:
+    return p.get("signal") or f"v_{p['name']}"
+
+
 def sv_type(width) -> str:
     if isinstance(width, int):
         return "logic" if width <= 1 else f"logic [{width - 1}:0]"
@@ -100,12 +104,12 @@ def parse_rtl_ports(path: Path) -> dict[str, list[dict]]:
             end = _matching_paren(text, start)
             for decl in _split_top(text[start + 1:end]):
                 dm = re.search(
-                    r"(?:parameter|localparam)\s+(?:integer\s+|int\s+|logic\s+\[[^\]]*\]\s+)?([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)",
+                    r"(?:parameter|localparam)\s+(?:integer\s+|int\s+|logic\s+\[[^\]]*\]\s+)?([A-Za-z_]\w*)\s*=\s*([A-Za-z0-9_+\-*/() ]+)",
                     decl,
                 )
                 if not dm:
                     # `#(parameter A = 1, B = 2)` — later chunks carry no keyword
-                    dm = re.match(r"\s*([A-Za-z_]\w*)\s*=\s*([0-9+\-*/() ]+)", decl)
+                    dm = re.match(r"\s*([A-Za-z_]\w*)\s*=\s*([A-Za-z0-9_+\-*/() ]+)", decl)
                 if dm:
                     val = _eval_expr(dm.group(2), params)
                     if val is not None:
