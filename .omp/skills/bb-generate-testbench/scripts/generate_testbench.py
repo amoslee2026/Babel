@@ -383,6 +383,8 @@ def main() -> int:
         if not tc.exists():
             tc.write_text(gen_tc_placeholder(clocks), encoding="utf-8")
         generated.append(mod)
+        ports_by_module[mod] = ports
+        clocks_by_module[mod] = clocks
         tb_files += [rel(tb, root), rel(cov, root), rel(tc, root)]
         fl_tb_files.append(rel(tb, root))
 
